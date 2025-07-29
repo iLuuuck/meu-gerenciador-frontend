@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://api.moraes.fun';
+    const API_URL = 'https://gerenciador-emprestimos-api.onrender.com';
 
     const errorMessageElement = document.getElementById('errorMessage');
 
