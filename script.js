@@ -60,10 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${day}/${month}/${year}`;
     }
 
+    // Calcula o saldo restante do VALOR EMPRESTADO original
     function calculateRemainingBalance(debtor) {
         const totalPaid = debtor.payments.reduce((sum, p) => sum + p.amount, 0);
-        // O saldo restante é o valor total *emprestado* menos o que já foi pago
-        // Isso é diferente do lucro, que é (parcela * num_parcelas) - emprestado
         return debtor.totalAmount - totalPaid;
     }
 
@@ -74,8 +73,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // NOVO: Função para calcular o lucro total
     function calculateTotalProfit(debtor) {
-        const totalAmountToBeReceived = debtor.amountPerInstallment * debtor.installments;
-        return totalAmountToBeReceived - debtor.totalAmount;
+        // Garante que os valores são números para evitar erros
+        const totalAmount = parseFloat(debtor.totalAmount);
+        const installments = parseInt(debtor.installments);
+        const amountPerInstallment = parseFloat(debtor.amountPerInstallment);
+
+        if (isNaN(totalAmount) || isNaN(installments) || isNaN(amountPerInstallment)) {
+            return 0; // Retorna 0 ou um erro se os valores não forem válidos
+        }
+        
+        const totalAmountToBeReceived = amountPerInstallment * installments;
+        return totalAmountToBeReceived - totalAmount;
     }
 
     // --- Renderização ---
@@ -99,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="debtor-info">
                     <h2>${debtor.name}</h2>
                     <p>Valor Emprestado: ${formatCurrency(debtor.totalAmount)}</p>
-                    <p>Prestações: ${debtor.installments}</p>
+                    <p>Prestações: ${debtor.installments} x ${formatCurrency(debtor.amountPerInstallment)}</p>
                     <p>Prestações Faltando: ${remainingInstallments}</p>
                 </div>
                 <div class="debtor-balance">
@@ -112,7 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             debtorItem.addEventListener('click', (e) => {
-                if (!e.target.closest('.debtor-actions')) { // Evita abrir o modal de detalhes ao clicar nos botões de ação
+                // Evita abrir o modal de detalhes ao clicar nos botões de ação
+                if (!e.target.closest('.debtor-actions')) { 
                     showDebtorDetails(debtor.id);
                 }
             });
@@ -169,16 +178,17 @@ document.addEventListener('DOMContentLoaded', () => {
             let paymentDate = null;
             let paymentId = null;
 
-            // Verifica se esta parcela já foi paga
+            // Verifica se esta parcela já foi paga (o índice do array de payments corresponde ao número da parcela)
             if (debtor.payments && debtor.payments[i]) {
                 const payment = debtor.payments[i];
                 isPaid = true;
                 paymentDate = payment.date;
                 paymentId = payment.id;
                 paymentSquare.classList.add('paid');
-                paymentSquare.dataset.paymentId = paymentId;
+                paymentSquare.dataset.paymentId = paymentId; // Armazena o ID do pagamento para exclusão
             }
 
+            // Exibe o valor da parcela e a data ou "Parc. X" se não paga
             paymentSquare.innerHTML = `
                 <span>${formatCurrency(debtor.amountPerInstallment)}</span>
                 <span>${paymentDate ? formatDate(paymentDate) : `Parc. ${i + 1}`}</span>
@@ -186,13 +196,14 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             if (!isPaid) {
+                // Adiciona o listener de clique apenas para parcelas não pagas
                 paymentSquare.addEventListener('click', () => selectPaymentSquare(paymentSquare, debtor.amountPerInstallment));
             }
             
             paymentsGrid.appendChild(paymentSquare);
         }
 
-        // Adicionar listeners para os botões de excluir pagamento
+        // Adicionar listeners para os botões de excluir pagamento (precisa ser depois que os botões são criados)
         document.querySelectorAll('.delete-payment-btn').forEach(button => {
             button.onclick = (e) => {
                 e.stopPropagation();
@@ -238,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startDate = startDateInput.value;
 
         if (!name || isNaN(totalAmount) || isNaN(installments) || isNaN(amountPerInstallment) || !startDate || totalAmount <= 0 || installments <= 0 || amountPerInstallment <= 0) {
-            alert('Por favor, preencha todos os campos corretamente.');
+            alert('Por favor, preencha todos os campos corretamente (Nome, Valor Emprestado, Número de Parcelas, Valor por Parcela e Data de Início).');
             return;
         }
 
@@ -306,14 +317,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Verifica se todas as parcelas já foram pagas
+        // Verifica se todas as parcelas já foram pagas (com base no número de pagamentos vs. número total de parcelas)
         if (debtor.payments.length >= debtor.installments) {
             alert('Todas as parcelas já foram pagas para este devedor.');
             return;
         }
 
         const newPayment = {
-            id: Date.now().toString(),
+            id: Date.now().toString(), // ID único para o pagamento
             amount: paymentAmount,
             date: paymentDate
         };
@@ -332,6 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!debtor) return;
 
         debtor.payments = debtor.payments.filter(p => p.id !== paymentId);
+        // Opcional: Se você quiser reordenar os pagamentos para que fiquem sempre nos primeiros índices, pode fazer aqui
+        // debtor.payments.sort((a, b) => new Date(a.date) - new Date(b.date));
+
         localStorage.setItem('debtors', JSON.stringify(debtors));
 
         renderDebtors();
@@ -341,9 +355,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Botão "Usar Valor da Parcela"
     fillAmountButton.addEventListener('click', () => {
         const debtor = debtors.find(d => d.id === currentDebtorId);
-        if (debtor && debtor.amountPerInstallment) {
+        if (debtor && typeof debtor.amountPerInstallment === 'number') { // Verifica se é um número
             paymentAmountInput.value = debtor.amountPerInstallment.toFixed(2);
             paymentDateInput.valueAsDate = new Date(); // Preenche com a data atual
+        } else {
+            alert('Valor por parcela não definido para este devedor.');
         }
     });
 
