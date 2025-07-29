@@ -22,11 +22,17 @@
     <div id="debtorDetailModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <h2 id="detailDebtorName"></h2>
-            <p>Valor Total: <span id="detailTotalAmount"></span></p>
-            <p>Parcelas: <span id="detailInstallments"></span></p>
-            <p>Valor por Parcela: <span id="detailAmountPerInstallment"></span></p>
-            <p>Data de Início: <span id="detailStartDate"></span></p>
+            
+            <div class="debtor-details-header">
+                <h2 id="detailDebtorName"></h2> </div>
+            
+            <div class="debtor-details-info">
+                <p class="detail-item"><span>Valor Emprestado:</span> <span id="detailTotalAmount"></span></p>
+                <p class="detail-item"><span>Quantidade de Prestações:</span> <span id="detailInstallments"></span></p>
+                <p class="detail-item"><span>Prestações Faltando:</span> <span id="detailRemainingInstallments"></span></p>
+                <p class="detail-item"><span>Data do Empréstimo:</span> <span id="detailStartDate"></span></p>
+                <p class="detail-item"><span>Saldo Restante:</span> <span id="detailRemainingBalance"></span></p>
+                </div>
 
             <h3>Pagamentos</h3>
             <div id="paymentsGrid" class="payments-grid">
@@ -62,10 +68,9 @@
                 <input type="date" id="startDate" required>
 
                 <button type="submit" id="saveDebtorButton">Salvar Devedor</button>
-                </form>
+            </form>
         </div>
     </div>
 
-    <script src="script.js"></script>
-</body>
+    <script src="script.js" defer></script> </body>
 </html>
