@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'http://localhost:3000';
+    const API_URL = 'https://russo.moraes.fun';
 
     const errorMessageElement = document.getElementById('errorMessage');
 
