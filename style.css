@@ -211,7 +211,7 @@ input:focus {
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     display: flex;
-    flex-direction: column; /* Coluna para mobile primeiro */
+    flex-direction: column;
     align-items: flex-start;
     justify-content: space-between;
     cursor: pointer;
@@ -225,23 +225,14 @@ input:focus {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
-/* --- Ajustes para o Nome e Informações do Devedor no Card --- */
-.debtor-info {
-    width: 100%; /* Ocupa a largura total para organizar as infos */
-    margin-bottom: 10px; /* Espaço entre info e ações/saldo */
-}
-
 .debtor-info h2 {
     font-size: 1.5em;
     margin-bottom: 5px;
-    color: var(--accent-color); /* Destaca o nome */
-    font-weight: bold;
 }
 
 .debtor-info p {
     color: var(--light-text);
     font-size: 0.95em;
-    margin-bottom: 3px; /* Espaçamento entre as linhas de info */
 }
 
 .debtor-balance {
@@ -249,7 +240,7 @@ input:focus {
     font-weight: bold;
     color: var(--accent-color);
     margin-top: 15px;
-    align-self: flex-end; /* Continua no canto inferior direito em mobile */
+    align-self: flex-end;
 }
 
 .debtor-actions {
@@ -258,8 +249,9 @@ input:focus {
     margin-top: 15px;
     width: 100%;
     justify-content: flex-end;
-    opacity: 1; /* Sempre visível */
-    transition: opacity 0.3s ease;
+    /* REMOVIDO: opacity: 0; */
+    opacity: 1; /* Adicionado para garantir visibilidade padrão */
+    transition: opacity 0.3s ease; /* Mantido para suavizar a transição se for usado em outros contextos */
 }
 
 /* Mantido para efeito de hover em desktop */
@@ -320,46 +312,6 @@ input:focus {
     animation: fadeInScale 0.3s ease-out;
 }
 
-/* --- Detalhes do Devedor no Modal --- */
-.debtor-details-header {
-    margin-bottom: 20px;
-    text-align: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 15px;
-}
-
-.debtor-details-header h2 {
-    font-size: 2em;
-    color: var(--accent-color);
-    margin-bottom: 5px;
-}
-
-.debtor-details-info {
-    display: grid;
-    grid-template-columns: 1fr; /* Coluna única para mobile */
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.detail-item {
-    font-size: 1em;
-    color: var(--light-text);
-    display: flex;
-    justify-content: space-between; /* Alinha label e valor */
-    padding: 5px 0;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-}
-
-.detail-item span:first-child {
-    font-weight: bold;
-    color: var(--text-color);
-}
-
-.detail-item:last-child {
-    border-bottom: none;
-}
-
-
 @keyframes fadeInScale {
     from {
         opacity: 0;
@@ -404,24 +356,13 @@ input:focus {
     text-align: center;
     font-size: 0.9em;
     display: flex;
-    flex-direction: column; /* Para quantia e data ficarem em colunas */
+    flex-direction: column;
     justify-content: space-between;
     align-items: center;
     min-height: 80px;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
-
-.payment-square span:first-child {
-    font-weight: bold;
-    font-size: 1.1em; /* Destaca a quantia */
-    margin-bottom: 5px; /* Espaçamento entre quantia e data */
-}
-.payment-square span:last-child {
-    font-size: 0.8em;
-    color: var(--light-text);
-}
-
 
 .payment-square:hover:not(.paid) {
     background-color: #444444;
@@ -534,19 +475,21 @@ input:focus {
         font-size: 2.2em;
     }
     .debtor-item {
-        flex-direction: row; /* Volta para linha em telas maiores */
+        flex-direction: row;
         align-items: center;
         text-align: left;
     }
     .debtor-info {
         flex-grow: 1;
-        margin-bottom: 0; /* Remove margem inferior em telas maiores */
     }
     .debtor-balance {
         margin-top: 0;
         margin-left: 20px;
         flex-shrink: 0;
     }
+    /*
+       REMOVIDO: Esta regra não é mais necessária aqui, pois a opacidade padrão já é 1
+       e o :hover já lida com a transição em desktop.
     .debtor-actions {
         position: static;
         opacity: 1;
@@ -555,14 +498,9 @@ input:focus {
         width: auto;
         justify-content: flex-start;
     }
+    */
     .debtor-item:hover .debtor-actions {
-        opacity: 1;
-    }
-
-    /* --- Detalhes do Devedor no Modal em Telas Maiores --- */
-    .debtor-details-info {
-        grid-template-columns: repeat(2, 1fr); /* Duas colunas em telas maiores */
-        gap: 20px;
+        opacity: 1; /* Mantido, embora redundante com a remoção do opacity: 0 padrão */
     }
 }
 
