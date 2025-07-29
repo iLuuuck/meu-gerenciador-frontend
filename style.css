@@ -249,10 +249,12 @@ input:focus {
     margin-top: 15px;
     width: 100%;
     justify-content: flex-end;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    /* REMOVIDO: opacity: 0; */
+    opacity: 1; /* Adicionado para garantir visibilidade padrão */
+    transition: opacity 0.3s ease; /* Mantido para suavizar a transição se for usado em outros contextos */
 }
 
+/* Mantido para efeito de hover em desktop */
 .debtor-item:hover .debtor-actions {
     opacity: 1;
 }
@@ -485,6 +487,9 @@ input:focus {
         margin-left: 20px;
         flex-shrink: 0;
     }
+    /*
+       REMOVIDO: Esta regra não é mais necessária aqui, pois a opacidade padrão já é 1
+       e o :hover já lida com a transição em desktop.
     .debtor-actions {
         position: static;
         opacity: 1;
@@ -493,8 +498,9 @@ input:focus {
         width: auto;
         justify-content: flex-start;
     }
+    */
     .debtor-item:hover .debtor-actions {
-        opacity: 1;
+        opacity: 1; /* Mantido, embora redundante com a remoção do opacity: 0 padrão */
     }
 }
 
