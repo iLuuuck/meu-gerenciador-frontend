@@ -277,8 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
             addEditDebtorModal.style.display = 'flex';
         }
 
+        // Função principal para salvar/editar devedor
         function saveDebtor(e) {
-            e.preventDefault();
+            e.preventDefault(); // Impede o recarregamento da página
 
             const name = debtorNameInput.value.trim();
             const totalAmount = parseFloat(totalAmountInput.value);
@@ -286,51 +287,61 @@ document.addEventListener('DOMContentLoaded', () => {
             const amountPerInstallment = parseFloat(amountPerInstallmentInput.value);
             const startDate = startDateInput.value;
 
+            // Validação dos campos
             if (!name || isNaN(totalAmount) || isNaN(installments) || isNaN(amountPerInstallment) || !startDate || totalAmount <= 0 || installments <= 0 || amountPerInstallment <= 0) {
                 alert('Por favor, preencha todos os campos corretamente (Nome, Valor Emprestado, Número de Parcelas, Valor por Parcela e Data de Início).');
-                return;
+                return; // Impede que a função continue se a validação falhar
             }
 
             if (currentDebtorId) {
+                // Lógica para editar um devedor existente
                 const debtorIndex = debtorsOfCurrentUser.findIndex(d => d.id === currentDebtorId);
                 if (debtorIndex !== -1) {
                     let debtor = debtorsOfCurrentUser[debtorIndex];
+                    
+                    // Verifica se o número de parcelas ou valor por parcela mudou
                     if (debtor.installments !== installments || debtor.amountPerInstallment !== amountPerInstallment) {
+                        // Reinicia a estrutura de parcelas se houver mudança significativa
                         debtor.installmentsData = Array.from({ length: installments }, (_, i) => ({ 
                             amountPaid: 0, 
                             dateOfLastPayment: null 
                         }));
                         alert('Atenção: A alteração no número ou valor das parcelas reiniciará o status de pagamento de cada parcela individualmente. O saldo total permanecerá o mesmo.');
                     }
+                    
+                    // Atualiza as propriedades do devedor
                     debtor.name = name;
                     debtor.totalAmount = totalAmount;
                     debtor.installments = installments;
                     debtor.amountPerInstallment = amountPerInstallment;
                     debtor.startDate = startDate;
-                    debtor.totalProfit = calculateTotalProfit(debtor);
+                    debtor.totalProfit = calculateTotalProfit(debtor); // Recalcula lucro
                 }
             } else {
+                // Lógica para adicionar um novo devedor
                 const newDebtor = {
-                    id: Date.now().toString(),
+                    id: Date.now().toString(), // ID único baseado no timestamp
                     name,
                     totalAmount,
                     installments,
                     amountPerInstallment,
                     startDate,
+                    // Inicializa a estrutura de dados das parcelas
                     installmentsData: Array.from({ length: installments }, (_, i) => ({ 
                         amountPaid: 0, 
                         dateOfLastPayment: null 
                     })),
                     totalProfit: calculateTotalProfit({ totalAmount, installments, amountPerInstallment }) 
                 };
-                debtorsOfCurrentUser.push(newDebtor);
+                debtorsOfCurrentUser.push(newDebtor); // Adiciona o novo devedor à lista
             }
 
+            // Salva a lista de devedores ATUALIZADA do usuário logado de volta no objeto 'users'
             users[loggedInUser].debtors = debtorsOfCurrentUser;
-            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('users', JSON.stringify(users)); // Salva o objeto 'users' completo no localStorage
 
-            renderDebtors();
-            addEditDebtorModal.style.display = 'none';
+            renderDebtors(); // Re-renderiza a lista de devedores no dashboard
+            addEditDebtorModal.style.display = 'none'; // Fecha o modal
         }
 
         function deleteDebtor(id) {
@@ -344,12 +355,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // --- Lógica de Pagamentos (Alterada) ---
+        // --- Lógica de Pagamentos ---
         function selectPaymentSquare(square, amount) {
             document.querySelectorAll('.payment-square').forEach(s => s.classList.remove('selected'));
             square.classList.add('selected');
             paymentAmountInput.value = amount.toFixed(2);
-            paymentDateInput.value = getCurrentDateFormatted(); // Garante que a data esteja atualizada
+            paymentDateInput.value = getCurrentDateFormatted();
         }
 
         function addPayment() {
@@ -388,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderDebtors();
             showDebtorDetails(currentDebtorId);
             paymentAmountInput.value = '';
-            paymentDateInput.value = getCurrentDateFormatted(); // Reseta para a data atual
+            paymentDateInput.value = getCurrentDateFormatted();
         }
 
         function deletePayment(debtorId, installmentIndex) {
@@ -408,14 +419,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- Event Listeners Específicos do Dashboard ---
-        addDebtorButton.addEventListener('click', openAddDebtorModal); // Certifique-se que o ID do botão está correto
-        addEditDebtorForm.addEventListener('submit', saveDebtor);
+        addDebtorButton.addEventListener('click', openAddDebtorModal); 
+        // Event Listener para o formulário de adicionar/editar devedor
+        // O evento 'submit' é disparado quando o botão type="submit" é clicado ou Enter é pressionado no formulário
+        addEditDebtorForm.addEventListener('submit', saveDebtor); 
         addPaymentButton.addEventListener('click', addPayment);
         fillAmountButton.addEventListener('click', () => {
             const debtor = debtorsOfCurrentUser.find(d => d.id === currentDebtorId);
             if (debtor && typeof debtor.amountPerInstallment === 'number') {
                 paymentAmountInput.value = debtor.amountPerInstallment.toFixed(2);
-                paymentDateInput.value = getCurrentDateFormatted(); // Garante que a data esteja atualizada
+                paymentDateInput.value = getCurrentDateFormatted();
             } else {
                 alert('Valor por parcela não definido para este devedor.');
             }
