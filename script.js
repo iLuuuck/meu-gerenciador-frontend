@@ -1,24 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Variáveis Globais e Seletores de DOM ---
 
-    // Define os usuários e suas senhas, e agora, suas listas de devedores
-    // O '|| {}' garante que se 'users' não existir no localStorage, ele inicialize vazio
-    // IMPORTANTE: Se você já tem devedores cadastrados, eles precisarão ser
-    // transferidos manualmente para um dos usuários dentro do localStorage,
-    // ou você pode cadastrá-los novamente após esta atualização.
+    // Define os usuários e suas senhas, e suas listas de devedores
+    // Garante que a estrutura inicial dos usuários esteja correta com uma lista de devedores vazia
     let users = JSON.parse(localStorage.getItem('users')) || {
         'gine': { password: 'g0g0', debtors: [] },
         'marcos': { password: '8186', debtors: [] }
-    }; 
-    // Garante que os usuários padrão existam se ainda não estiverem no localStorage
-    // Isso é útil para a primeira vez que o sistema é carregado
-    if (!users.gine) {
-        users.gine = { password: 'g0g0', debtors: [] };
-    }
-    if (!users.marcos) {
-        users.marcos = { password: '8186', debtors: [] };
-    }
-    localStorage.setItem('users', JSON.stringify(users)); // Salva a estrutura inicial
+    };
+    // Adiciona usuários padrão se eles não existirem (para a primeira execução)
+    if (!users.gine) users.gine = { password: 'g0g0', debtors: [] };
+    if (!users.marcos) users.marcos = { password: '8186', debtors: [] };
+    // Salva a estrutura inicial garantindo que 'debtors' esteja presente para cada usuário
+    localStorage.setItem('users', JSON.stringify(users));
 
     const loggedInUser = localStorage.getItem('loggedInUser');
 
@@ -66,8 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fillAmountButton = document.getElementById('fillAmountButton');
 
     let currentDebtorId = null;
-    // Removido: let debtors = JSON.parse(localStorage.getItem('debtors')) || [];
-    // Agora, 'debtors' será a lista específica do usuário logado
+    let debtorsOfCurrentUser = []; // Inicializado aqui, mas será preenchido após login
 
     // --- Funções Auxiliares ---
 
@@ -84,16 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${day}/${month}/${year}`;
     }
 
-    // Estas funções agora operam sobre o objeto 'debtor' que é passado a elas
-    // e que vem da lista do usuário logado.
+    // Calcula o saldo restante com base no total emprestado e total pago (considerando parcelas)
     function calculateRemainingBalance(debtor) {
-        const totalPaid = debtor.payments.reduce((sum, p) => sum + p.amount, 0);
-        return debtor.totalAmount - totalPaid;
+        const totalPaidAcrossAllInstallments = debtor.installmentsData.reduce((sum, p) => sum + p.amountPaid, 0);
+        return debtor.totalAmount - totalPaidAcrossAllInstallments;
     }
 
+    // Calcula quantas parcelas ainda não foram 100% pagas
     function calculateRemainingInstallments(debtor) {
-        const paidInstallments = debtor.payments.length;
-        return debtor.installments - paidInstallments;
+        return debtor.installmentsData.filter(inst => inst.amountPaid < debtor.amountPerInstallment).length;
     }
 
     function calculateTotalProfit(debtor) {
@@ -116,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = usernameInput.value;
             const password = passwordInput.value;
 
-            // Verifica se o usuário existe e a senha está correta
             if (users[username] && users[username].password === password) {
                 localStorage.setItem('loggedInUser', username);
                 window.location.href = 'dashboard.html';
@@ -128,21 +118,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Lógica do Dashboard (apenas para dashboard.html) ---
-    // Verifica se estamos no dashboard E se há um usuário logado válido
     if (loggedInUser && debtorsList && users[loggedInUser]) { 
-        // Agora, debtors se refere à lista de devedores DO USUÁRIO LOGADO
-        let debtorsOfCurrentUser = users[loggedInUser].debtors;
+        // Carrega os devedores do usuário logado
+        debtorsOfCurrentUser = users[loggedInUser].debtors;
 
         // --- Renderização dos Devedores ---
         function renderDebtors() {
             debtorsList.innerHTML = '';
-            // Renderiza os devedores do usuário logado
             if (debtorsOfCurrentUser.length === 0) {
                 debtorsList.innerHTML = '<p class="loading-message">Nenhum devedor cadastrado. Clique em "Adicionar Novo Devedor" para começar.</p>';
                 return;
             }
 
-            debtorsOfCurrentUser.forEach(debtor => { // Usa debtorsOfCurrentUser
+            debtorsOfCurrentUser.forEach(debtor => {
                 const debtorItem = document.createElement('div');
                 debtorItem.classList.add('debtor-item');
                 debtorItem.dataset.id = debtor.id;
@@ -193,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Exibir Detalhes do Devedor (Modal) ---
         function showDebtorDetails(id) {
             currentDebtorId = id;
-            const debtor = debtorsOfCurrentUser.find(d => d.id === id); // Usa debtorsOfCurrentUser
+            const debtor = debtorsOfCurrentUser.find(d => d.id === id);
             if (!debtor) return;
 
             const remainingBalance = calculateRemainingBalance(debtor);
@@ -213,44 +201,51 @@ document.addEventListener('DOMContentLoaded', () => {
             debtorDetailModal.style.display = 'flex';
         }
 
-        // --- Renderizar Pagamentos no Modal de Detalhes ---
+        // --- Renderizar Pagamentos no Modal de Detalhes (Lógica Alterada) ---
         function renderPayments(debtor) {
             paymentsGrid.innerHTML = '';
-            for (let i = 0; i < debtor.installments; i++) {
+            debtor.installmentsData.forEach((installment, index) => {
                 const paymentSquare = document.createElement('div');
                 paymentSquare.classList.add('payment-square');
                 
-                let isPaid = false;
-                let paymentDate = null;
-                let paymentId = null;
+                const installmentAmount = debtor.amountPerInstallment;
+                const paidAmount = installment.amountPaid;
+                const remainingToPay = installmentAmount - paidAmount;
 
-                if (debtor.payments && debtor.payments[i]) {
-                    const payment = debtor.payments[i];
+                let statusText = '';
+                let isPaid = false;
+                let paymentDate = installment.dateOfLastPayment ? formatDate(installment.dateOfLastPayment) : `Parc. ${index + 1}`;
+
+                if (paidAmount >= installmentAmount) {
                     isPaid = true;
-                    paymentDate = payment.date;
-                    paymentId = payment.id;
                     paymentSquare.classList.add('paid');
-                    paymentSquare.dataset.paymentId = paymentId;
+                    statusText = formatCurrency(installmentAmount); // Mostra o valor total da parcela
+                } else if (paidAmount > 0 && paidAmount < installmentAmount) {
+                    statusText = `Faltam: ${formatCurrency(remainingToPay)}`;
+                } else {
+                    statusText = formatCurrency(installmentAmount); // Mostra o valor total da parcela
                 }
 
                 paymentSquare.innerHTML = `
-                    <span>${formatCurrency(debtor.amountPerInstallment)}</span>
-                    <span>${paymentDate ? formatDate(paymentDate) : `Parc. ${i + 1}`}</span>
-                    ${isPaid ? `<button class="delete-payment-btn" data-payment-id="${paymentId}">Excluir Pagamento</button>` : ''}
+                    <span>${statusText}</span>
+                    <span>${paymentDate}</span>
+                    ${isPaid ? `<button class="delete-payment-btn" data-installment-index="${index}">Excluir Pagamento</button>` : ''}
                 `;
 
+                // Adiciona listener apenas para parcelas não totalmente pagas (para selecionar)
                 if (!isPaid) {
-                    paymentSquare.addEventListener('click', () => selectPaymentSquare(paymentSquare, debtor.amountPerInstallment));
+                    paymentSquare.addEventListener('click', () => selectPaymentSquare(paymentSquare, installmentAmount));
                 }
                 
                 paymentsGrid.appendChild(paymentSquare);
-            }
+            });
 
+            // Re-adiciona listeners para os botões de excluir pagamento (agora por índice da parcela)
             document.querySelectorAll('.delete-payment-btn').forEach(button => {
                 button.onclick = (e) => {
                     e.stopPropagation();
-                    const paymentIdToDelete = e.target.dataset.paymentId;
-                    deletePayment(currentDebtorId, paymentIdToDelete);
+                    const installmentIndexToDelete = parseInt(e.target.dataset.installmentIndex);
+                    deletePayment(currentDebtorId, installmentIndexToDelete);
                 };
             });
         }
@@ -266,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function editDebtor(id) {
             currentDebtorId = id;
-            const debtor = debtorsOfCurrentUser.find(d => d.id === id); // Usa debtorsOfCurrentUser
+            const debtor = debtorsOfCurrentUser.find(d => d.id === id);
             if (!debtor) return;
 
             addEditModalTitle.textContent = 'Editar Devedor';
@@ -295,19 +290,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (currentDebtorId) {
-                // Editando devedor existente na lista do usuário logado
                 const debtorIndex = debtorsOfCurrentUser.findIndex(d => d.id === currentDebtorId);
                 if (debtorIndex !== -1) {
                     let debtor = debtorsOfCurrentUser[debtorIndex];
+                    // Se o número de parcelas ou valor por parcela mudar, a estrutura das parcelas precisa ser reavaliada
+                    if (debtor.installments !== installments || debtor.amountPerInstallment !== amountPerInstallment) {
+                        // Precisa recriar installmentsData se o total de parcelas ou valor mudar
+                        debtor.installmentsData = Array.from({ length: installments }, (_, i) => ({ 
+                            amountPaid: 0, 
+                            dateOfLastPayment: null 
+                        }));
+                        // Aviso: Recriar instalações apaga histórico de pagamentos por parcela.
+                        // Uma lógica mais avançada poderia tentar mapear pagamentos existentes.
+                        alert('Atenção: A alteração no número ou valor das parcelas reiniciará o status de pagamento de cada parcela individualmente. O saldo total permanecerá o mesmo.');
+                    }
                     debtor.name = name;
                     debtor.totalAmount = totalAmount;
                     debtor.installments = installments;
                     debtor.amountPerInstallment = amountPerInstallment;
                     debtor.startDate = startDate;
-                    debtor.totalProfit = calculateTotalProfit(debtor); // Recalcula lucro
+                    debtor.totalProfit = calculateTotalProfit(debtor);
                 }
             } else {
-                // Adicionando novo devedor à lista do usuário logado
+                // Adicionando novo devedor
                 const newDebtor = {
                     id: Date.now().toString(),
                     name,
@@ -315,15 +320,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     installments,
                     amountPerInstallment,
                     startDate,
-                    payments: [], 
+                    // Inicializa a estrutura de dados das parcelas
+                    installmentsData: Array.from({ length: installments }, (_, i) => ({ 
+                        amountPaid: 0, 
+                        dateOfLastPayment: null 
+                    })),
                     totalProfit: calculateTotalProfit({ totalAmount, installments, amountPerInstallment }) 
                 };
                 debtorsOfCurrentUser.push(newDebtor);
             }
 
-            // Salva a lista de devedores ATUALIZADA do usuário logado de volta no objeto 'users'
             users[loggedInUser].debtors = debtorsOfCurrentUser;
-            localStorage.setItem('users', JSON.stringify(users)); // Salva o objeto 'users' completo
+            localStorage.setItem('users', JSON.stringify(users));
 
             renderDebtors();
             addEditDebtorModal.style.display = 'none';
@@ -331,10 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function deleteDebtor(id) {
             if (confirm('Tem certeza de que deseja excluir este devedor?')) {
-                // Filtra a lista de devedores do usuário logado
                 debtorsOfCurrentUser = debtorsOfCurrentUser.filter(d => d.id !== id);
-
-                // Salva a lista de devedores ATUALIZADA do usuário logado
                 users[loggedInUser].debtors = debtorsOfCurrentUser;
                 localStorage.setItem('users', JSON.stringify(users));
 
@@ -343,9 +348,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // --- Lógica de Pagamentos ---
+        // --- Lógica de Pagamentos (Alterada) ---
         function selectPaymentSquare(square, amount) {
+            // Remove 'selected' de todos os outros
             document.querySelectorAll('.payment-square').forEach(s => s.classList.remove('selected'));
+            // Adiciona 'selected' ao clicado
             square.classList.add('selected');
             paymentAmountInput.value = amount.toFixed(2);
             paymentDateInput.valueAsDate = new Date();
@@ -357,11 +364,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Encontra o devedor na lista do usuário logado
             const debtor = debtorsOfCurrentUser.find(d => d.id === currentDebtorId);
             if (!debtor) return;
 
-            const paymentAmount = parseFloat(paymentAmountInput.value);
+            let paymentAmount = parseFloat(paymentAmountInput.value);
             const paymentDate = paymentDateInput.value;
 
             if (isNaN(paymentAmount) || !paymentDate || paymentAmount <= 0) {
@@ -369,19 +375,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (debtor.payments.length >= debtor.installments) {
-                alert('Todas as parcelas já foram pagas para este devedor.');
-                return;
+            // Itera pelas parcelas e aplica o pagamento
+            for (let i = 0; i < debtor.installmentsData.length && paymentAmount > 0; i++) {
+                let installment = debtor.installmentsData[i];
+                const installmentValue = debtor.amountPerInstallment;
+                const remainingInInstallment = installmentValue - installment.amountPaid;
+
+                if (remainingInInstallment > 0) { // Se a parcela ainda precisa ser paga
+                    const amountToApply = Math.min(paymentAmount, remainingInInstallment);
+                    installment.amountPaid += amountToApply;
+                    installment.dateOfLastPayment = paymentDate; // Atualiza data do último pagamento na parcela
+                    paymentAmount -= amountToApply;
+                }
             }
 
-            const newPayment = {
-                id: Date.now().toString(),
-                amount: paymentAmount,
-                date: paymentDate
-            };
-
-            debtor.payments.push(newPayment);
-            // Salva a lista de devedores ATUALIZADA do usuário logado (com o pagamento adicionado)
             users[loggedInUser].debtors = debtorsOfCurrentUser;
             localStorage.setItem('users', JSON.stringify(users));
 
@@ -391,16 +398,17 @@ document.addEventListener('DOMContentLoaded', () => {
             paymentDateInput.value = '';
         }
 
-        function deletePayment(debtorId, paymentId) {
-            // Encontra o devedor na lista do usuário logado
+        // Função para remover um pagamento de UMA PARCELA específica
+        // Isso vai "desfazer" a parcela para o estado inicial ou parcial
+        function deletePayment(debtorId, installmentIndex) {
             const debtor = debtorsOfCurrentUser.find(d => d.id === debtorId);
-            if (!debtor) return;
+            if (!debtor || !debtor.installmentsData[installmentIndex]) return;
 
-            if (confirm('Tem certeza de que deseja excluir este pagamento?')) {
-                debtor.payments = debtor.payments.filter(p => p.id !== paymentId);
-                debtor.payments.sort((a, b) => new Date(a.date) - new Date(b.date)); // Mantém a ordem
-
-                // Salva a lista de devedores ATUALIZADA do usuário logado (com o pagamento removido)
+            if (confirm(`Tem certeza de que deseja zerar o pagamento da Parcela ${installmentIndex + 1}?`)) {
+                // Zera o valor pago e a data da parcela específica
+                debtor.installmentsData[installmentIndex].amountPaid = 0;
+                debtor.installmentsData[installmentIndex].dateOfLastPayment = null;
+                
                 users[loggedInUser].debtors = debtorsOfCurrentUser;
                 localStorage.setItem('users', JSON.stringify(users));
 
@@ -414,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addEditDebtorForm.addEventListener('submit', saveDebtor);
         addPaymentButton.addEventListener('click', addPayment);
         fillAmountButton.addEventListener('click', () => {
-            const debtor = debtorsOfCurrentUser.find(d => d.id === currentDebtorId); // Usa debtorsOfCurrentUser
+            const debtor = debtorsOfCurrentUser.find(d => d.id === currentDebtorId);
             if (debtor && typeof debtor.amountPerInstallment === 'number') {
                 paymentAmountInput.value = debtor.amountPerInstallment.toFixed(2);
                 paymentDateInput.valueAsDate = new Date();
@@ -448,8 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDebtors();
     } else if (loggedInUser && !users[loggedInUser]) {
         // Caso um usuário logado não seja encontrado na estrutura 'users'
-        // Isso pode acontecer se o 'localStorage' foi limpo para 'users' mas não para 'loggedInUser'
         localStorage.removeItem('loggedInUser');
-        window.location.href = 'index.html'; // Redireciona para o login
+        window.location.href = 'index.html';
     }
 });
