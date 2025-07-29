@@ -30,10 +30,12 @@
             <div class="debtor-details-info">
                 <p class="detail-item"><span>Valor Emprestado:</span> <span id="detailTotalAmount"></span></p>
                 <p class="detail-item"><span>Quantidade de Prestações:</span> <span id="detailInstallments"></span></p>
-                <p class="detail-item"><span>Valor por Parcela:</span> <span id="detailAmountPerInstallment"></span></p> <p class="detail-item"><span>Prestações Faltando:</span> <span id="detailRemainingInstallments"></span></p>
+                <p class="detail-item"><span>Valor por Parcela:</span> <span id="detailAmountPerInstallment"></span></p>
+                <p class="detail-item"><span>Prestações Faltando:</span> <span id="detailRemainingInstallments"></span></p>
                 <p class="detail-item"><span>Data do Empréstimo:</span> <span id="detailStartDate"></span></p>
                 <p class="detail-item"><span>Saldo Restante:</span> <span id="detailRemainingBalance"></span></p>
-                <p class="detail-item"><span>Lucro Total:</span> <span id="detailTotalProfit"></span></p> </div>
+                <p class="detail-item"><span>Lucro Total:</span> <span id="detailTotalProfit"></span></p>
+            </div>
 
             <h3>Pagamentos</h3>
             <div id="paymentsGrid" class="payments-grid">
@@ -59,12 +61,14 @@
                 <label for="debtorName">Nome:</label>
                 <input type="text" id="debtorName" required>
 
-                <label for="totalAmount">Valor Total Emprestado:</label> <input type="number" id="totalAmount" step="0.01" required>
+                <label for="totalAmount">Valor Total Emprestado:</label>
+                <input type="number" id="totalAmount" step="0.01" required>
 
                 <label for="installments">Número de Parcelas:</label>
                 <input type="number" id="installments" required>
 
-                <label for="amountPerInstallment">Valor por Parcela:</label> <input type="number" id="amountPerInstallment" step="0.01" required>
+                <label for="amountPerInstallment">Valor por Parcela:</label>
+                <input type="number" id="amountPerInstallment" step="0.01" required>
 
                 <label for="startDate">Data de Início:</label>
                 <input type="date" id="startDate" required>
