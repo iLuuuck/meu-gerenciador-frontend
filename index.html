@@ -1,26 +1,92 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Empréstimos - Login</title>
+    <title>Gerenciador de Empréstimos - Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="login-container">
-        <h1 class="app-title">RUSSO EMPRÉSTIMOS</h1>
-        <form id="loginForm">
-            <div class="input-group">
-                <label for="username">Usuário:</label>
-                <input type="text" id="username" name="username" required>
+    <header>
+        <h1>Dashboard</h1>
+        <nav>
+            <button id="logoutButton">Sair</button>
+            <button id="addDebtorButton" style="margin-left: 20px;">Adicionar Novo Devedor</button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="debtors-list-section">
+            <h2>Meus Devedores</h2>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <div id="debtorsList" class="debtors-grid">
             </div>
-            <div class="input-group">
-                <label for="password">Senha:</label>
-                <input type="password" id="password" name="password" required>
+        </section>
+    </main>
+
+    <div id="debtorDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailDebtorName"></h2>
+                <p id="detailDebtorDescription" style="font-style: italic; color: #666; margin-top: 5px;"></p>
+                <span class="close-button">&times;</span>
             </div>
-            <button type="submit">Entrar</button>
-            <p id="errorMessage" class="error-message"></p>
-        </form>
+            <div class="modal-body">
+                <div class="debtor-details-info">
+                    <p><strong>Valor Total:</strong> <span id="detailTotalAmount"></span></p>
+                    <p><strong>Parcelas:</strong> <span id="detailInstallments"></span></p>
+                    <p><strong>Valor por Parcela:</strong> <span id="detailAmountPerInstallment"></span></p>
+                    <p><strong>Data de Início:</strong> <span id="detailStartDate"></span></p>
+                </div>
+
+                <h3>Pagamentos</h3>
+                <div class="payments-grid" id="paymentsGrid">
+                </div>
+
+                <div class="add-payment-section">
+                    <h4>Adicionar Pagamento</h4>
+                    <div class="input-group">
+                        <label for="paymentAmount">Valor:</label>
+                        <input type="number" id="paymentAmount" step="0.01" required>
+                        <button id="fillAmountButton" class="fill-amount-btn">Preencher Valor Parcela</button>
+                    </div>
+                    <div class="input-group">
+                        <label for="paymentDate">Data:</label>
+                        <input type="date" id="paymentDate" required>
+                    </div>
+                    <button id="addPaymentButton">Adicionar Pagamento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addEditDebtorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="addEditModalTitle"></h2>
+                <span class="close-button">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addEditDebtorForm">
+                    <label for="debtorName">Nome do Devedor:</label>
+                    <input type="text" id="debtorName" required>
+
+                    <label for="debtorDescription">Descrição (opcional):</label>
+                    <input type="text" id="debtorDescription" placeholder="Ex: João da Padaria, Endereço, etc.">
+
+                    <label for="totalAmount">Valor Total Devido:</label>
+                    <input type="number" id="totalAmount" step="0.01" required>
+
+                    <label for="installments">Número de Parcelas:</label>
+                    <input type="number" id="installments" required>
+
+                    <label for="startDate">Data de Início:</label>
+                    <input type="date" id="startDate" required>
+
+                    <button type="submit" id="saveDebtorButton">Salvar Devedor</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
