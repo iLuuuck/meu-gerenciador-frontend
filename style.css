@@ -176,6 +176,7 @@ input:focus {
     font-size: 1.8em;
 }
 
+/* Estilo para o botão Sair, aplica-se à sua posição original ou nova, mantendo a aparência */
 .logout-button {
     background-color: transparent;
     border: 1px solid var(--accent-color);
@@ -249,7 +250,6 @@ input:focus {
     margin-top: 15px;
     width: 100%;
     justify-content: flex-end;
-    /* REMOVIDO: opacity: 0; */
     opacity: 1; /* Adicionado para garantir visibilidade padrão */
     transition: opacity 0.3s ease; /* Mantido para suavizar a transição se for usado em outros contextos */
 }
@@ -466,11 +466,26 @@ input:focus {
     transform: translateY(-1px);
 }
 
+---
+/* Estilo para o botão Sair no final da página (NOVO) */
+.logout-container {
+    display: flex;
+    justify-content: center; /* Centraliza o botão horizontalmente */
+    padding: 20px; /* Adiciona espaçamento ao redor */
+    margin-top: 30px; /* Adiciona uma margem superior para separá-lo dos devedores */
+    width: 100%;
+    box-sizing: border-box; /* Inclui padding na largura total */
+}
+
+.logout-container #logoutButton {
+    width: auto; /* Permite que o botão tenha a largura do conteúdo */
+    max-width: 200px; /* Limita a largura máxima do botão */
+}
+---
+
 /* Media Queries para Responsividade (Mobile First) */
 @media (min-width: 576px) {
-    .container { /* Se .container não for usado, pode remover esta regra */
-        padding: 50px;
-    }
+    /* REMOVIDO: .container { padding: 50px; } - Removido porque não há .container no seu HTML atual */
     .header h1 {
         font-size: 2.2em;
     }
@@ -487,18 +502,6 @@ input:focus {
         margin-left: 20px;
         flex-shrink: 0;
     }
-    /*
-        REMOVIDO: Esta regra não é mais necessária aqui, pois a opacidade padrão já é 1
-        e o :hover já lida com a transição em desktop.
-    .debtor-actions {
-        position: static;
-        opacity: 1;
-        margin-top: 0;
-        margin-left: 15px;
-        width: auto;
-        justify-content: flex-start;
-    }
-    */
     .debtor-item:hover .debtor-actions {
         opacity: 1; /* Mantido, embora redundante com a remoção do opacity: 0 padrão */
     }
