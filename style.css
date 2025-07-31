@@ -1,6 +1,6 @@
 /* style.css */
 
-/* --- Variáveis de Cores (Paleta Netflix-ish) --- */
+/* --- Variáveis de Cores (Paleta Netflix-ish - Tema Escuro) --- */
 :root {
     --primary-bg: #141414; /* Quase preto */
     --secondary-bg: #222222; /* Cinza escuro para cards/modals */
@@ -13,6 +13,23 @@
     --border-color: #333333; /* Borda sutil */
     --input-bg: #333333; /* Fundo de input escuro */
     --input-border: #555555; /* Borda de input */
+    --light-text-rgb: 170, 170, 170; /* Definindo para uso em rgba() no tema escuro */
+}
+
+/* --- Variáveis de Cores (Tema Claro) --- */
+body.light-theme {
+    --primary-bg: #F0F2F5; /* Fundo principal claro */
+    --secondary-bg: #FFFFFF; /* Fundo de cards/modals branco */
+    --text-color: #333333; /* Texto principal escuro */
+    --light-text: #666666; /* Texto secundário cinza */
+    --accent-color: #007BFF; /* Azul padrão para destaques/botões */
+    --accent-hover: #0056b3; /* Azul mais escuro no hover */
+    --success-color: #28a745; /* Pode manter ou ajustar */
+    --error-color: #dc3545; /* Pode manter ou ajustar */
+    --border-color: #DDDDDD; /* Borda clara */
+    --input-bg: #F8F8F8; /* Fundo de input claro */
+    --input-border: #CCCCCC; /* Borda de input clara */
+    --light-text-rgb: 102, 102, 102; /* Para uso em rgba() no tema claro */
 }
 
 /* --- Estilos Gerais e Reset Básico --- */
@@ -174,6 +191,24 @@ input:focus {
 .header h1 {
     margin: 0;
     font-size: 1.8em;
+}
+
+/* Estilo para o botão de alternar tema */
+.theme-toggle-button {
+    background-color: transparent; /* Fundo transparente */
+    border: 1px solid var(--light-text); /* Borda sutil */
+    color: var(--light-text); /* Cor do texto sutil */
+    padding: 6px 12px;
+    font-size: 0.9em;
+    margin-right: 15px; /* Espaço entre este botão e outros itens do cabeçalho */
+    transition: all 0.3s ease;
+}
+
+.theme-toggle-button:hover {
+    background-color: rgba(var(--light-text-rgb), 0.1); /* Um leve fundo no hover */
+    transform: translateY(-1px);
+    border-color: var(--text-color);
+    color: var(--text-color);
 }
 
 /* Estilo para o botão Sair, aplica-se à sua posição original ou nova, mantendo a aparência */
@@ -466,7 +501,7 @@ input:focus {
     transform: translateY(-1px);
 }
 
-/* Estilo para o botão Sair no final da página (CORRIGIDO) */
+/* Estilo para o botão Sair no final da página */
 .logout-container {
     display: flex;
     justify-content: center; /* Centraliza o botão horizontalmente */
@@ -479,8 +514,6 @@ input:focus {
 .logout-container #logoutButton {
     width: auto; /* Permite que o botão tenha a largura do conteúdo */
     max-width: 200px; /* Limita a largura máxima do botão */
-    /* Você pode adicionar mais estilos aqui se quiser que o botão seja maior ou menor */
-    /* Ex: width: 150px; para um tamanho fixo */
 }
 
 
