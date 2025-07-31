@@ -72,7 +72,6 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
 }
 
 header h1 {
@@ -94,7 +93,7 @@ main {
 }
 
 #addDebtorButton {
-    margin-right: 10px;
+    margin-right: 10px; /* <-- Correção adicionada aqui */
 }
 
 /* Devedores */
