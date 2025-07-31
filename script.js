@@ -40,7 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Sessão expirada ou não autorizado. Por favor, faça login novamente.');
             localStorage.removeItem('accessToken');
             window.location.href = 'index.html'; // Redireciona para a página de login
-            return; // Interrompe o fluxo após redirecionamento
+            // NÃO RETORNAR response AQUI, pois o fluxo de erro já foi tratado com o redirecionamento.
+            // Para evitar que o código continue executando após o redirecionamento, pode-se lançar um erro ou retornar null.
+            // Eu prefiro lançar um erro para que as funções chamadoras saibam que algo deu errado.
+            throw new Error('Sessão expirada ou não autorizado.');
         }
         return response;
     };
@@ -148,8 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
             debtorsListElement.innerHTML = '<p class="loading-message">Carregando devedores...</p>';
             try {
                 const response = await fetchWithAuth(`${API_URL}/debtors`);
-                if (!response || !response.ok) { // Adicionado verificação para `!response`
-                    throw new Error(`HTTP error! status: ${response ? response.status : 'N/A'}`);
+                // Adicionado verificação para `!response.ok` já que fetchWithAuth agora lança erro ou redireciona
+                if (!response.ok) { 
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const debtors = await response.json();
                 renderDebtors(debtors);
@@ -172,7 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
             debtors.forEach(debtor => {
                 const debtorItem = document.createElement('div');
                 debtorItem.className = 'debtor-item';
-                debtorItem.dataset.id = debtor.id;
+                // CORREÇÃO AQUI: Use debtor._id (MongoDB ID)
+                debtorItem.dataset.id = debtor._id; 
 
                 const totalPaid = debtor.payments ? debtor.payments.reduce((sum, p) => sum + p.amount, 0) : 0;
                 const currentBalance = debtor.totalAmount - totalPaid;
@@ -196,17 +201,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 debtorItem.addEventListener('click', (e) => {
                     // Impede que o clique nos botões de editar/excluir ative o detalhe do devedor
                     if (!e.target.classList.contains('edit-debtor-btn') && !e.target.classList.contains('delete-debtor-btn')) {
-                        showDebtorDetail(debtor.id);
+                        // CORREÇÃO AQUI: Use debtor._id
+                        showDebtorDetail(debtor._id); 
                     }
                 });
 
                 debtorItem.querySelector('.edit-debtor-btn').addEventListener('click', (e) => {
                     e.stopPropagation(); // Impede que o clique no botão ative o evento de clique do item pai
-                    editDebtor(debtor.id);
+                    // CORREÇÃO AQUI: Use debtor._id
+                    editDebtor(debtor._id); 
                 });
                 debtorItem.querySelector('.delete-debtor-btn').addEventListener('click', (e) => {
                     e.stopPropagation(); // Impede que o clique no botão ative o evento de clique do item pai
-                    deleteDebtor(debtor.id);
+                    // CORREÇÃO AQUI: Use debtor._id
+                    deleteDebtor(debtor._id); 
                 });
 
                 debtorsListElement.appendChild(debtorItem);
@@ -217,8 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
             hideErrorMessage();
             try {
                 const response = await fetchWithAuth(`${API_URL}/debtors/${id}`);
-                if (!response || !response.ok) {
-                    throw new Error(`HTTP error! status: ${response ? response.status : 'N/A'}`);
+                if (!response.ok) { // Removida verificação para `!response`
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const debtor = await response.json();
 
@@ -289,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         if (installment.coveredAmount >= installment.amount - 0.005) { // Tolerância para flutuantes
                             installment.paid = true;
-                            installment.paymentId = payment.id;
+                            installment.paymentId = payment.id; // ID do pagamento em si
                             installment.paymentDate = payment.date;
                         }
 
@@ -356,12 +364,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (confirm('Tem certeza que deseja excluir este pagamento?')) {
                         hideErrorMessage();
                         try {
-                            const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor.id}/payments/${paymentIdToDelete}`, {
+                            // CORREÇÃO AQUI: currentDebtor._id
+                            const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}/payments/${paymentIdToDelete}`, {
                                 method: 'DELETE'
                             });
                             if (response.ok) {
                                 alert('Pagamento excluído com sucesso!');
-                                showDebtorDetail(currentDebtor.id); // Recarrega os detalhes para atualizar as parcelas
+                                // CORREÇÃO AQUI: currentDebtor._id
+                                showDebtorDetail(currentDebtor._id); // Recarrega os detalhes para atualizar as parcelas
                                 loadDebtors(); // Recarrega a lista principal de devedores (para atualizar o saldo)
                             } else {
                                 const errorText = await response.text();
@@ -396,7 +406,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (!currentDebtor || !currentDebtor.id) {
+            // CORREÇÃO AQUI: currentDebtor._id
+            if (!currentDebtor || !currentDebtor._id) { 
                 showErrorMessage('Nenhum devedor selecionado para adicionar pagamento.');
                 return;
             }
@@ -406,7 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
             addPaymentButton.textContent = 'Adicionando...';
 
             try {
-                const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor.id}/payments`, {
+                // CORREÇÃO AQUI: currentDebtor._id
+                const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}/payments`, {
                     method: 'POST',
                     body: JSON.stringify({ amount, date })
                 });
@@ -420,7 +432,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         selectedPaymentSquare.classList.remove('selected');
                         selectedPaymentSquare = null;
                     }
-                    showDebtorDetail(currentDebtor.id); // Recarrega os detalhes do devedor
+                    // CORREÇÃO AQUI: currentDebtor._id
+                    showDebtorDetail(currentDebtor._id); // Recarrega os detalhes do devedor
                     loadDebtors(); // Recarrega a lista principal para atualizar o saldo
                 } else {
                     const errorText = await response.text();
@@ -450,8 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
             hideErrorMessage();
             try {
                 const response = await fetchWithAuth(`${API_URL}/debtors/${id}`);
-                if (!response || !response.ok) {
-                    throw new Error(`HTTP error! status: ${response ? response.status : 'N/A'}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const debtor = await response.json();
 
@@ -501,8 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 let response;
                 if (currentDebtor) {
-                    // Se for edição, mantém os pagamentos existentes (o backend deve lidar com isso)
-                    response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor.id}`, {
+                    // CORREÇÃO AQUI: currentDebtor._id
+                    response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}`, {
                         method: 'PUT',
                         body: JSON.stringify(debtorData)
                     });
