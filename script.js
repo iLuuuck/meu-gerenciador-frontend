@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Lógica da Página de Login (index.html) ---
-    // Este bloco só será executado se o usuário estiver em index.html ou na raiz
     if (window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/')) {
         const loginForm = document.getElementById('loginForm');
 
@@ -59,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 hideErrorMessage();
 
-                // Validação frontend mais robusta
                 const username = usernameInput.value.trim();
                 const password = passwordInput.value.trim();
 
@@ -68,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // Desabilita o botão para evitar cliques múltiplos
                 loginButton.disabled = true;
                 loginButton.textContent = 'Entrando...';
 
@@ -93,22 +90,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Erro de rede ou servidor:', error);
                     showErrorMessage('Não foi possível conectar ao servidor. Tente novamente mais tarde.');
                 } finally {
-                    // Reabilita o botão ao final da requisição
                     loginButton.disabled = false;
                     loginButton.textContent = 'Entrar';
                 }
             });
         }
 
-        // Se já houver um token, redireciona para o dashboard
-        // Isso impede que o usuário veja a tela de login se já estiver logado
         if (getToken()) {
             window.location.href = 'dashboard.html';
         }
     }
 
     // --- Lógica da Página do Dashboard (dashboard.html) ---
-    // Este bloco só será executado se o usuário estiver em dashboard.html
     if (window.location.pathname.endsWith('dashboard.html')) {
         const debtorsListElement = document.getElementById('debtorsList');
         const addDebtorButton = document.getElementById('addDebtorButton');
@@ -128,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fillAmountButton = document.getElementById('fillAmountButton');
         const addPaymentButton = document.getElementById('addPaymentButton');
 
-        let currentDebtorId = null; // Para armazenar o ID do devedor que está no modal de detalhes
+        let currentDebtorId = null; 
 
         // Elementos do Modal de Adicionar/Editar Devedor
         const addEditDebtorModal = document.getElementById('addEditDebtorModal');
@@ -157,20 +150,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const debtor = await response.json();
 
-                currentDebtorId = debtor._id; // Salva o ID do devedor atual
+                currentDebtorId = debtor._id; 
 
                 detailDebtorName.textContent = debtor.name;
                 detailTotalAmount.textContent = formatCurrency(debtor.totalAmount);
                 detailInstallments.textContent = debtor.installments;
                 detailAmountPerInstallment.textContent = formatCurrency(debtor.amountPerInstallment);
                 
-                // Formata a data de início (que ainda pode ser string do DB)
+                // A data de início ainda é uma string (YYYY-MM-DD) do DB para devedores
                 detailStartDate.textContent = new Date(debtor.startDate + 'T00:00:00Z').toLocaleDateString('pt-BR');
 
-                renderPayments(debtor.payments || []); // Renderiza os pagamentos do devedor
+                renderPayments(debtor.payments || []); 
 
-                // Preenche o valor padrão do input de pagamento
                 paymentAmountInput.value = debtor.amountPerInstallment.toFixed(2);
+                paymentDateInput.value = ''; // Limpa o campo de data do pagamento
 
                 debtorDetailModal.style.display = 'block';
 
@@ -182,13 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Renderiza a lista de pagamentos no modal de detalhes
         const renderPayments = (payments) => {
-            paymentsGrid.innerHTML = ''; // Limpa os pagamentos existentes
+            paymentsGrid.innerHTML = ''; 
             if (payments.length === 0) {
                 paymentsGrid.innerHTML = '<p>Nenhum pagamento registrado ainda.</p>';
                 return;
             }
 
-            // Ordena os pagamentos pela data para exibir do mais antigo ao mais novo
             const sortedPayments = [...payments].sort((a, b) => new Date(a.date) - new Date(b.date));
 
             sortedPayments.forEach(payment => {
@@ -222,18 +214,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const debtors = await response.json();
 
-                debtorsListElement.innerHTML = ''; // Limpa a lista existente
+                debtorsListElement.innerHTML = ''; 
 
                 if (debtors.length === 0) {
                     debtorsListElement.innerHTML = '<p>Nenhum devedor cadastrado ainda. Clique em "Adicionar Novo Devedor" para começar.</p>';
                     return;
                 }
 
-                // Renderiza cada devedor
                 debtors.forEach(debtor => {
                     const debtorItem = document.createElement('div');
                     debtorItem.classList.add('debtor-item');
-                    debtorItem.dataset.id = debtor._id; // Armazena o ID do devedor
+                    debtorItem.dataset.id = debtor._id; 
+
+                    // --- Renderização dos quadrados de pagamento ---
+                    const totalPaidAmount = debtor.payments.reduce((sum, p) => sum + p.amount, 0);
+                    const paidInstallments = Math.floor(totalPaidAmount / debtor.amountPerInstallment);
+                    const remainingInstallments = debtor.installments - paidInstallments;
+
+                    let paymentSquaresHtml = '<div class="payment-squares">';
+                    for (let i = 0; i < debtor.installments; i++) {
+                        // Ajuste a lógica se você tiver pagamentos parciais
+                        if (i < paidInstallments) {
+                            paymentSquaresHtml += '<div class="payment-square paid"></div>';
+                        } else {
+                            paymentSquaresHtml += '<div class="payment-square"></div>';
+                        }
+                    }
+                    paymentSquaresHtml += '</div>';
+                    // --- Fim da renderização dos quadrados de pagamento ---
+
 
                     debtorItem.innerHTML = `
                         <h3>${debtor.name}</h3>
@@ -241,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p>Parcelas: ${debtor.installments}</p>
                         <p>Valor por Parcela: ${formatCurrency(debtor.amountPerInstallment)}</p>
                         <p>Saldo Restante: ${formatCurrency(debtor.remainingBalance)}</p>
-                        <div class="debtor-actions">
+                        ${paymentSquaresHtml} <div class="debtor-actions">
                             <button class="view-payments-button small-button">Ver Pagamentos</button>
                             <button class="edit-debtor-button small-button">Editar</button>
                             <button class="delete-debtor-button small-button">Excluir</button>
@@ -269,15 +278,15 @@ document.addEventListener('DOMContentLoaded', () => {
             isEditMode = false;
             debtorToEditId = null;
             addEditModalTitle.textContent = 'Adicionar Novo Devedor';
-            addEditDebtorForm.reset(); // Limpa o formulário
+            addEditDebtorForm.reset(); 
             addEditDebtorModal.style.display = 'block';
-            hideErrorMessage(); // Limpa qualquer mensagem de erro anterior
+            hideErrorMessage(); 
         });
 
         // Event listener para os botões dentro da lista de devedores (usando delegação de eventos)
         debtorsListElement.addEventListener('click', async (e) => {
             const debtorItem = e.target.closest('.debtor-item');
-            if (!debtorItem) return; // Não clicou em um item de devedor
+            if (!debtorItem) return; 
 
             const debtorId = debtorItem.dataset.id;
 
@@ -287,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 isEditMode = true;
                 debtorToEditId = debtorId;
                 addEditModalTitle.textContent = 'Editar Devedor';
-                hideErrorMessage(); // Limpa qualquer mensagem de erro anterior
+                hideErrorMessage(); 
 
                 try {
                     const response = await fetchWithAuth(`${API_URL}/debtors/${debtorId}`);
@@ -297,11 +306,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     const debtor = await response.json();
                     
-                    // Preenche o formulário com os dados do devedor
                     debtorNameInput.value = debtor.name;
                     totalAmountInput.value = debtor.totalAmount;
                     installmentsInput.value = debtor.installments;
-                    startDateInput.value = debtor.startDate; // startDate já é string 'YYYY-MM-DD'
+                    startDateInput.value = debtor.startDate; 
                     addEditDebtorModal.style.display = 'block';
 
                 } catch (error) {
@@ -319,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const error = await response.json();
                             throw new Error(error.message || 'Falha ao excluir devedor.');
                         }
-                        await loadDebtors(); // Recarrega a lista
+                        await loadDebtors(); 
                     } catch (error) {
                         console.error('Erro ao excluir devedor:', error);
                         showErrorMessage(`Erro: ${error.message}`);
@@ -343,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const name = debtorNameInput.value.trim();
             const totalAmount = parseFloat(totalAmountInput.value);
             const installments = parseInt(installmentsInput.value);
-            const startDate = startDateInput.value; // Já está no formato 'YYYY-MM-DD'
+            const startDate = startDateInput.value; 
 
             if (!name || isNaN(totalAmount) || totalAmount <= 0 || isNaN(installments) || installments <= 0 || !startDate) {
                 showErrorMessage('Por favor, preencha todos os campos do devedor corretamente.');
@@ -364,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok) {
                     addEditDebtorModal.style.display = 'none';
-                    await loadDebtors(); // Recarrega a lista de devedores
+                    await loadDebtors(); 
                 } else {
                     const error = await response.json();
                     showErrorMessage(error.message || `Erro ao ${isEditMode ? 'atualizar' : 'adicionar'} devedor.`);
@@ -383,12 +391,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fechar o modal de Detalhes
         closeDetailModalButton.addEventListener('click', () => {
             debtorDetailModal.style.display = 'none';
-            currentDebtorId = null; // Limpa o ID do devedor
-            hideErrorMessage(); // Limpa qualquer mensagem de erro
+            currentDebtorId = null; 
+            hideErrorMessage(); 
         });
 
         // Botão "Usar Valor da Parcela"
         fillAmountButton.addEventListener('click', () => {
+            // Remove R$ e espaços, depois substitui vírgula por ponto para parseFloat
             paymentAmountInput.value = detailAmountPerInstallment.textContent.replace('R$', '').trim().replace(',', '.');
         });
 
@@ -402,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hideErrorMessage();
 
             const amount = parseFloat(paymentAmountInput.value);
-            const date = paymentDateInput.value; // 'YYYY-MM-DD'
+            const date = paymentDateInput.value; 
 
             if (isNaN(amount) || amount <= 0 || !date) {
                 showErrorMessage('Por favor, insira um valor e uma data de pagamento válidos.');
@@ -420,17 +429,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok) {
                     const updatedDebtor = await response.json();
-                    renderPayments(updatedDebtor.payments || []); // Recarrega os pagamentos no modal
-                    detailTotalAmount.textContent = formatCurrency(updatedDebtor.totalAmount);
-                    // Recalcula o saldo restante no modal (já vem do backend)
-                    // if (updatedDebtor.remainingBalance !== undefined) {
-                    //     document.querySelector('.debtor-item[data-id="${currentDebtorId}"] p:nth-child(5)').textContent = `Saldo Restante: ${formatCurrency(updatedDebtor.remainingBalance)}`;
-                    // }
-                    // É melhor recarregar a lista inteira para atualizar o saldo no item do devedor
-                    await loadDebtors();
+                    renderPayments(updatedDebtor.payments || []); 
+                    // Atualiza o saldo restante no modal de detalhes
+                    document.getElementById('detailTotalAmount').textContent = formatCurrency(updatedDebtor.totalAmount); // Ou recalcule com base nos pagamentos
 
-                    paymentAmountInput.value = updatedDebtor.amountPerInstallment.toFixed(2); // Reseta o valor para o da parcela
-                    paymentDateInput.value = ''; // Limpa a data
+                    await loadDebtors(); // Atualiza a lista principal para refletir os novos pagamentos e saldos
+
+                    paymentAmountInput.value = updatedDebtor.amountPerInstallment.toFixed(2); 
+                    paymentDateInput.value = ''; 
 
                 } else {
                     const error = await response.json();
@@ -461,9 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             method: 'DELETE'
                         });
 
-                        if (response.status === 204) { // 204 No Content
-                            // Recarrega os detalhes do devedor para atualizar a lista de pagamentos
-                            await openDebtorDetailModal(currentDebtorId);
+                        if (response.status === 204) { 
+                            await openDebtorDetailModal(currentDebtorId); // Recarrega os detalhes do devedor para atualizar a lista de pagamentos
                             await loadDebtors(); // Atualiza a lista principal para refletir o novo saldo
                         } else if (response.status === 404) {
                              showErrorMessage('Pagamento não encontrado.');
@@ -490,6 +495,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // --- Inicialização ---
-        loadDebtors(); // Carrega os devedores ao iniciar o dashboard
+        loadDebtors(); 
     }
 });
