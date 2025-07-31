@@ -3,17 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Gerenciador de Empréstimos</title>
+    <title>Gerenciador de Empréstimos - Login</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
 </head>
 <body>
     <div class="container">
-        <div class="auth-section">
-            
-            <img src="caminho/para/sua/logo.png" alt="Sua Logo" class="login-logo">
-            
+        <div class="auth-section login-section active">
             <h2>Login</h2>
             <form id="loginForm">
                 <div class="input-group">
@@ -25,10 +23,11 @@
                     <input type="password" id="loginPassword" required>
                 </div>
                 <button type="submit" class="button">Entrar</button>
-                <p id="loginError" class="error-message" style="display: none;"></p>
+                <p id="loginError" class="error-message"></p>
             </form>
         </div>
-    </div>
+        </div>
+
     <script src="script.js"></script>
 </body>
 </html>
