@@ -467,7 +467,6 @@ input:focus {
 }
 
 /* --- Modal de Adicionar/Editar Devedor (seletor corrigido) --- */
-/* Antes #editDebtorModal, agora #addEditDebtorModal */
 #addEditDebtorModal .modal-content form {
     display: flex;
     flex-direction: column;
@@ -514,6 +513,29 @@ input:focus {
 .logout-container #logoutButton {
     width: auto; /* Permite que o botão tenha a largura do conteúdo */
     max-width: 200px; /* Limita a largura máxima do botão */
+}
+
+/* Novo estilo para ocultar o valor quando o checkbox for marcado */
+.hidden-value {
+    /* Pode ser uma cor diferente, ou texto 'Oculto' */
+    color: transparent; /* Torna o texto invisível */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4); /* Efeito de borrado */
+    /* ou background-color: var(--text-color); para cobrir */
+}
+/* Estilo para o label da checkbox de ocultar */
+.debtor-details-info label {
+    display: inline-flex; /* Para alinhar a checkbox e o texto */
+    align-items: center;
+    margin-left: 10px;
+    font-size: 0.85em;
+    color: var(--light-text);
+    user-select: none; /* Impede seleção de texto */
+}
+
+.debtor-details-info label input[type="checkbox"] {
+    width: auto;
+    margin-bottom: 0;
+    margin-right: 5px;
 }
 
 
