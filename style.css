@@ -1,298 +1,305 @@
-/* Variáveis de Tema */
+/* style.css */
+
+/* --- Variáveis de Cores (Paleta Netflix-ish - Tema Escuro) --- */
 :root {
-    --bg-color-dark: #2c2c2c;
-    --text-color-dark: #e0e0e0;
-    --card-bg-dark: #3a3a3a;
-    --border-color-dark: #555;
-    --button-bg-dark: #4a90e2;
-    --button-hover-dark: #3a7bd5;
-    --input-bg-dark: #444;
-    --input-border-dark: #666;
-    --placeholder-color-dark: #aaa;
-    --modal-bg-dark: rgba(0, 0, 0, 0.7);
-
-    --bg-color-light: #f4f4f4;
-    --text-color-light: #333;
-    --card-bg-light: #ffffff;
-    --border-color-light: #ccc;
-    --button-bg-light: #007bff;
-    --button-hover-light: #0056b3;
-    --input-bg-light: #f9f9f9;
-    --input-border-light: #ccc;
-    --placeholder-color-light: #666;
-    --modal-bg-light: rgba(0, 0, 0, 0.5);
-
-    --success-color: #28a745;
-    --error-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #17a2b8;
-
-    /* Cores padrão (tema escuro) */
-    --main-bg: var(--bg-color-dark);
-    --main-text: var(--text-color-dark);
-    --card-bg: var(--card-bg-dark);
-    --border-color: var(--border-color-dark);
-    --button-bg: var(--button-bg-dark);
-    --button-hover: var(--button-hover-dark);
-    --input-bg: var(--input-bg-dark);
-    --input-border: var(--input-border-dark);
-    --placeholder-color: var(--placeholder-color-dark);
-    --modal-bg: var(--modal-bg-dark);
-    --light-text: #ccc; /* Para texto secundário */
+    --primary-bg: #141414; /* Quase preto */
+    --secondary-bg: #222222; /* Cinza escuro para cards/modals */
+    --text-color: #E5E5E5; /* Branco suave para texto principal */
+    --light-text: #AAAAAA; /* Cinza claro para texto secundário */
+    --accent-color: #E50914; /* Vermelho vibrante para destaques/botões */
+    --accent-hover: #F40A15; /* Vermelho mais claro no hover */
+    --success-color: #28a745; /* Verde para sucesso */
+    --error-color: #dc3545; /* Vermelho para erro */
+    --border-color: #333333; /* Borda sutil */
+    --input-bg: #333333; /* Fundo de input escuro */
+    --input-border: #555555; /* Borda de input */
+    --light-text-rgb: 170, 170, 170; /* Definindo para uso em rgba() no tema escuro */
 }
 
-/* Tema Claro */
+/* --- Variáveis de Cores (Tema Claro) --- */
 body.light-theme {
-    --main-bg: var(--bg-color-light);
-    --main-text: var(--text-color-light);
-    --card-bg: var(--card-bg-light);
-    --border-color: var(--border-color-light);
-    --button-bg: var(--button-bg-light);
-    --button-hover: var(--button-hover-light);
-    --input-bg: var(--input-bg-light);
-    --input-border: var(--input-border-light);
-    --placeholder-color: var(--placeholder-color-light);
-    --modal-bg: var(--modal-bg-light);
-    --light-text: #666;
+    --primary-bg: #F0F2F5; /* Fundo principal claro */
+    --secondary-bg: #FFFFFF; /* Fundo de cards/modals branco */
+    --text-color: #333333; /* Texto principal escuro */
+    --light-text: #666666; /* Texto secundário cinza */
+    --accent-color: #007BFF; /* Azul padrão para destaques/botões */
+    --accent-hover: #0056b3; /* Azul mais escuro no hover */
+    --success-color: #28a745; /* Pode manter ou ajustar */
+    --error-color: #dc3545; /* Pode manter ou ajustar */
+    --border-color: #DDDDDD; /* Borda clara */
+    --input-bg: #F8F8F8; /* Fundo de input claro */
+    --input-border: #CCCCCC; /* Borda de input clara */
+    --light-text-rgb: 102, 102, 102; /* Para uso em rgba() no tema claro */
 }
 
-/* Base */
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* --- Estilos Gerais e Reset Básico --- */
+* {
     margin: 0;
     padding: 0;
-    background-color: var(--main-bg);
-    color: var(--main-text);
-    transition: background-color 0.3s ease, color 0.3s ease;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    box-sizing: border-box;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Fonte limpa */
 }
 
-/* Header */
-.header {
-    background-color: var(--card-bg);
-    padding: 20px;
+body {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+    color: var(--text-color);
+    margin-bottom: 0.8em;
+}
+
+a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+button {
+    background-color: var(--accent-color);
+    color: var(--text-color);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="date"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1em;
+    appearance: none; /* Remove estilos padrão de input */
+    -webkit-appearance: none;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.5);
+}
+
+/* Aprimoramento 1: Estilo reforçado para a mensagem de erro */
+.error-message {
+    color: var(--error-color);
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--error-color);
+    padding: 10px 15px; /* Mais padding para melhor visualização */
+    border-radius: 4px;
+    margin-top: 20px; /* Mais espaço acima */
     text-align: center;
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-weight: bold; /* Deixa o texto mais visível */
+    display: none; /* Escondido por padrão */
+    width: 100%; /* Garante que ocupe a largura total no formulário */
+}
+
+.loading-message {
+    text-align: center;
+    color: var(--light-text);
+    padding: 20px;
+}
+
+/* --- Login Page --- */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--primary-bg);
+    padding: 20px;
+}
+
+.app-title {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 30px;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
+    flex-shrink: 0;
+}
+
+/* Ajuste de seletor para o formulário de login */
+#loginForm { /* Use o ID para maior especificidade e clareza */
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--secondary-bg);
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.input-group {
+    margin-bottom: 15px;
+    text-align: left;
+    width: 100%;
+}
+
+/* Ajuste de seletor para labels e botões dentro do formulário de login */
+#loginForm label {
+    text-align: left;
+    margin-bottom: 5px;
+    color: var(--light-text);
+    display: block; /* Garante que o label ocupe sua própria linha */
+}
+
+#loginForm button {
+    margin-top: 20px;
+}
+
+/* --- Dashboard Header --- */
+.header {
+    background-color: var(--secondary-bg);
+    padding: 15px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* Permite que os itens quebrem a linha em telas pequenas */
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .header h1 {
     margin: 0;
     font-size: 1.8em;
-    color: var(--button-bg);
 }
 
+/* Estilo para o botão de alternar tema */
 .theme-toggle-button {
-    background-color: var(--button-bg);
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    background-color: transparent; /* Fundo transparente */
+    border: 1px solid var(--light-text); /* Borda sutil */
+    color: var(--light-text); /* Cor do texto sutil */
+    padding: 6px 12px;
     font-size: 0.9em;
-    transition: background-color 0.3s ease;
+    margin-right: 15px; /* Espaço entre este botão e outros itens do cabeçalho */
+    transition: all 0.3s ease;
 }
 
 .theme-toggle-button:hover {
-    background-color: var(--button-hover);
+    background-color: rgba(var(--light-text-rgb), 0.1); /* Um leve fundo no hover */
+    transform: translateY(-1px);
+    border-color: var(--text-color);
+    color: var(--text-color);
 }
 
-/* Login Container */
-.login-container {
+/* Estilo para o botão Sair, aplica-se à sua posição original ou nova, mantendo a aparência */
+.logout-button {
+    background-color: transparent;
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    padding: 8px 15px;
+}
+
+.logout-button:hover {
+    background-color: rgba(229, 9, 20, 0.1);
+    transform: none;
+    color: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+/* --- Dashboard Content --- */
+.dashboard-container {
+    padding: 20px;
+    flex-grow: 1; /* Permite que ocupe o espaço restante */
+    max-width: 900px;
+    margin: 20px auto;
+}
+
+.debtors-list {
+    display: grid;
+    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    margin-bottom: 20px;
+}
+
+.debtor-item {
+    background-color: var(--secondary-bg);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-grow: 1; /* Permite que ocupe o espaço disponível */
-    padding: 20px;
-    box-sizing: border-box; /* Inclui padding na largura/altura total */
+    align-items: flex-start;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border-color);
+    position: relative;
 }
 
-.login-container h1 {
-    margin-bottom: 30px;
-    color: var(--button-bg);
-    text-align: center;
+.debtor-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
-.form-card {
-    background-color: var(--card-bg);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    width: 100%;
-    max-width: 400px; /* Limita a largura máxima */
-    box-sizing: border-box;
-}
-
-.form-card h2 {
-    text-align: center;
-    color: var(--main-text);
-    margin-bottom: 25px;
+.debtor-info h2 {
     font-size: 1.5em;
+    margin-bottom: 5px;
 }
 
-.input-group {
-    margin-bottom: 15px;
-}
-
-.input-group label {
-    display: block;
-    margin-bottom: 8px;
+.debtor-info p {
     color: var(--light-text);
     font-size: 0.95em;
 }
 
-.input-group input[type="text"],
-.input-group input[type="password"],
-.input-group input[type="email"],
-.input-group input[type="number"],
-.input-group input[type="date"] {
-    width: calc(100% - 20px); /* 100% menos o padding */
-    padding: 12px;
-    border: 1px solid var(--input-border);
-    border-radius: 5px;
-    background-color: var(--input-bg);
-    color: var(--main-text);
-    font-size: 1em;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.input-group input[type="text"]:focus,
-.input-group input[type="password"]:focus,
-.input-group input[type="email"]:focus,
-.input-group input[type="number"]:focus,
-.input-group input[type="date"]:focus {
-    border-color: var(--button-bg);
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3); /* Um brilho suave */
-    outline: none;
-}
-
-/* Botões */
-button[type="submit"],
-.add-button,
-.logout-button,
-#addPaymentButton {
-    background-color: var(--button-bg);
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    width: 100%;
-    margin-top: 15px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-button[type="submit"]:hover,
-.add-button:hover,
-.logout-button:hover,
-#addPaymentButton:hover {
-    background-color: var(--button-hover);
-    transform: translateY(-2px);
-}
-
-.small-button {
-    padding: 6px 12px;
-    font-size: 0.85em;
-    border-radius: 4px;
-    margin-left: 10px; /* Para botões adjacentes a inputs */
-    width: auto; /* Não ocupa 100% */
-}
-
-/* Dashboard Layout */
-.dashboard-container {
-    display: flex;
-    flex-grow: 1;
-    padding: 20px;
-    gap: 20px; /* Espaçamento entre as seções */
-    justify-content: center; /* Centraliza o conteúdo horizontalmente */
-    flex-wrap: wrap; /* Permite que as seções quebrem a linha */
-}
-
-.debtor-controls {
-    text-align: center;
-    padding: 20px;
-    background-color: var(--card-bg);
-    margin: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    width: calc(100% - 40px); /* Ocupa quase toda a largura */
-    max-width: 800px; /* Limita para não ficar muito largo */
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.debtors-list-section {
-    flex: 1; /* Ocupa o espaço restante */
-    min-width: 300px; /* Garante uma largura mínima */
-    background-color: var(--card-bg);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    box-sizing: border-box;
-}
-
-.debtors-list-section h2 {
-    text-align: center;
-    color: var(--main-text);
-    margin-bottom: 20px;
+.debtor-balance {
     font-size: 1.6em;
-}
-
-.debtors-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.debtor-item {
-    background-color: var(--input-bg); /* Fundo mais escuro para o item */
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start; /* Alinha o topo do texto com o topo dos botões */
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
-}
-
-.debtor-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.debtor-info h2 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    color: var(--button-bg);
-    font-size: 1.3em;
-}
-
-.debtor-info p {
-    margin: 5px 0;
-    font-size: 0.9em;
-    color: var(--light-text);
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-top: 15px;
+    align-self: flex-end;
 }
 
 .debtor-actions {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    margin-top: 15px;
+    width: 100%;
+    justify-content: flex-end;
+    opacity: 1; /* Adicionado para garantir visibilidade padrão */
+    transition: opacity 0.3s ease; /* Mantido para suavizar a transição se for usado em outros contextos */
 }
 
-.debtor-actions .small-button {
-    margin-left: 0; /* Remove margem para alinhamento vertical */
-    width: 80px; /* Largura fixa para os botões de ação */
+/* Mantido para efeito de hover em desktop */
+.debtor-item:hover .debtor-actions {
+    opacity: 1;
 }
 
+.debtor-actions .edit-debtor-btn {
+    background-color: #007bff;
+}
+.debtor-actions .edit-debtor-btn:hover {
+    background-color: #0056b3;
+}
 .debtor-actions .delete-debtor-btn {
     background-color: var(--error-color);
 }
@@ -300,274 +307,277 @@ button[type="submit"]:hover,
     background-color: #c82333;
 }
 
-
-/* Mensagens */
-.loading-message {
-    text-align: center;
-    color: var(--light-text);
-    font-style: italic;
-    padding: 20px;
+/* --- Add Debtor Button (no dashboard) --- */
+.add-button {
+    background-color: var(--success-color);
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1em;
+    margin-top: 20px;
 }
 
-.error-message {
-    background-color: var(--error-color);
-    color: white;
-    padding: 10px;
-    border-radius: 5px;
-    text-align: center;
-    margin-bottom: 20px;
-    font-weight: bold;
+.add-button:hover {
+    background-color: #218838;
 }
 
-/* Logout */
-.logout-container {
-    text-align: center;
-    padding: 20px;
-    margin-top: auto; /* Empurra para o final */
-}
-
-/* Modals (Pop-ups) */
+/* --- Modals (Base para Detalhes e Edição) --- */
 .modal {
-    display: none; /* Escondido por padrão */
-    position: fixed; /* Fica por cima de tudo */
-    z-index: 1; /* Nível mais alto */
+    display: none;
+    position: fixed;
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto; /* Habilita scroll se conteúdo for muito grande */
-    background-color: var(--modal-bg);
-    justify-content: center; /* Centraliza o modal horizontalmente */
-    align-items: center; /* Centraliza o modal verticalmente */
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
 }
 
 .modal-content {
-    background-color: var(--card-bg);
+    background-color: var(--secondary-bg);
     margin: auto;
     padding: 30px;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.8);
     width: 90%;
-    max-width: 600px; /* Largura máxima para legibilidade */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    max-width: 600px;
     position: relative;
-    box-sizing: border-box;
-    max-height: 90vh; /* Limita a altura do modal */
-    overflow-y: auto; /* Adiciona scroll se o conteúdo for maior que a tela */
+    animation: fadeInScale 0.3s ease-out;
 }
 
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 15px;
-}
-
-.modal-header h2 {
-    margin: 0;
-    font-size: 1.8em;
-    color: var(--button-bg);
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .close-button {
     color: var(--light-text);
-    font-size: 30px;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: color 0.2s ease;
 }
 
 .close-button:hover,
 .close-button:focus {
-    color: var(--error-color);
+    color: var(--accent-color);
     text-decoration: none;
 }
 
-.modal-body {
-    margin-top: 20px;
-}
-
-.debtor-details-info p {
-    margin: 8px 0;
-    font-size: 1em;
-    color: var(--main-text);
-}
-
-.debtor-details-info p strong {
-    color: var(--light-text);
-}
-
-.debtor-details-info label input[type="checkbox"] {
-    margin-left: 10px;
-}
-
-.hidden-value {
-    filter: blur(4px); /* Efeito de censura */
-}
-
-/* Payments Grid (Quadradinhos) */
+/* --- Payment Grid (dentro do Modal de Detalhes) --- */
 .payments-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Colunas responsivas */
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
     margin-top: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 20px;
 }
 
 .payment-square {
     background-color: var(--input-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 15px;
+    border-radius: 4px;
+    padding: 10px;
     text-align: center;
+    font-size: 0.9em;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    align-items: center;
     min-height: 80px;
-    position: relative;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
 
-.payment-square:hover {
+.payment-square:hover:not(.paid) {
+    background-color: #444444;
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-.payment-square span {
-    display: block;
-    font-weight: bold;
-    color: var(--button-bg);
-    margin-bottom: 5px;
 }
 
 .payment-square.paid {
     background-color: var(--success-color);
-    color: white;
-    border-color: var(--success-color);
+    cursor: default;
+    border-color: #1e7e34;
+    position: relative;
+}
+.payment-square.paid span:first-child {
+    font-weight: bold;
+}
+.payment-square.paid span:last-child {
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.payment-square.paid span {
-    color: white; /* Garante que o texto seja branco para contrastar */
-}
-
+/* Estilo para a caixinha de pagamento selecionada */
 .payment-square.selected {
-    border-color: var(--warning-color); /* Realça o selecionado */
-    box-shadow: 0 0 0 3px var(--warning-color);
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 0 8px rgba(229, 9, 20, 0.6);
 }
 
-.payment-square .delete-payment-btn {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: rgba(255, 255, 255, 0.2); /* Fundo semi-transparente */
+.delete-payment-btn {
+    background-color: var(--error-color);
     color: white;
     border: none;
-    border-radius: 50%; /* Botão redondo */
-    width: 25px;
-    height: 25px;
-    font-size: 0.8em;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 0.7em;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin-top: 5px;
     transition: background-color 0.2s ease;
-    padding: 0; /* Remove padding extra */
 }
 
-.payment-square .delete-payment-btn:hover {
-    background-color: var(--error-color); /* Fica vermelho ao passar o mouse */
+.delete-payment-btn:hover {
+    background-color: #c82333;
+    transform: none;
 }
 
+/* --- Payment Input Section (dentro do Modal de Detalhes) --- */
 .payment-input {
-    padding-top: 20px;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--primary-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
 .payment-input h4 {
-    margin-top: 0;
-    color: var(--main-text);
+    margin-bottom: 15px;
+    text-align: center;
 }
 
-.payment-input .input-group {
+.payment-input label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--light-text);
+}
+
+.payment-input button {
+    width: 100%;
+    margin-top: 15px;
+}
+
+/* --- Modal de Adicionar/Editar Devedor (seletor corrigido) --- */
+#addEditDebtorModal .modal-content form {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+}
+
+#addEditDebtorModal label {
+    text-align: left;
+    margin-bottom: 5px;
+    color: var(--light-text);
+    display: block; /* Garante que o label ocupe sua própria linha */
+}
+
+#addEditDebtorModal button {
+    margin-top: 20px;
+}
+
+/* Adicionado: Estilo para o botão "Usar Valor da Parcela" */
+.small-button {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    width: auto;
+    margin-top: 5px;
     margin-bottom: 10px;
+    background-color: var(--accent-color); /* Usando a cor de destaque principal */
+    border-color: var(--accent-color);
 }
 
-.payment-input .input-group label {
-    flex-shrink: 0; /* Evita que a label encolha */
-    width: 60px; /* Largura fixa para a label */
-    margin-right: 10px;
+.small-button:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+    transform: translateY(-1px);
 }
 
-.payment-input .input-group input {
-    flex-grow: 1; /* O input ocupa o espaço restante */
-    width: auto; /* Remove largura fixa para o input */
-    margin-top: 0;
+/* Estilo para o botão Sair no final da página */
+.logout-container {
+    display: flex;
+    justify-content: center; /* Centraliza o botão horizontalmente */
+    padding: 20px; /* Adiciona espaçamento ao redor */
+    margin-top: auto; /* IMPORTANTE: Empurra este elemento para o final, ocupando o espaço restante */
+    width: 100%; /* Garante que o contêiner ocupe a largura total */
+    box-sizing: border-box;
+}
+
+.logout-container #logoutButton {
+    width: auto; /* Permite que o botão tenha a largura do conteúdo */
+    max-width: 200px; /* Limita a largura máxima do botão */
+}
+
+/* Novo estilo para ocultar o valor quando o checkbox for marcado */
+.hidden-value {
+    color: transparent; /* Torna o texto invisível */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4); /* Efeito de borrado */
+}
+/* Estilo para o label da checkbox de ocultar */
+.debtor-details-info label {
+    display: inline-flex; /* Para alinhar a checkbox e o texto */
+    align-items: center;
+    margin-left: 10px;
+    font-size: 0.85em;
+    color: var(--light-text);
+    user-select: none; /* Impede seleção de texto */
+}
+
+.debtor-details-info label input[type="checkbox"] {
+    width: auto;
     margin-bottom: 0;
+    margin-right: 5px;
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
-    .header {
-        flex-direction: column;
-        gap: 15px;
-    }
+
+/* Media Queries para Responsividade (Mobile First) */
+@media (min-width: 576px) {
     .header h1 {
-        font-size: 1.5em;
+        font-size: 2.2em;
     }
+    .debtor-item {
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+    }
+    .debtor-info {
+        flex-grow: 1;
+    }
+    .debtor-balance {
+        margin-top: 0;
+        margin-left: 20px;
+        flex-shrink: 0;
+    }
+    .debtor-item:hover .debtor-actions {
+        opacity: 1;
+    }
+}
 
+@media (min-width: 768px) {
     .dashboard-container {
-        flex-direction: column;
-        padding: 10px;
+        padding: 30px;
     }
-
-    .debtors-list-section,
-    .debtor-controls {
-        width: calc(100% - 20px); /* Ajusta para padding de 10px na tela */
-        margin: 10px auto;
+    .debtors-list {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
     }
-
     .modal-content {
-        width: 95%;
-        padding: 20px;
+        padding: 40px;
     }
+}
 
-    .input-group input[type="text"],
-    .input-group input[type="password"],
-    .input-group input[type="email"],
-    .input-group input[type="number"],
-    .input-group input[type="date"] {
-        width: calc(100% - 24px); /* Ajusta para padding */
+@media (min-width: 992px) {
+    .dashboard-container {
+        max-width: 1200px;
     }
-
-    .small-button {
-        margin-left: 0; /* Remove margem extra */
-        margin-top: 10px; /* Adiciona margem acima */
-        width: 100%; /* Ocupa a largura total */
-    }
-
-    .payment-input .input-group {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .payment-input .input-group label {
-        width: auto;
-        margin-bottom: 5px;
-    }
-
-    .payment-input .input-group input {
-        width: calc(100% - 20px);
-        margin-left: 0;
-    }
-
-    .fill-amount-button {
-        margin-top: 10px; /* Separar o botão do input */
+    .debtors-list {
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
     }
 }
