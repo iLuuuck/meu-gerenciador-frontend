@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     paymentSquare.innerHTML = `
                         <span>Parcela ${installment.number}</span>
                         <span>R$ ${displayAmount}</span>
-                        <span>Pago em: ${new Date(installment.paymentDate + 'T00:00:00Z').toLocaleDateString('pt-BR')}</span>
+                        <span>Pago em: ${new Date(installment.paymentDate + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
                         ${installment.paymentId ? `<button class="delete-payment-btn" data-payment-id="${installment.paymentId}">Excluir</button>` : ''}
                     `;
                 } else {
