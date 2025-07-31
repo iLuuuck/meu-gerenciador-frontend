@@ -37,16 +37,18 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="detailDebtorName"></h2>
-                <p id="detailDebtorDescription" style="font-style: italic; color: #666; margin-top: 5px;"></p>
+                <p id="detailDebtorDescription" style="font-style: italic; color: var(--light-text); margin-top: 5px;"></p>
                 <span class="close-button">&times;</span>
             </div>
             <div class="modal-body">
                 <div class="debtor-details-info">
-                    <p><strong>Valor Total:</strong> <span id="detailTotalAmount"></span></p>
-                    <p><strong>Parcelas:</strong> <span id="detailInstallments"></span></p>
+                    <p><strong>Valor Emprestado:</strong> <span id="detailLoanedAmount"></span></p>
+                    <p><strong>Valor Total a Receber:</strong> <span id="detailTotalToReceive"></span> <label><input type="checkbox" id="toggleTotalToReceive"> Ocultar</label></p>
+                    <p><strong>Juros (%):</strong> <span id="detailInterestPercentage"></span></p>
                     <p><strong>Valor por Parcela:</strong> <span id="detailAmountPerInstallment"></span></p>
+                    <p><strong>Parcelas:</strong> <span id="detailInstallments"></span></p>
                     <p><strong>Data de Início:</strong> <span id="detailStartDate"></span></p>
-                </div>
+                    </div>
 
                 <h3>Pagamentos</h3>
                 <div class="payments-grid" id="paymentsGrid">
@@ -83,12 +85,14 @@
                     <label for="debtorDescription">Descrição (opcional):</label>
                     <input type="text" id="debtorDescription" placeholder="Ex: João da Padaria, Endereço, etc.">
 
-                    <label for="totalAmount">Valor Total Devido:</label>
-                    <input type="number" id="totalAmount" step="0.01" required>
+                    <label for="loanedAmount">Valor Emprestado:</label>
+                    <input type="number" id="loanedAmount" step="0.01" required>
 
+                    <label for="amountPerInstallmentInput">Valor por Parcela:</label>
+                    <input type="number" id="amountPerInstallmentInput" step="0.01" required>
+                    
                     <label for="installments">Número de Parcelas:</label>
                     <input type="number" id="installments" required>
-
                     <label for="startDate">Data de Início:</label>
                     <input type="date" id="startDate" required>
 
