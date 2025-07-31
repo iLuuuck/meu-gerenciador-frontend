@@ -11,16 +11,19 @@
         <h1>Dashboard</h1>
         <nav>
             <button id="logoutButton">Sair</button>
-            <button id="addDebtorButton" style="margin-left: 20px;">Adicionar Novo Devedor</button>
         </nav>
     </header>
 
     <main>
+        <section class="debtor-controls">
+            <button id="addDebtorButton">Adicionar Novo Devedor</button>
+        </section>
+
         <section class="debtors-list-section">
             <h2>Meus Devedores</h2>
             <div id="errorMessage" class="error-message" style="display: none;"></div>
             <div id="debtorsList" class="debtors-grid">
-            </div>
+                </div>
         </section>
     </main>
 
@@ -41,7 +44,7 @@
 
                 <h3>Pagamentos</h3>
                 <div class="payments-grid" id="paymentsGrid">
-                </div>
+                    </div>
 
                 <div class="add-payment-section">
                     <h4>Adicionar Pagamento</h4>
