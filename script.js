@@ -40,9 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Sessão expirada ou não autorizado. Por favor, faça login novamente.');
             localStorage.removeItem('accessToken');
             window.location.href = 'index.html'; // Redireciona para a página de login
-            // NÃO RETORNAR response AQUI, pois o fluxo de erro já foi tratado com o redirecionamento.
-            // Para evitar que o código continue executando após o redirecionamento, pode-se lançar um erro ou retornar null.
-            // Eu prefiro lançar um erro para que as funções chamadoras saibam que algo deu errado.
             throw new Error('Sessão expirada ou não autorizado.');
         }
         return response;
@@ -151,15 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
             debtorsListElement.innerHTML = '<p class="loading-message">Carregando devedores...</p>';
             try {
                 const response = await fetchWithAuth(`${API_URL}/debtors`);
-                // Adicionado verificação para `!response.ok` já que fetchWithAuth agora lança erro ou redireciona
-                if (!response.ok) { 
+                if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const debtors = await response.json();
                 renderDebtors(debtors);
             } catch (error) {
                 console.error('Erro ao carregar devedores:', error);
-                // A mensagem de erro da sessão expirada já é tratada em fetchWithAuth
                 if (!errorMessageElement.style.display || errorMessageElement.style.display === 'none') {
                     showErrorMessage('Não foi possível carregar os devedores. Verifique sua conexão ou sessão.');
                 }
@@ -176,8 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
             debtors.forEach(debtor => {
                 const debtorItem = document.createElement('div');
                 debtorItem.className = 'debtor-item';
-                // CORREÇÃO AQUI: Use debtor._id (MongoDB ID)
-                debtorItem.dataset.id = debtor._id; 
+                // Correção de _id: usando _id do MongoDB
+                debtorItem.dataset.id = debtor._id;
 
                 const totalPaid = debtor.payments ? debtor.payments.reduce((sum, p) => sum + p.amount, 0) : 0;
                 const currentBalance = debtor.totalAmount - totalPaid;
@@ -201,20 +196,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 debtorItem.addEventListener('click', (e) => {
                     // Impede que o clique nos botões de editar/excluir ative o detalhe do devedor
                     if (!e.target.classList.contains('edit-debtor-btn') && !e.target.classList.contains('delete-debtor-btn')) {
-                        // CORREÇÃO AQUI: Use debtor._id
-                        showDebtorDetail(debtor._id); 
+                        // Correção de _id: usando _id do MongoDB
+                        showDebtorDetail(debtor._id);
                     }
                 });
 
                 debtorItem.querySelector('.edit-debtor-btn').addEventListener('click', (e) => {
                     e.stopPropagation(); // Impede que o clique no botão ative o evento de clique do item pai
-                    // CORREÇÃO AQUI: Use debtor._id
-                    editDebtor(debtor._id); 
+                    // Correção de _id: usando _id do MongoDB
+                    editDebtor(debtor._id);
                 });
                 debtorItem.querySelector('.delete-debtor-btn').addEventListener('click', (e) => {
                     e.stopPropagation(); // Impede que o clique no botão ative o evento de clique do item pai
-                    // CORREÇÃO AQUI: Use debtor._id
-                    deleteDebtor(debtor._id); 
+                    // Correção de _id: usando _id do MongoDB
+                    deleteDebtor(debtor._id);
                 });
 
                 debtorsListElement.appendChild(debtorItem);
@@ -225,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hideErrorMessage();
             try {
                 const response = await fetchWithAuth(`${API_URL}/debtors/${id}`);
-                if (!response.ok) { // Removida verificação para `!response`
+                if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const debtor = await response.json();
@@ -234,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedPaymentSquare = null; // Reseta a seleção ao abrir um novo devedor
                 selectedInstallmentAmount = 0; // Reseta o valor da parcela selecionada
                 paymentAmountInput.value = ''; // Limpa o campo de valor
-                
+
                 // Melhoria 4: Preenche a data de pagamento com a data atual por padrão
                 paymentDateInput.value = new Date().toISOString().split('T')[0];
 
@@ -297,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         if (installment.coveredAmount >= installment.amount - 0.005) { // Tolerância para flutuantes
                             installment.paid = true;
-                            installment.paymentId = payment.id; // ID do pagamento em si
+                            installment.paymentId = payment._id; // ID do pagamento em si (usando _id do MongoDB)
                             installment.paymentDate = payment.date;
                         }
 
@@ -324,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     paymentSquare.innerHTML = `
                         <span>Parcela ${installment.number}</span>
                         <span>R$ ${displayAmount}</span>
-                        <span>Pago em: ${new Date(installment.paymentDate).toLocaleDateString('pt-BR')}</span>
+                        <span>Pago em: ${new Date(installment.paymentDate + 'T00:00:00Z').toLocaleDateString('pt-BR')}</span>
                         ${installment.paymentId ? `<button class="delete-payment-btn" data-payment-id="${installment.paymentId}">Excluir</button>` : ''}
                     `;
                 } else {
@@ -364,13 +359,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (confirm('Tem certeza que deseja excluir este pagamento?')) {
                         hideErrorMessage();
                         try {
-                            // CORREÇÃO AQUI: currentDebtor._id
+                            // Correção de _id: usando _id do MongoDB
                             const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}/payments/${paymentIdToDelete}`, {
                                 method: 'DELETE'
                             });
                             if (response.ok) {
                                 alert('Pagamento excluído com sucesso!');
-                                // CORREÇÃO AQUI: currentDebtor._id
+                                // Correção de _id: usando _id do MongoDB
                                 showDebtorDetail(currentDebtor._id); // Recarrega os detalhes para atualizar as parcelas
                                 loadDebtors(); // Recarrega a lista principal de devedores (para atualizar o saldo)
                             } else {
@@ -399,15 +394,15 @@ document.addEventListener('DOMContentLoaded', () => {
         addPaymentButton.addEventListener('click', async () => {
             hideErrorMessage();
             const amount = parseFloat(paymentAmountInput.value);
-            const date = paymentDateInput.value;
+            const date = paymentDateInput.value; // Já vem como 'YYYY-MM-DD'
 
             if (isNaN(amount) || amount <= 0 || !date) {
                 showErrorMessage('Por favor, insira um valor e uma data válidos para o pagamento.');
                 return;
             }
 
-            // CORREÇÃO AQUI: currentDebtor._id
-            if (!currentDebtor || !currentDebtor._id) { 
+            // Correção de _id: usando _id do MongoDB
+            if (!currentDebtor || !currentDebtor._id) {
                 showErrorMessage('Nenhum devedor selecionado para adicionar pagamento.');
                 return;
             }
@@ -417,10 +412,10 @@ document.addEventListener('DOMContentLoaded', () => {
             addPaymentButton.textContent = 'Adicionando...';
 
             try {
-                // CORREÇÃO AQUI: currentDebtor._id
+                // Correção de _id: usando _id do MongoDB
                 const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}/payments`, {
                     method: 'POST',
-                    body: JSON.stringify({ amount, date })
+                    body: JSON.stringify({ amount, date }) // Envia a string 'YYYY-MM-DD' diretamente
                 });
 
                 if (response.ok) {
@@ -432,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         selectedPaymentSquare.classList.remove('selected');
                         selectedPaymentSquare = null;
                     }
-                    // CORREÇÃO AQUI: currentDebtor._id
+                    // Correção de _id: usando _id do MongoDB
                     showDebtorDetail(currentDebtor._id); // Recarrega os detalhes do devedor
                     loadDebtors(); // Recarrega a lista principal para atualizar o saldo
                 } else {
@@ -514,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 let response;
                 if (currentDebtor) {
-                    // CORREÇÃO AQUI: currentDebtor._id
+                    // Correção de _id: usando _id do MongoDB
                     response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}`, {
                         method: 'PUT',
                         body: JSON.stringify(debtorData)
