@@ -645,3 +645,28 @@ input:checked + .slider:before {
         min-width: unset; /* Remove min-width em telas muito pequenas */
     }
 }
+
+/* Adicione isso ao seu style.css, talvez perto do .header */
+.app-logo {
+    height: 300px; /* Ajuste a altura conforme necessário */
+    width: auto; /* Mantém a proporção */
+    margin-right: 20px; /* Espaço entre o logo e o título */
+    /* Você pode adicionar mais estilos, como padding, bordas, etc. */
+}
+
+/* Em telas menores, ajuste o logo */
+@media (max-width: 768px) {
+    .app-logo {
+        height: 150px; /* Reduz o tamanho do logo em telas menores */
+        margin-right: 0; /* Remove a margem para melhor alinhamento */
+        margin-bottom: 10px; /* Espaço abaixo do logo */
+    }
+    .header {
+        flex-direction: column; /* Para empilhar o logo e o título */
+        align-items: center; /* Centraliza-os */
+        text-align: center;
+    }
+    .header h1 {
+        flex-grow: unset; /* Remove o crescimento para não desalinhar */
+    }
+}
