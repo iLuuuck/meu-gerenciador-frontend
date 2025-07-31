@@ -1,5 +1,4 @@
 // --- Lógica de Alternância de Tema ---
-// MANTIDO DO SEU CÓDIGO ANTERIOR, ESTILO É CUIDADO PELO STYLE.CSS
 const themeToggleButton = document.getElementById('themeToggleButton');
 const body = document.body;
 
@@ -20,7 +19,7 @@ if (savedTheme) {
     applyTheme('dark'); // Tema padrão se nenhum for salvo
 }
 
-// Listener para o botão de alternar tema
+// Listener para o botão de alternar tema (se existir na página)
 if (themeToggleButton) {
     themeToggleButton.addEventListener('click', () => {
         if (body.classList.contains('light-theme')) {
@@ -32,7 +31,6 @@ if (themeToggleButton) {
 }
 
 // --- Configuração e Inicialização do Firebase ---
-// SUAS CREDENCIAIS JÁ ESTÃO AQUI!
 const firebaseConfig = {
     apiKey: "AIzaSyAEZVCbz39BiqTj5f129PcrVHxfS6OnzLc",
     authDomain: "gerenciadoremprestimos.firebaseapp.com",
@@ -46,40 +44,35 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth(); // Referência ao serviço de autenticação
 
-// --- Lógica de Autenticação (Login/Registro) ---
+// --- Lógica de Autenticação (Login) ---
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
+    const loginError = document.getElementById('loginError'); // Para exibir erros de login
 
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            const email = loginForm.loginEmail.value; // ID do campo de email de login
-            const password = loginForm.loginPassword.value; // ID do campo de senha de login
+            if (loginError) loginError.textContent = ''; // Limpa a mensagem de erro anterior
+
+            const email = loginForm.loginEmail.value;
+            const password = loginForm.loginPassword.value;
 
             try {
                 await auth.signInWithEmailAndPassword(email, password);
                 // Redirecionamento será tratado pelo auth.onAuthStateChanged
             } catch (error) {
-                alert(`Erro ao fazer login: ${error.message}`);
+                let errorMessage = 'Ocorreu um erro ao fazer login.';
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMessage = 'E-mail ou senha inválidos.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Formato de e-mail inválido.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = 'Muitas tentativas de login. Tente novamente mais tarde.';
+                } else {
+                    errorMessage = `Erro: ${error.message}`;
+                }
+                if (loginError) loginError.textContent = errorMessage; // Define o texto de erro
                 console.error("Erro de login:", error);
-            }
-        });
-    }
-
-    if (registerForm) {
-        registerForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const email = registerForm.registerEmail.value; // ID do campo de email de registro
-            const password = registerForm.registerPassword.value; // ID do campo de senha de registro
-
-            try {
-                await auth.createUserWithEmailAndPassword(email, password);
-                alert('Usuário registrado com sucesso! Por favor, faça login.');
-                registerForm.reset(); // Limpa o formulário após o registro
-            } catch (error) {
-                alert(`Erro ao registrar: ${error.message}`);
-                console.error("Erro de registro:", error);
             }
         });
     }
@@ -174,7 +167,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         errorMessageDiv.textContent = message;
         errorMessageDiv.style.display = 'block';
         setTimeout(() => {
-            errorMessageDiv.style.none = 'none'; // Corrigido de 'display = none' para 'display = "none"'
+            errorMessageDiv.style.display = 'none'; // Corrigido aqui
         }, 5000);
     }
 
@@ -305,8 +298,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                     showError("Erro: Usuário não autenticado. Não é possível adicionar devedor.");
                     return;
                 }
-                
-                // CRIE O OBJETO DO NOVO DEVEDOR AQUI COM O userId
+
                 const newDebtorData = {
                     name,
                     description,
@@ -320,7 +312,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                     userId: currentUserId // SALVA O ID DO USUÁRIO LOGADO
                 };
 
-                await db.collection('debtors').add(newDebtorData); // ADICIONA O OBJETO COMPLETO
+                await db.collection('debtors').add(newDebtorData);
             }
             addEditDebtorModal.style.display = 'none';
         } catch (error) {
@@ -352,7 +344,6 @@ if (window.location.pathname.endsWith('dashboard.html')) {
 
     async function deleteDebtor(id) {
         try {
-            // A regra de segurança do Firestore já verifica o userId antes de permitir a exclusão.
             await db.collection('debtors').doc(id).delete();
         } catch (error) {
             console.error("Erro ao excluir devedor:", error);
