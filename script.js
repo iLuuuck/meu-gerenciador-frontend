@@ -36,11 +36,7 @@ if (themeToggleButton) { // Verifica se o botão existe
 // --- Fim da Lógica de Alternância de Tema ---
 
 
-// --- Lógica de Login (assumindo que já existe) ---
-// Normalmente, a lógica de login estaria em um arquivo separado (ex: login.js)
-// ou na página de login (index.html).
-// Para este exemplo, vamos manter a estrutura do dashboard.
-
+// --- Lógica de Login (mantida simples, mas o ideal seria usar autenticação Firebase) ---
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
@@ -49,7 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = loginForm.username.value;
             const password = loginForm.password.value;
 
-            // Simples verificação de login (APENAS PARA EXEMPLO!)
+            // Simples verificação de login (APENAS PARA EXEMPLO E TESTE DE DESENVOLVIMENTO!)
+            // Para um app real, use Firebase Authentication!
             if (username === 'admin' && password === 'admin') {
                 localStorage.setItem('isAuthenticated', 'true');
                 window.location.href = 'dashboard.html';
@@ -75,6 +72,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = 'index.html';
             });
         }
+
+        // --- Configuração e Inicialização do Firebase ---
+        // SUBSTITUA ESTE OBJETO COM AS SUAS CREDENCIAIS DO FIREBASE!
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEZVCbz39BiqTj5f129PcrVHxfS6OnzLc",
+            authDomain: "gerenciadoremprestimos.firebaseapp.com",
+            projectId: "gerenciadoremprestimos",
+            storageBucket: "gerenciadoremprestimos.firebasestorage.app",
+            messagingSenderId: "365277402196",
+            appId: "1:365277402196:web:65016aa2dd316e718a89c1"
+        };
+
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(); // Obtém uma referência ao Firestore
 
         // --- Variáveis e Elementos do Dashboard ---
         const addDebtorButton = document.getElementById('addDebtorButton');
@@ -113,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startDateInput = document.getElementById('startDate');
         const saveDebtorButton = document.getElementById('saveDebtorButton');
 
-        let debtors = JSON.parse(localStorage.getItem('debtors')) || [];
+        let debtors = []; // Agora os devedores serão carregados do Firebase
         let currentDebtorId = null; // Para controlar qual devedor está sendo visualizado/editado
         let selectedPaymentIndex = null; // Para controlar qual pagamento está selecionado para exclusão
 
@@ -158,7 +171,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             debtors.forEach(debtor => {
-                const totalPaid = debtor.payments.reduce((sum, p) => sum + p.amount, 0);
+                // Ensure payments array exists and is valid
+                const debtorPayments = Array.isArray(debtor.payments) ? debtor.payments : [];
+                const totalPaid = debtorPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
                 const remainingAmount = debtor.totalToReceive - totalPaid;
 
                 const debtorItem = document.createElement('div');
@@ -207,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Adicionar/Editar Devedor ---
         addDebtorButton.addEventListener('click', () => openAddEditDebtorModal());
 
-        addEditDebtorForm.addEventListener('submit', (event) => {
+        addEditDebtorForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
             const name = debtorNameInput.value;
@@ -226,44 +241,53 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalToReceive = calculateTotalToReceive(amountPerInstallment, installments);
             const interestPercentage = calculateInterestPercentage(loanedAmount, totalToReceive);
 
+            try {
+                if (currentDebtorId) {
+                    // Atualizar devedor existente no Firestore
+                    const debtorRef = db.collection('debtors').doc(currentDebtorId);
+                    const doc = await debtorRef.get();
+                    if (doc.exists) {
+                        const oldDebtor = doc.data();
+                        let updatedPayments = Array.isArray(oldDebtor.payments) ? [...oldDebtor.payments] : [];
 
-            if (currentDebtorId) {
-                const debtorIndex = debtors.findIndex(d => d.id === currentDebtorId);
-                if (debtorIndex > -1) {
-                    const oldDebtor = debtors[debtorIndex];
+                        // Se o número de parcelas diminuir, remove pagamentos em excesso (conceitualmente)
+                        if (updatedPayments.length > installments) {
+                            updatedPayments = updatedPayments.slice(0, installments);
+                        }
 
-                    oldDebtor.name = name;
-                    oldDebtor.description = description;
-                    oldDebtor.loanedAmount = loanedAmount;
-                    oldDebtor.amountPerInstallment = amountPerInstallment;
-                    oldDebtor.installments = installments;
-                    oldDebtor.startDate = startDate;
-                    oldDebtor.totalToReceive = totalToReceive;
-                    oldDebtor.interestPercentage = interestPercentage;
-
-                    if (oldDebtor.payments.length > installments) {
-                        oldDebtor.payments = oldDebtor.payments.slice(0, installments);
+                        await debtorRef.update({
+                            name,
+                            description,
+                            loanedAmount,
+                            amountPerInstallment,
+                            installments,
+                            startDate,
+                            totalToReceive,
+                            interestPercentage,
+                            payments: updatedPayments // Mantém os pagamentos existentes
+                        });
+                    } else {
+                        showError("Devedor não encontrado para atualização.");
                     }
+                } else {
+                    // Adicionar novo devedor ao Firestore
+                    await db.collection('debtors').add({
+                        name,
+                        description,
+                        loanedAmount,
+                        amountPerInstallment,
+                        installments,
+                        startDate,
+                        totalToReceive,
+                        interestPercentage,
+                        payments: [] // Começa com um array de pagamentos vazio
+                    });
                 }
-            } else {
-                const newDebtor = {
-                    id: Date.now(),
-                    name,
-                    description,
-                    loanedAmount,
-                    amountPerInstallment,
-                    installments,
-                    startDate,
-                    totalToReceive,
-                    interestPercentage,
-                    payments: []
-                };
-                debtors.push(newDebtor);
+                addEditDebtorModal.style.display = 'none';
+            } catch (error) {
+                console.error("Erro ao salvar devedor:", error);
+                showError('Erro ao salvar devedor. Verifique o console para mais detalhes.');
             }
-
-            localStorage.setItem('debtors', JSON.stringify(debtors));
-            renderDebtors();
-            addEditDebtorModal.style.display = 'none';
         });
 
         function openAddEditDebtorModal(id = null) {
@@ -272,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (id) {
                 addEditModalTitle.textContent = 'Editar Devedor';
-                const debtor = debtors.find(d => d.id === id);
+                const debtor = debtors.find(d => d.id === id); // Busca nos dados locais carregados
                 if (debtor) {
                     debtorNameInput.value = debtor.name;
                     debtorDescriptionInput.value = debtor.description;
@@ -287,10 +311,13 @@ document.addEventListener('DOMContentLoaded', () => {
             addEditDebtorModal.style.display = 'flex';
         }
 
-        function deleteDebtor(id) {
-            debtors = debtors.filter(d => d.id !== id);
-            localStorage.setItem('debtors', JSON.stringify(debtors));
-            renderDebtors();
+        async function deleteDebtor(id) {
+            try {
+                await db.collection('debtors').doc(id).delete();
+            } catch (error) {
+                console.error("Erro ao excluir devedor:", error);
+                showError('Erro ao excluir devedor. Verifique o console para mais detalhes.');
+            }
         }
 
         // --- Modal de Detalhes do Devedor ---
@@ -340,7 +367,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Clonamos os pagamentos para poder manipulá-los temporariamente sem afetar o original
             // Mapeamos para garantir que cada pagamento tenha uma quantidade 'consumível'
-            let consumablePayments = debtor.payments.map(p => ({ ...p, amountRemaining: p.amount }));
+            // Filtrar pagamentos inválidos que podem vir do Firestore
+            const validPayments = (Array.isArray(debtor.payments) ? debtor.payments : []).filter(p => p && typeof p.amount === 'number' && p.amount > 0);
+            let consumablePayments = validPayments.map(p => ({ ...p, amountRemaining: p.amount }));
+            
+            // Ordena os pagamentos por data para um consumo sequencial
+            consumablePayments.sort((a, b) => new Date(a.date) - new Date(b.date));
+
 
             // Percorre cada parcela esperada
             for (let i = 0; i < debtor.installments; i++) {
@@ -361,8 +394,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         payment.amountRemaining -= amountToApply;
 
                         // Se esta parcela foi coberta (total ou parcialmente) por este pagamento
+                        // e se ainda não tem uma data definida, use a data deste pagamento
                         if (amountToApply > 0 && paymentDateForThisInstallment === 'Pendente') {
-                             paymentDateForThisInstallment = payment.date; // Atribui a data do primeiro pagamento que contribuiu
+                             paymentDateForThisInstallment = payment.date;
                         }
 
                         if (paidAmountForThisInstallment >= expectedAmountForThisInstallment) {
@@ -373,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 const displayAmount = Math.min(paidAmountForThisInstallment, expectedAmountForThisInstallment);
-                const displayRemaining = expectedAmountForThisInstallment - paidAmountForThisInstallment;
+                const displayRemaining = expectedAmountForThisInstallment - displayAmount;
 
                 const paymentSquare = document.createElement('div');
                 paymentSquare.className = `payment-square ${isPaid ? 'paid' : ''}`;
@@ -402,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!isPaid) { // Só permite selecionar parcelas não pagas
                         paymentSquare.classList.add('selected');
                         selectedPaymentIndex = i; // Armazena o índice da parcela *esperada*
-                        paymentAmountInput.value = expectedAmountForThisInstallment.toFixed(2); // Preenche com o valor da parcela
+                        paymentAmountInput.value = (expectedAmountForThisInstallment - paidAmountForThisInstallment).toFixed(2); // Preenche com o valor que falta
                         paymentDateInput.valueAsDate = new Date();
                     } else {
                         selectedPaymentIndex = null;
@@ -416,11 +450,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (deleteBtn) {
                     deleteBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        // Importante: A exclusão do pagamento por parcela é complexa.
-                        // Para simplificar, removeremos o ÚLTIMO pagamento efetivado no array de pagamentos
-                        // Isso pode não corresponder exatamente à parcela clicada se um pagamento grande cobriu várias.
-                        if (confirm('Tem certeza que deseja remover o último pagamento registrado? (Isso pode afetar outras parcelas)')) {
-                            removePayment(currentDebtorId, null); // remove o último pagamento por padrão
+                        // Como a lógica de "qual pagamento cobriu qual parcela" é complexa,
+                        // e o Firestore não armazena essa associação, para o botão "X"
+                        // o mais prático é oferecer a opção de remover o ÚLTIMO pagamento registrado.
+                        if (confirm('Tem certeza que deseja remover o último pagamento registrado deste devedor?')) {
+                            removeLastPayment(currentDebtorId);
                         }
                     });
                 }
@@ -431,7 +465,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const nextPendingSquare = paymentsGrid.querySelector('.payment-square:not(.paid)');
             if (nextPendingSquare) {
                 const nextExpectedAmount = debtor.amountPerInstallment; // Valor da próxima parcela
-                paymentAmountInput.value = nextExpectedAmount.toFixed(2);
+                const remainingInNext = nextExpectedAmount - parseFloat(nextPendingSquare.querySelector('span:nth-child(2)').textContent.match(/\((.*?)\)/)?.[1]?.replace(/[^\d.,]/g, '').replace(',', '.') || 0);
+                
+                paymentAmountInput.value = remainingInNext > 0 ? remainingInNext.toFixed(2) : nextExpectedAmount.toFixed(2);
                 paymentDateInput.valueAsDate = new Date();
                 nextPendingSquare.classList.add('selected'); // Pré-seleciona a próxima parcela
                 selectedPaymentIndex = parseInt(nextPendingSquare.getAttribute('data-index'));
@@ -444,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         // --- Adicionar Pagamento (Lógica aprimorada para múltiplos pagamentos) ---
-        addPaymentButton.addEventListener('click', () => {
+        addPaymentButton.addEventListener('click', async () => {
             if (currentDebtorId === null) {
                 showError('Nenhum devedor selecionado para adicionar pagamento.');
                 return;
@@ -458,22 +494,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const debtorIndex = debtors.findIndex(d => d.id === currentDebtorId);
-            if (debtorIndex > -1) {
-                const debtor = debtors[debtorIndex];
-                
-                // Adiciona o novo pagamento ao array de pagamentos do devedor
-                debtor.payments.push({ amount: paymentAmount, date: paymentDate });
-                
-                // Ordena os pagamentos por data (garante que os mais antigos são 'consumidos' primeiro)
-                debtor.payments.sort((a, b) => new Date(a.date) - new Date(b.date));
+            try {
+                const debtorRef = db.collection('debtors').doc(currentDebtorId);
+                const doc = await debtorRef.get();
+                if (doc.exists) {
+                    const debtorData = doc.data();
+                    let updatedPayments = Array.isArray(debtorData.payments) ? [...debtorData.payments] : [];
+                    
+                    // Adiciona o novo pagamento
+                    updatedPayments.push({ amount: paymentAmount, date: paymentDate });
+                    
+                    // Ordena os pagamentos por data para um controle mais fácil
+                    updatedPayments.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                localStorage.setItem('debtors', JSON.stringify(debtors));
-                renderPaymentsGrid(debtor); // Re-renderiza a grade de pagamentos
-                renderDebtors(); // Atualiza a lista principal de devedores (saldo restante)
-                paymentAmountInput.value = '';
-                paymentDateInput.valueAsDate = new Date();
-                selectedPaymentIndex = null; // Reseta a seleção
+                    await debtorRef.update({ payments: updatedPayments });
+
+                    // A UI será atualizada automaticamente pelo listener do Firestore
+                    paymentAmountInput.value = '';
+                    paymentDateInput.valueAsDate = new Date();
+                    selectedPaymentIndex = null; // Reseta a seleção
+                } else {
+                    showError("Devedor não encontrado para adicionar pagamento.");
+                }
+            } catch (error) {
+                console.error("Erro ao adicionar pagamento:", error);
+                showError('Erro ao adicionar pagamento. Verifique o console para mais detalhes.');
             }
         });
 
@@ -482,42 +527,52 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentDebtorId === null) return;
             const debtor = debtors.find(d => d.id === currentDebtorId);
             if (debtor) {
-                paymentAmountInput.value = debtor.amountPerInstallment.toFixed(2);
-                paymentDateInput.valueAsDate = new Date(); // Garante que a data seja atual
-                // Tenta selecionar a próxima parcela pendente
                 const nextPendingSquare = paymentsGrid.querySelector('.payment-square:not(.paid)');
                 if (nextPendingSquare) {
+                     // Calcula o valor que falta para a próxima parcela pendente
+                    const nextExpectedAmount = debtor.amountPerInstallment;
+                    const paidForNext = parseFloat(nextPendingSquare.querySelector('span:nth-child(2)').textContent.match(/(\d[\d.,]*)/)?.[1]?.replace(/[^\d.,]/g, '').replace(',', '.') || 0);
+                    const remainingToFill = nextExpectedAmount - paidForNext;
+
+                    paymentAmountInput.value = remainingToFill.toFixed(2);
+                    paymentDateInput.valueAsDate = new Date(); 
                     document.querySelectorAll('.payment-square').forEach(sq => sq.classList.remove('selected'));
                     nextPendingSquare.classList.add('selected');
                     selectedPaymentIndex = parseInt(nextPendingSquare.getAttribute('data-index'));
+                } else {
+                    // Se não há parcelas pendentes, preenche com o valor de uma parcela completa
+                    paymentAmountInput.value = debtor.amountPerInstallment.toFixed(2);
+                    paymentDateInput.valueAsDate = new Date();
+                    selectedPaymentIndex = null;
                 }
             }
         });
 
 
-        // Função para remover um pagamento
-        // Agora, 'paymentIndexToRemove' é o índice do pagamento REAL no array 'debtor.payments'
-        // Se for null/indefinido, removerá o último pagamento.
-        function removePayment(debtorId, paymentIndexToRemove = null) {
-            const debtorIndex = debtors.findIndex(d => d.id === debtorId);
-            if (debtorIndex > -1) {
-                const debtor = debtors[debtorIndex];
-                
-                if (debtor.payments.length === 0) {
-                    showError('Não há pagamentos para remover.');
-                    return;
-                }
-
-                if (paymentIndexToRemove !== null && paymentIndexToRemove < debtor.payments.length) {
-                    debtor.payments.splice(paymentIndexToRemove, 1);
+        // Função para remover o último pagamento
+        async function removeLastPayment(debtorId) {
+            try {
+                const debtorRef = db.collection('debtors').doc(debtorId);
+                const doc = await debtorRef.get();
+                if (doc.exists) {
+                    const debtorData = doc.data();
+                    let updatedPayments = Array.isArray(debtorData.payments) ? [...debtorData.payments] : [];
+                    
+                    if (updatedPayments.length === 0) {
+                        showError('Não há pagamentos para remover.');
+                        return;
+                    }
+                    
+                    updatedPayments.pop(); // Remove o último elemento
+                    
+                    await debtorRef.update({ payments: updatedPayments });
+                    // A UI será atualizada automaticamente pelo listener do Firestore
                 } else {
-                    // Por padrão, remove o último pagamento se nenhum índice específico for fornecido
-                    debtor.payments.pop();
+                    showError("Devedor não encontrado para remover pagamento.");
                 }
-                
-                localStorage.setItem('debtors', JSON.stringify(debtors));
-                renderPaymentsGrid(debtor); // Re-renderiza para mostrar a remoção
-                renderDebtors(); // Atualiza o saldo geral
+            } catch (error) {
+                console.error("Erro ao remover pagamento:", error);
+                showError('Erro ao remover pagamento. Verifique o console para mais detalhes.');
             }
         }
 
@@ -542,7 +597,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Chamada inicial para renderizar os devedores ao carregar a página
-        renderDebtors();
+        // --- Listener em Tempo Real do Firestore ---
+        // Este é o coração da sincronização!
+        db.collection('debtors').onSnapshot((snapshot) => {
+            debtors = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            renderDebtors(); // Renderiza a lista principal com os dados mais recentes
+
+            // Se o modal de detalhes estiver aberto para o devedor atual, re-renderize-o
+            if (debtorDetailModal.style.display === 'flex' && currentDebtorId) {
+                const currentDebtorInModal = debtors.find(d => d.id === currentDebtorId);
+                if (currentDebtorInModal) {
+                    renderPaymentsGrid(currentDebtorInModal);
+                } else {
+                    // Se o devedor foi excluído enquanto o modal estava aberto, feche-o
+                    debtorDetailModal.style.display = 'none';
+                }
+            }
+        }, (error) => {
+            console.error("Erro ao carregar devedores do Firestore:", error);
+            showError("Erro ao carregar dados. Verifique sua conexão ou as regras do Firebase.");
+            debtorsList.innerHTML = '<p class="loading-message error">Erro ao carregar dados. Tente novamente mais tarde.</p>';
+        });
     }
 });
