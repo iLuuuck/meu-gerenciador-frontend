@@ -1,19 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Devedores - Login/Registro</title>
+    <title>Gerenciador de Empréstimos - Login</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
-    <div class="container" id="loginSection">
-        <div class="logo">
-            <img src="logo.png" alt="Logo Gerenciador">
-            <h1>Gerenciador de Devedores</h1>
-        </div>
-        <h2>Entrar</h2>
+    <div class="login-container">
+        <h1 class="app-title">RUSSO EMPRÉSTIMOS</h1>
         <form id="loginForm">
             <div class="input-group">
                 <label for="username">Usuário:</label>
@@ -23,52 +18,9 @@
                 <label for="password">Senha:</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit" id="loginButton">Entrar</button>
+            <button type="submit">Entrar</button>
+            <p id="errorMessage" class="error-message"></p>
         </form>
-        <p id="loginErrorMessage" class="error-message"></p>
-        <a href="#" id="toggleToRegister" class="toggle-link">Não tem uma conta? Registrar-se</a>
-    </div>
-
-    <div class="container" id="registerSection" style="display: none;">
-        <div class="logo">
-            <img src="logo.png" alt="Logo Gerenciador">
-            <h1>Gerenciador de Devedores</h1>
-        </div>
-        <h2>Registrar</h2>
-        <form id="registerForm">
-            <div class="input-group">
-                <label for="registerUsername">Usuário:</label>
-                <input type="text" id="registerUsername" name="username" required>
-            </div>
-            <div class="input-group">
-                <label for="registerPassword">Senha:</label>
-                <input type="password" id="registerPassword" name="password" required>
-            </div>
-            <button type="submit" id="registerButton">Registrar</button>
-        </form>
-        <p id="registerErrorMessage" class="error-message"></p>
-        <a href="#" id="toggleToLogin" class="toggle-link">Já tem uma conta? Entrar</a>
-    </div>
-
-    <div id="messageModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="closeMessageModal">&times;</span>
-            <h3 id="messageModalTitle"></h3>
-            <p id="messageModalContent"></p>
-            <button id="messageModalConfirmBtn" class="add-button" style="display: none; margin-top: 20px;">OK</button>
-        </div>
-    </div>
-
-    <div id="confirmModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="closeConfirmModal">&times;</span>
-            <h3>Confirmação</h3>
-            <p id="confirmModalContent"></p>
-            <div style="display: flex; justify-content: space-around; margin-top: 20px;">
-                <button id="confirmModalYes" class="delete-debtor-btn">Sim</button>
-                <button id="confirmModalNo" class="logout-button">Não</button>
-            </div>
-        </div>
     </div>
 
     <script src="script.js"></script>
