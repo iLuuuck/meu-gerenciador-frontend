@@ -89,9 +89,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Elementos do Modal de Detalhes do Devedor
         const detailDebtorName = document.getElementById('detailDebtorName');
         const detailDebtorDescription = document.getElementById('detailDebtorDescription');
-        const detailTotalAmount = document.getElementById('detailTotalAmount');
+        // NOVOS ELEMENTOS AQUI
+        const detailLoanedAmount = document.getElementById('detailLoanedAmount');
+        const detailTotalToReceive = document.getElementById('detailTotalToReceive');
+        const detailInterestPercentage = document.getElementById('detailInterestPercentage');
+        const toggleTotalToReceive = document.getElementById('toggleTotalToReceive'); // Checkbox
+        // FIM DOS NOVOS ELEMENTOS
         const detailInstallments = document.getElementById('detailInstallments');
-        const detailAmountPerInstallment = document.getElementById('detailAmountPerInstallment');
+        const detailAmountPerInstallment = document.getElementById('detailAmountPerInstallment'); // Agora é um valor de entrada
         const detailStartDate = document.getElementById('detailStartDate');
         const paymentsGrid = document.getElementById('paymentsGrid');
         const paymentAmountInput = document.getElementById('paymentAmount');
@@ -104,7 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const addEditDebtorForm = document.getElementById('addEditDebtorForm');
         const debtorNameInput = document.getElementById('debtorName');
         const debtorDescriptionInput = document.getElementById('debtorDescription');
-        const totalAmountInput = document.getElementById('totalAmount');
+        // MUDANÇAS AQUI
+        const loanedAmountInput = document.getElementById('loanedAmount'); // Novo campo para Valor Emprestado
+        const amountPerInstallmentInput = document.getElementById('amountPerInstallmentInput'); // Antigo totalAmount, agora o valor por parcela
+        // FIM DAS MUDANÇAS
         const installmentsInput = document.getElementById('installments');
         const startDateInput = document.getElementById('startDate');
         const saveDebtorButton = document.getElementById('saveDebtorButton');
@@ -125,10 +133,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return `${day}/${month}/${year}`;
         }
 
-        function calculateAmountPerInstallment(totalAmount, installments) {
-            if (installments === 0) return 0;
-            return totalAmount / installments;
+        // Calcula o valor total a receber
+        function calculateTotalToReceive(amountPerInstallment, installments) {
+            return amountPerInstallment * installments;
         }
+
+        // Calcula a porcentagem de juros
+        function calculateInterestPercentage(loanedAmount, totalToReceive) {
+            if (loanedAmount <= 0) return 0; // Evita divisão por zero
+            const interestAmount = totalToReceive - loanedAmount;
+            return ((interestAmount / loanedAmount) * 100).toFixed(2); // Duas casas decimais
+        }
+
 
         function showError(message) {
             errorMessageDiv.textContent = message;
@@ -148,7 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             debtors.forEach(debtor => {
                 const totalPaid = debtor.payments.reduce((sum, p) => sum + p.amount, 0);
-                const remainingAmount = debtor.totalAmount - totalPaid;
+                // Usamos debtor.totalToReceive agora para o cálculo do restante
+                const remainingAmount = debtor.totalToReceive - totalPaid;
 
                 const debtorItem = document.createElement('div');
                 debtorItem.className = 'debtor-item';
@@ -158,7 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="debtor-info">
                         <h2>${debtor.name}</h2>
                         <p>${debtor.description || 'Sem descrição'}</p>
-                        <p>Total: ${formatCurrency(debtor.totalAmount)}</p>
+                        <p>Emprestado: ${formatCurrency(debtor.loanedAmount)}</p>
+                        <p>Total a Receber: ${formatCurrency(debtor.totalToReceive)}</p>
                         <p>Restante: <span style="color: ${remainingAmount > 0 ? 'var(--error-color)' : 'var(--success-color)'}">${formatCurrency(remainingAmount)}</span></p>
                     </div>
                     <div class="debtor-actions">
@@ -202,43 +220,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const name = debtorNameInput.value;
             const description = debtorDescriptionInput.value;
-            const totalAmount = parseFloat(totalAmountInput.value);
+            // NOVOS CAMPOS DO FORMULÁRIO
+            const loanedAmount = parseFloat(loanedAmountInput.value);
+            const amountPerInstallment = parseFloat(amountPerInstallmentInput.value);
+            // FIM DOS NOVOS CAMPOS
             const installments = parseInt(installmentsInput.value);
             const startDate = startDateInput.value;
 
-            if (isNaN(totalAmount) || isNaN(installments) || totalAmount <= 0 || installments <= 0) {
-                showError('Por favor, insira valores válidos para Valor Total e Parcelas.');
+            if (isNaN(loanedAmount) || isNaN(amountPerInstallment) || isNaN(installments) ||
+                loanedAmount <= 0 || amountPerInstallment <= 0 || installments <= 0) {
+                showError('Por favor, insira valores válidos e maiores que zero para todos os campos numéricos.');
                 return;
             }
+
+            // Cálculos
+            const totalToReceive = calculateTotalToReceive(amountPerInstallment, installments);
+            const interestPercentage = calculateInterestPercentage(loanedAmount, totalToReceive);
+
 
             if (currentDebtorId) { // Editando devedor existente
                 const debtorIndex = debtors.findIndex(d => d.id === currentDebtorId);
                 if (debtorIndex > -1) {
                     const oldDebtor = debtors[debtorIndex];
 
-                    // Atualiza apenas os campos do formulário de edição
                     oldDebtor.name = name;
                     oldDebtor.description = description;
-                    oldDebtor.totalAmount = totalAmount;
+                    oldDebtor.loanedAmount = loanedAmount; // Atualiza o valor emprestado
+                    oldDebtor.amountPerInstallment = amountPerInstallment; // Atualiza o valor da parcela
                     oldDebtor.installments = installments;
                     oldDebtor.startDate = startDate;
+                    // Atualiza os valores calculados
+                    oldDebtor.totalToReceive = totalToReceive;
+                    oldDebtor.interestPercentage = interestPercentage;
 
-                    // Recalcula valor por parcela se o total ou parcelas mudarem
-                    oldDebtor.amountPerInstallment = calculateAmountPerInstallment(totalAmount, installments);
-
-                    // Revalida/ajusta pagamentos se o valor total mudar drasticamente
-                    // Implementação mais complexa pode ser necessária aqui para lidar com pagamentos já feitos
-                    // Por simplicidade, assumimos que pagamentos existentes são válidos.
+                    // Se o número de parcelas mudou, ajuste o array de pagamentos
+                    if (oldDebtor.payments.length > installments) {
+                        oldDebtor.payments = oldDebtor.payments.slice(0, installments);
+                    }
                 }
             } else { // Adicionando novo devedor
                 const newDebtor = {
                     id: Date.now(), // ID único baseado no timestamp
                     name,
                     description,
-                    totalAmount,
+                    loanedAmount,             // Novo campo
+                    amountPerInstallment,     // Novo campo
                     installments,
                     startDate,
-                    amountPerInstallment: calculateAmountPerInstallment(totalAmount, installments),
+                    totalToReceive,           // Valor calculado
+                    interestPercentage,       // Valor calculado
                     payments: []
                 };
                 debtors.push(newDebtor);
@@ -259,7 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (debtor) {
                     debtorNameInput.value = debtor.name;
                     debtorDescriptionInput.value = debtor.description;
-                    totalAmountInput.value = debtor.totalAmount;
+                    loanedAmountInput.value = debtor.loanedAmount;             // Preenche
+                    amountPerInstallmentInput.value = debtor.amountPerInstallment; // Preenche
                     installmentsInput.value = debtor.installments;
                     startDateInput.value = debtor.startDate;
                 }
@@ -283,15 +314,42 @@ document.addEventListener('DOMContentLoaded', () => {
             if (debtor) {
                 detailDebtorName.textContent = debtor.name;
                 detailDebtorDescription.textContent = debtor.description;
-                detailTotalAmount.textContent = formatCurrency(debtor.totalAmount);
+                // NOVOS CAMPOS NA VISUALIZAÇÃO
+                detailLoanedAmount.textContent = formatCurrency(debtor.loanedAmount);
+                detailTotalToReceive.textContent = formatCurrency(debtor.totalToReceive);
+                detailInterestPercentage.textContent = `${debtor.interestPercentage}%`; // Exibe com '%'
+                // FIM DOS NOVOS CAMPOS
                 detailInstallments.textContent = debtor.installments;
-                detailAmountPerInstallment.textContent = formatCurrency(debtor.amountPerInstallment);
+                detailAmountPerInstallment.textContent = formatCurrency(debtor.amountPerInstallment); // Valor da Parcela
                 detailStartDate.textContent = formatDate(debtor.startDate);
+
+                // Carrega a preferência de ocultar do localStorage
+                const hideTotalToReceivePref = localStorage.getItem('hideTotalToReceive');
+                if (hideTotalToReceivePref === 'true') {
+                    toggleTotalToReceive.checked = true;
+                    detailTotalToReceive.classList.add('hidden-value');
+                } else {
+                    toggleTotalToReceive.checked = false;
+                    detailTotalToReceive.classList.remove('hidden-value');
+                }
+
 
                 renderPaymentsGrid(debtor);
                 debtorDetailModal.style.display = 'flex'; // Use flex para centralizar
             }
         }
+        
+        // Listener para o checkbox de ocultar/mostrar valor a receber
+        toggleTotalToReceive.addEventListener('change', () => {
+            if (toggleTotalToReceive.checked) {
+                detailTotalToReceive.classList.add('hidden-value');
+                localStorage.setItem('hideTotalToReceive', 'true');
+            } else {
+                detailTotalToReceive.classList.remove('hidden-value');
+                localStorage.setItem('hideTotalToReceive', 'false');
+            }
+        });
+
 
         function renderPaymentsGrid(debtor) {
             paymentsGrid.innerHTML = '';
@@ -392,12 +450,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     debtor.payments.push(paymentToAdd);
                 }
-
-                // Ordena os pagamentos pela data da parcela (se for para manter a ordem)
-                // ou simplesmente pela ordem de index se o user.story for de marcar parcela a parcela.
-                // Para simplificar, vou assumir que a ordem no array corresponde à ordem da parcela.
-                // Se o seu caso de uso exigir, pode ordenar por data de pagamento aqui:
-                // debtor.payments.sort((a, b) => new Date(a.date) - new Date(b.date));
                 
                 localStorage.setItem('debtors', JSON.stringify(debtors));
                 renderPaymentsGrid(debtor); // Re-renderiza a grade de pagamentos
@@ -424,12 +476,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (debtorIndex > -1) {
                 const debtor = debtors[debtorIndex];
                 // Remove o pagamento na posição indicada
+                // Use splice para remover e preencher o "buraco" ou null para manter o slot
+                // Se a intenção é que um pagamento para a parcela N seja sempre a N-ésima posição,
+                // então null é melhor, mas complica a lógica de payments.reduce
+                // Para simplificar, continuaremos a remover o item do array e assumimos
+                // que o ordernação do array de payments reflete a ordem das parcelas pagas.
                 debtor.payments.splice(paymentIndex, 1);
                 
-                // Opcional: preencher o slot vazio com o próximo pagamento para manter a sequência
-                // ou deixar vazio se for para refletir "pagamento removido" para aquela parcela.
-                // Para este exemplo, simplesmente removemos e deixamos o slot pendente.
-
                 localStorage.setItem('debtors', JSON.stringify(debtors));
                 renderPaymentsGrid(debtor); // Re-renderiza para mostrar a remoção
                 renderDebtors(); // Atualiza o saldo geral
