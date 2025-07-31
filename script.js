@@ -351,34 +351,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            // Adiciona evento para deletar pagamento (delegado)
-            paymentsGrid.querySelectorAll('.delete-payment-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    e.stopPropagation(); // Impede que o clique no botão ative o evento de clique do item pai
-                    const paymentIdToDelete = e.target.dataset.paymentId;
-                    if (confirm('Tem certeza que deseja excluir este pagamento?')) {
-                        hideErrorMessage();
-                        try {
-                            // Correção de _id: usando _id do MongoDB
-                            const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}/payments/${paymentIdToDelete}`, {
-                                method: 'DELETE'
-                            });
-                            if (response.ok) {
-                                alert('Pagamento excluído com sucesso!');
-                                // Correção de _id: usando _id do MongoDB
-                                showDebtorDetail(currentDebtor._id); // Recarrega os detalhes para atualizar as parcelas
-                                loadDebtors(); // Recarrega a lista principal de devedores (para atualizar o saldo)
-                            } else {
-                                const errorText = await response.text();
-                                showErrorMessage(errorText || 'Erro ao excluir pagamento.');
-                            }
-                        } catch (error) {
-                            console.error('Erro ao excluir pagamento:', error);
-                            showErrorMessage('Erro de rede ao excluir pagamento.');
-                        }
-                    }
-                });
-            });
+            // O BLOCO DE CÓDIGO ANTERIOR QUE ANEXAVA LISTENERS INDIVIDUAIS FOI REMOVIDO DAQUI
+            // E SUBSTITUÍDO POR DELEGAÇÃO DE EVENTOS ABAIXO, FORA DE renderPayments
         };
 
         // --- Event Listeners Globais do Dashboard ---
@@ -443,6 +417,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 addPaymentButton.textContent = 'Adicionar Pagamento';
             }
         });
+
+        // NOVO: Delegação de evento para deletar pagamentos
+        paymentsGrid.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-payment-btn')) {
+                e.stopPropagation(); // Impede que o clique no botão ative o evento de clique do item pai
+                const paymentIdToDelete = e.target.dataset.paymentId;
+
+                if (!currentDebtor || !currentDebtor._id) {
+                    showErrorMessage('Erro: Devedor atual não identificado para exclusão do pagamento.');
+                    return;
+                }
+
+                if (confirm('Tem certeza que deseja excluir este pagamento?')) {
+                    hideErrorMessage();
+                    try {
+                        const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}/payments/${paymentIdToDelete}`, {
+                            method: 'DELETE'
+                        });
+                        if (response.ok) {
+                            alert('Pagamento excluído com sucesso!');
+                            showDebtorDetail(currentDebtor._id); // Recarrega os detalhes para atualizar as parcelas
+                            loadDebtors(); // Recarrega a lista principal de devedores (para atualizar o saldo)
+                        } else {
+                            const errorText = await response.text();
+                            showErrorMessage(errorText || 'Erro ao excluir pagamento.');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao excluir pagamento:', error);
+                        showErrorMessage('Erro de rede ao excluir pagamento.');
+                    }
+                }
+            }
+        });
+
 
         addDebtorButton.addEventListener('click', () => {
             addEditModalTitle.textContent = 'Adicionar Novo Devedor';
