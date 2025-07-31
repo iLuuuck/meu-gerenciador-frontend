@@ -488,8 +488,8 @@ input:focus {
         flex-shrink: 0;
     }
     /*
-       REMOVIDO: Esta regra não é mais necessária aqui, pois a opacidade padrão já é 1
-       e o :hover já lida com a transição em desktop.
+        REMOVIDO: Esta regra não é mais necessária aqui, pois a opacidade padrão já é 1
+        e o :hover já lida com a transição em desktop.
     .debtor-actions {
         position: static;
         opacity: 1;
