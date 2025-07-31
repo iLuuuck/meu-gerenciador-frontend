@@ -18,6 +18,8 @@
     --modal-background-color: #424242; /* Fundo do modal */
     --button-secondary-bg: #5a5a5a; /* Botão secundário cinza */
     --button-secondary-hover-bg: #6a6a6a; /* Hover do botão secundário */
+    /* NOVA VARIÁVEL: Cor do texto para botões primários no tema dark */
+    --button-primary-text-color: #212121; /* Um tom escuro para o texto */
 }
 
 /* Tema Claro (aplicado quando a classe light-theme está no body) - Mantém o que já está bom */
@@ -35,6 +37,8 @@ body.light-theme {
     --primary-color: #4CAF50; /* Um verde mais comum para o tema claro */
     --accent-color: #4CAF50;
     --accent-color-hover: #45a049;
+    /* No tema claro, o texto dos botões primários pode continuar branco ou escuro se preferir */
+    --button-primary-text-color: #ffffff; /* Mantém branco para contraste com o verde */
 }
 
 /* --- Estilos Gerais --- */
@@ -65,7 +69,7 @@ button {
     border-radius: 5px;
     padding: 10px 15px;
     font-size: 1em;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s; /* Adicionada transição para a cor do texto */
 }
 
 /* --- Layout da Página de Login (index.html) --- */
@@ -113,14 +117,15 @@ button {
 
 .button {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--button-primary-text-color); /* AGORA USA A NOVA VARIÁVEL */
     padding: 12px 25px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1.1em;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s;
     width: 100%; /* Botão ocupa toda a largura */
+    /* Removido o text-shadow para simplificar, já que a cor do texto será mais escura */
 }
 
 .button:hover {
@@ -173,6 +178,8 @@ button {
 .header-actions .button {
     padding: 8px 15px;
     font-size: 0.9em;
+    color: var(--button-primary-text-color); /* AGORA USA A NOVA VARIÁVEL */
+    /* Removido o text-shadow */
 }
 
 .theme-toggle-button {
@@ -261,11 +268,12 @@ button {
     font-size: 0.85em;
     flex-grow: 1; /* Ocupam o espaço disponível */
     min-width: 100px; /* Largura mínima para botões em telas pequenas */
+    color: var(--button-primary-text-color); /* AGORA USA A NOVA VARIÁVEL */
+    /* Removido o text-shadow */
 }
 
 .edit-debtor-btn {
     background-color: var(--primary-color);
-    color: white;
 }
 
 .edit-debtor-btn:hover {
@@ -275,7 +283,6 @@ button {
 
 .delete-debtor-btn {
     background-color: var(--error-color);
-    color: white;
 }
 
 .delete-debtor-btn:hover {
@@ -377,6 +384,7 @@ button {
 .modal-footer .button {
     width: auto;
     padding: 10px 20px;
+    color: var(--button-primary-text-color); /* AGORA USA A NOVA VARIÁVEL */
 }
 
 /* Detalhes do Devedor Específicos */
@@ -542,6 +550,7 @@ input:checked + .slider:before {
     width: auto;
     padding: 10px 15px;
     flex-shrink: 0; /* Impede que o botão encolha demais */
+    color: var(--button-primary-text-color); /* AGORA USA A NOVA VARIÁVEL */
 }
 
 /* Responsive Design */
