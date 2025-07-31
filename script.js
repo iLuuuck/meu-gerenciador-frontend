@@ -1,172 +1,68 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Variáveis Globais (elementos que podem estar em qualquer página ou são base) ---
-    const API_URL = 'https://gerenciador-de-devedores-api.onrender.com'; // Sua URL da API no Render
+    const API_URL = 'https://gerenciador-emprestimos-api.onrender.com';
 
-    // Modal de Mensagem (Sucesso/Erro/Informação) - pode ser global se você quiser usá-lo em todas as páginas
-    const messageModal = document.getElementById('messageModal');
-    const closeMessageModal = document.getElementById('closeMessageModal');
-    const messageModalTitle = document.getElementById('messageModalTitle');
-    const messageModalContent = document.getElementById('messageModalContent');
-    const messageModalConfirmBtn = document.getElementById('messageModalConfirmBtn');
+    const errorMessageElement = document.getElementById('errorMessage');
 
-    // Modal de Confirmação (para Exclusão)
-    const confirmModal = document.getElementById('confirmModal');
-    const closeConfirmModal = document.getElementById('closeConfirmModal');
-    const confirmModalContent = document.getElementById('confirmModalContent');
-    const confirmModalYes = document.getElementById('confirmModalYes');
-    const confirmModalNo = document.getElementById('confirmModalNo');
-
-    // --- Funções Auxiliares Comuns ---
-
-    const showCustomMessage = (title, message, type = 'info', callback = null) => {
-        if (!messageModal) return; // Garante que o modal exista na página
-        messageModalTitle.textContent = title;
-        messageModalContent.textContent = message;
-
-        if (type === 'success') {
-            messageModalTitle.style.color = 'var(--success-color)';
-            messageModalConfirmBtn.style.backgroundColor = 'var(--success-color)';
-        } else if (type === 'error') {
-            messageModalTitle.style.color = 'var(--error-color)';
-            messageModalConfirmBtn.style.backgroundColor = 'var(--error-color)';
-        } else {
-            messageModalTitle.style.color = 'var(--text-color)';
-            messageModalConfirmBtn.style.backgroundColor = 'var(--accent-color)';
+    const showErrorMessage = (message) => {
+        if (errorMessageElement) {
+            errorMessageElement.textContent = message;
+            errorMessageElement.style.display = 'block';
         }
-
-        messageModalConfirmBtn.style.display = 'block';
-        messageModalConfirmBtn.onclick = () => {
-            messageModal.style.display = 'none';
-            if (callback) callback();
-        };
-        messageModal.style.display = 'flex';
     };
 
-    const showCustomConfirm = (message, callback) => {
-        if (!confirmModal) return; // Garante que o modal exista na página
-        confirmModalContent.textContent = message;
-        confirmModal.style.display = 'flex';
-
-        confirmModalYes.onclick = () => {
-            confirmModal.style.display = 'none';
-            callback(true);
-        };
-        confirmModalNo.onclick = () => {
-            confirmModal.style.display = 'none';
-            callback(false);
-        };
+    const hideErrorMessage = () => {
+        if (errorMessageElement) {
+            errorMessageElement.textContent = '';
+            errorMessageElement.style.display = 'none';
+        }
     };
 
-    // Fechar os modais personalizados
-    if (closeMessageModal) {
-        closeMessageModal.addEventListener('click', () => {
-            messageModal.style.display = 'none';
-        });
-    }
-    if (closeConfirmModal) {
-        closeConfirmModal.addEventListener('click', () => {
-            confirmModal.style.display = 'none';
-        });
-    }
-    window.addEventListener('click', (e) => {
-        if (messageModal && e.target === messageModal) {
-            messageModal.style.display = 'none';
-        }
-        if (confirmModal && e.target === confirmModal) {
-            confirmModal.style.display = 'none';
-        }
-    });
+    const getToken = () => localStorage.getItem('accessToken');
 
     const fetchWithAuth = async (url, options = {}) => {
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-            // Se não há token, redireciona para o login (assumindo que esta função é chamada do dashboard)
-            // Se estiver no index.html, ele já estaria na tela de login, então não faz mal
-            window.location.href = 'index.html';
-            throw new Error('No token found');
-        }
-        options.headers = {
+        const token = getToken();
+        const headers = {
             ...options.headers,
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         };
-        return fetch(url, options);
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, { ...options, headers });
+
+        if (response.status === 401 || response.status === 403) {
+            alert('Sessão expirada ou não autorizado. Por favor, faça login novamente.');
+            localStorage.removeItem('accessToken');
+            window.location.href = 'index.html';
+            throw new Error('Sessão expirada ou não autorizado.');
+        }
+        return response;
     };
 
-    // --- Lógica para index.html (Login/Registro) ---
-    const loginSection = document.getElementById('loginSection');
-    const registerSection = document.getElementById('registerSection');
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    const toggleToRegister = document.getElementById('toggleToRegister');
-    const toggleToLogin = document.getElementById('toggleToLogin');
-    const loginErrorMessage = document.getElementById('loginErrorMessage');
-    const registerErrorMessage = document.getElementById('registerErrorMessage');
-
-    if (loginSection && registerSection) { // Verificação para garantir que estamos no index.html
-        const hideErrorMessage = () => {
-            if (loginErrorMessage) loginErrorMessage.style.display = 'none';
-            if (registerErrorMessage) registerErrorMessage.style.display = 'none';
-        };
-
-        const displayErrorMessage = (element, message) => {
-            if (element) { // Adicionado verificação para garantir que o elemento exista
-                element.textContent = message;
-                element.style.display = 'block';
-            }
-        };
-
-        const showAuthPage = (page) => {
-            loginSection.style.display = 'none';
-            registerSection.style.display = 'none';
-            if (page === 'login') {
-                loginSection.style.display = 'flex';
-            } else if (page === 'register') {
-                registerSection.style.display = 'flex';
-            }
-        };
-
-        // Verifica se há um token ao carregar a página
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-            window.location.href = 'dashboard.html'; // Redireciona para o dashboard se já logado
-        } else {
-            showAuthPage('login'); // Mostra a tela de login se não há token
-        }
-
-        // Eventos de alternância entre login e registro
-        if (toggleToRegister) {
-            toggleToRegister.addEventListener('click', (e) => {
-                e.preventDefault();
-                hideErrorMessage();
-                if (loginForm) loginForm.reset();
-                showAuthPage('register');
-            });
-        }
-
-        if (toggleToLogin) {
-            toggleToLogin.addEventListener('click', (e) => {
-                e.preventDefault();
-                hideErrorMessage();
-                if (registerForm) registerForm.reset();
-                showAuthPage('login');
-            });
-        }
+    if (window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/')) {
+        const loginForm = document.getElementById('loginForm');
 
         if (loginForm) {
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const loginButton = loginForm.querySelector('button[type="submit"]');
+
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 hideErrorMessage();
-                const username = loginForm.username.value.trim();
-                const password = loginForm.password.value.trim();
+
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value.trim();
 
                 if (!username || !password) {
-                    displayErrorMessage(loginErrorMessage, 'Por favor, preencha todos os campos.');
+                    showErrorMessage('Por favor, preencha todos os campos de usuário e senha.');
                     return;
                 }
 
-                loginForm.loginButton.disabled = true;
-                loginForm.loginButton.textContent = 'Entrando...';
+                loginButton.disabled = true;
+                loginButton.textContent = 'Entrando...';
 
                 try {
                     const response = await fetch(`${API_URL}/login`, {
@@ -180,230 +76,66 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (response.ok) {
                         const data = await response.json();
                         localStorage.setItem('accessToken', data.accessToken);
-                        window.location.href = 'dashboard.html'; // Redireciona para o dashboard
+                        window.location.href = 'dashboard.html';
                     } else {
-                        const errorData = await response.json();
-                        displayErrorMessage(loginErrorMessage, errorData.message || 'Erro ao fazer login.');
+                        const errorText = await response.text();
+                        showErrorMessage(errorText || 'Erro ao fazer login. Verifique suas credenciais.');
                     }
                 } catch (error) {
                     console.error('Erro de rede ou servidor:', error);
-                    displayErrorMessage(loginErrorMessage, 'Erro de conexão. Tente novamente mais tarde.');
+                    showErrorMessage('Não foi possível conectar ao servidor. Tente novamente mais tarde.');
                 } finally {
-                    loginForm.loginButton.disabled = false;
-                    loginForm.loginButton.textContent = 'Entrar';
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Entrar';
                 }
             });
         }
 
-        if (registerForm) {
-            registerForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                hideErrorMessage();
-                const username = registerForm.username.value.trim();
-                const password = registerForm.password.value.trim();
-
-                if (!username || !password) {
-                    displayErrorMessage(registerErrorMessage, 'Por favor, preencha todos os campos.');
-                    return;
-                }
-
-                registerForm.registerButton.disabled = true;
-                registerForm.registerButton.textContent = 'Registrando...';
-
-                try {
-                    const response = await fetch(`${API_URL}/register`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ username, password })
-                    });
-
-                    if (response.ok) {
-                        showCustomMessage('Sucesso!', 'Usuário registrado com sucesso! Você já pode fazer login.', 'success', () => {
-                            showAuthPage('login');
-                            registerForm.reset();
-                        });
-                    } else {
-                        const errorData = await response.json();
-                        displayErrorMessage(registerErrorMessage, errorData.message || 'Erro ao registrar usuário.');
-                    }
-                } catch (error) {
-                    console.error('Erro de rede ou servidor:', error);
-                    displayErrorMessage(registerErrorMessage, 'Erro de conexão. Tente novamente mais tarde.');
-                } finally {
-                    registerForm.registerButton.disabled = false;
-                    registerForm.registerButton.textContent = 'Registrar';
-                }
-            });
+        if (getToken()) {
+            window.location.href = 'dashboard.html';
         }
+
     }
 
+    if (window.location.pathname.endsWith('dashboard.html')) {
+        const debtorsListElement = document.getElementById('debtorsList');
+        const addDebtorButton = document.getElementById('addDebtorButton');
+        const logoutButton = document.getElementById('logoutButton');
 
-    // --- Lógica para dashboard.html ---
-    const dashboardSection = document.getElementById('dashboardSection');
-    const logoutButton = document.getElementById('logoutButton');
-    const addDebtorButton = document.getElementById('addDebtorButton');
-    const addEditDebtorModal = document.getElementById('addEditDebtorModal');
-    const closeAddEditDebtorModal = document.getElementById('closeAddEditDebtorModal');
-    const addEditDebtorForm = document.getElementById('addEditDebtorForm');
-    const modalTitle = document.getElementById('modalTitle');
-    const debtorIdInput = document.getElementById('debtorId');
-    const nameInput = document.getElementById('name');
-    const descriptionInput = document.getElementById('description');
-    const totalAmountInput = document.getElementById('totalAmount');
-    const installmentsInput = document.getElementById('installments');
-    const startDateInput = document.getElementById('startDate');
-    const saveDebtorButton = document.getElementById('saveDebtorButton');
-    const debtorsListElement = document.getElementById('debtorsList');
-    const errorMessageElement = document.getElementById('errorMessage'); // Erro no dashboard
+        const debtorDetailModal = document.getElementById('debtorDetailModal');
+        const closeDetailModalButton = debtorDetailModal.querySelector('.close-button');
+        const detailDebtorName = document.getElementById('detailDebtorName');
+        // NOVO: Elemento para exibir a descrição no modal de detalhes
+        const detailDebtorDescription = document.getElementById('detailDebtorDescription');
+        const detailTotalAmount = document.getElementById('detailTotalAmount');
+        const detailInstallments = document.getElementById('detailInstallments');
+        const detailAmountPerInstallment = document.getElementById('detailAmountPerInstallment');
+        const detailStartDate = document.getElementById('detailStartDate');
+        const paymentsGrid = document.getElementById('paymentsGrid');
+        const paymentAmountInput = document.getElementById('paymentAmount');
+        const paymentDateInput = document.getElementById('paymentDate');
+        const addPaymentButton = document.getElementById('addPaymentButton');
+        const fillAmountButton = document.getElementById('fillAmountButton');
 
-    const debtorDetailsModal = document.getElementById('debtorDetailsModal');
-    const closeDebtorDetailsModal = document.getElementById('closeDebtorDetailsModal');
-    const detailsDebtorName = document.getElementById('detailsDebtorName');
-    const detailsDebtorDescription = document.getElementById('detailsDebtorDescription');
-    const detailsTotalAmount = document.getElementById('detailsTotalAmount');
-    const detailsInstallments = document.getElementById('detailsInstallments');
-    const detailsAmountPerInstallment = document.getElementById('detailsAmountPerInstallment');
-    const detailsStartDate = document.getElementById('detailsStartDate');
-    const detailsRemainingBalance = document.getElementById('detailsRemainingBalance');
-    const editDebtorButton = document.getElementById('editDebtorButton');
-    const deleteDebtorButton = document.getElementById('deleteDebtorButton');
-    const paymentsGrid = document.getElementById('paymentsGrid');
-    const addPaymentForm = document.getElementById('addPaymentForm');
-    const currentDebtorIdInput = document.getElementById('currentDebtorId');
-    const paymentAmountInput = document.getElementById('paymentAmount');
-    const paymentDateInput = document.getElementById('paymentDate');
-    const addPaymentButton = document.getElementById('addPaymentButton');
+        const addEditDebtorModal = document.getElementById('addEditDebtorModal');
+        const closeAddEditModalButton = addEditDebtorModal.querySelector('.close-button');
+        const addEditModalTitle = document.getElementById('addEditModalTitle');
+        const addEditDebtorForm = document.getElementById('addEditDebtorForm');
+        const debtorNameInput = document.getElementById('debtorName');
+        // NOVO: Input para a descrição no modal de adicionar/editar
+        const debtorDescriptionInput = document.getElementById('debtorDescription');
+        const totalAmountInput = document.getElementById('totalAmount');
+        const installmentsInput = document.getElementById('installments');
+        const startDateInput = document.getElementById('startDate');
+        const saveDebtorButton = document.getElementById('saveDebtorButton');
 
-    // Variáveis para feedback visual no dashboard
-    const actionMessageElement = document.getElementById('actionMessage');
-
-    // Variáveis para elementos de estatísticas
-    const totalDebtorsCount = document.getElementById('totalDebtorsCount');
-    const totalAmountDue = document.getElementById('totalAmountDue');
-    const totalAmountPaid = document.getElementById('totalAmountPaid');
-    const totalRemainingBalance = document.getElementById('totalRemainingBalance');
-
-
-    if (dashboardSection) { // Verificação para garantir que estamos no dashboard.html
-
-        const hideDashboardErrorMessage = () => {
-            if (errorMessageElement) errorMessageElement.style.display = 'none';
-        };
-
-        const displayDashboardErrorMessage = (element, message) => {
-            if (element) {
-                element.textContent = message;
-                element.style.display = 'block';
-            }
-        };
-
-        const showActionMessage = (message, type = 'info') => {
-            if (!actionMessageElement) return;
-            actionMessageElement.textContent = message;
-            actionMessageElement.style.display = 'block';
-            if (type === 'success') {
-                actionMessageElement.className = 'success-message';
-            } else if (type === 'error') {
-                actionMessageElement.className = 'error-message';
-            } else {
-                actionMessageElement.className = 'loading-message';
-            }
-        };
-
-        const hideActionMessage = () => {
-            if (actionMessageElement) {
-                actionMessageElement.style.display = 'none';
-                actionMessageElement.textContent = '';
-            }
-        };
-
-        const setButtonLoading = (button, isLoading) => {
-            if (!button) return;
-            if (isLoading) {
-                button.classList.add('loading');
-                button.dataset.originalText = button.textContent;
-                button.innerHTML = '<span class="spinner"></span> Carregando...';
-            } else {
-                button.classList.remove('loading');
-                button.textContent = button.dataset.originalText;
-                delete button.dataset.originalText;
-            }
-        };
-
-        const updateStats = (debtors) => {
-            if (!totalDebtorsCount || !totalAmountDue || !totalAmountPaid || !totalRemainingBalance) return;
-
-            let count = debtors.length;
-            let totalDue = 0;
-            let totalPaid = 0;
-            let totalRemaining = 0;
-
-            debtors.forEach(debtor => {
-                totalDue += debtor.totalAmount;
-                const currentPaid = (debtor.payments || []).reduce((sum, p) => sum + p.amount, 0);
-                totalPaid += currentPaid;
-                totalRemaining += debtor.remainingBalance;
-            });
-
-            totalDebtorsCount.textContent = count;
-            totalAmountDue.textContent = `R$ ${totalDue.toFixed(2).replace('.', ',')}`;
-            totalAmountPaid.textContent = `R$ ${totalPaid.toFixed(2).replace('.', ',')}`;
-            totalRemainingBalance.textContent = `R$ ${totalRemaining.toFixed(2).replace('.', ',')}`;
-        };
-
-        // --- Autenticação e Logout no Dashboard ---
-        if (logoutButton) {
-            logoutButton.addEventListener('click', () => {
-                localStorage.removeItem('accessToken');
-                window.location.href = 'index.html'; // Redireciona para o login
-            });
-        }
-
-        // --- Gerenciamento de Modais no Dashboard ---
-        if (addDebtorButton) {
-            addDebtorButton.addEventListener('click', () => {
-                if (!addEditDebtorModal) return;
-                modalTitle.textContent = 'Adicionar Novo Devedor';
-                addEditDebtorForm.reset();
-                debtorIdInput.value = '';
-                addEditDebtorModal.style.display = 'flex';
-                hideDashboardErrorMessage();
-                hideActionMessage();
-            });
-        }
-
-        if (closeAddEditDebtorModal) {
-            closeAddEditDebtorModal.addEventListener('click', () => {
-                if (addEditDebtorModal) addEditDebtorModal.style.display = 'none';
-            });
-        }
-
-        if (closeDebtorDetailsModal) {
-            closeDebtorDetailsModal.addEventListener('click', () => {
-                if (debtorDetailsModal) debtorDetailsModal.style.display = 'none';
-            });
-        }
-
-        window.addEventListener('click', (e) => {
-            if (addEditDebtorModal && e.target === addEditDebtorModal) {
-                addEditDebtorModal.style.display = 'none';
-            }
-            if (debtorDetailsModal && e.target === debtorDetailsModal) {
-                debtorDetailsModal.style.display = 'none';
-            }
-        });
-
-
-        // --- CRUD de Devedores ---
+        let currentDebtor = null;
+        let selectedPaymentSquare = null;
+        let selectedInstallmentAmount = 0;
 
         const loadDebtors = async () => {
-            hideDashboardErrorMessage();
-            hideActionMessage();
-            if (debtorsListElement) {
-                debtorsListElement.innerHTML = '<p class="loading-message">Carregando devedores...</p>';
-            }
+            hideErrorMessage();
+            debtorsListElement.innerHTML = '<p class="loading-message">Carregando devedores...</p>';
             try {
                 const response = await fetchWithAuth(`${API_URL}/debtors`);
                 if (!response.ok) {
@@ -411,302 +143,435 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const debtors = await response.json();
                 renderDebtors(debtors);
-                updateStats(debtors);
             } catch (error) {
-                console.error('Erro ao buscar devedores:', error);
-                displayDashboardErrorMessage(errorMessageElement, 'Erro ao carregar devedores. Tente novamente.');
-                if (debtorsListElement) {
-                    debtorsListElement.innerHTML = '<p class="error-message">Não foi possível carregar os devedores.</p>';
+                console.error('Erro ao carregar devedores:', error);
+                if (!errorMessageElement.style.display || errorMessageElement.style.display === 'none') {
+                    showErrorMessage('Não foi possível carregar os devedores. Verifique sua conexão ou sessão.');
                 }
+                debtorsListElement.innerHTML = '<p class="loading-message">Erro ao carregar devedores.</p>';
             }
         };
 
         const renderDebtors = (debtors) => {
-            if (!debtorsListElement) return;
             debtorsListElement.innerHTML = '';
             if (debtors.length === 0) {
-                debtorsListElement.innerHTML = '<p class="no-data-message">Nenhum devedor cadastrado ainda.</p>';
+                debtorsListElement.innerHTML = '<p class="loading-message">Nenhum devedor cadastrado ainda. Adicione um!</p>';
                 return;
             }
             debtors.forEach(debtor => {
-                const debtorCard = document.createElement('div');
-                debtorCard.className = 'debtor-card';
-                debtorCard.innerHTML = `
-                    <h3>${debtor.name}</h3>
-                    <p><strong>Valor Total:</strong> R$ ${debtor.totalAmount.toFixed(2).replace('.', ',')}</p>
-                    <p><strong>Parcelas:</strong> ${debtor.installments}</p>
-                    <p><strong>Valor por Parcela:</strong> R$ ${debtor.amountPerInstallment.toFixed(2).replace('.', ',')}</p>
-                    <p class="remaining-balance"><strong>Saldo Restante:</strong> R$ ${debtor.remainingBalance.toFixed(2).replace('.', ',')}</p>
-                    <div class="button-group">
-                        <button class="details-button" data-id="${debtor._id}">Detalhes</button>
+                const debtorItem = document.createElement('div');
+                debtorItem.className = 'debtor-item';
+                debtorItem.dataset.id = debtor._id;
+
+                const totalPaid = debtor.payments ? debtor.payments.reduce((sum, p) => sum + p.amount, 0) : 0;
+                const currentBalance = debtor.totalAmount - totalPaid;
+
+                debtorItem.innerHTML = `
+                    <div class="debtor-info">
+                        <h2>${debtor.name}</h2>
+                        ${debtor.description ? `<p class="debtor-description">${debtor.description}</p>` : ''} <p>Parcelas: ${debtor.installments}</p>
+                        <p>Data Início: ${new Date(debtor.startDate).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div class="debtor-balance">
+                        Saldo: R$ ${currentBalance.toFixed(2).replace('.', ',')}
+                    </div>
+                    <div class="debtor-actions">
+                        <button class="edit-debtor-btn">Editar</button>
+                        <button class="delete-debtor-btn">Excluir</button>
                     </div>
                 `;
-                debtorsListElement.appendChild(debtorCard);
+
+                debtorItem.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('edit-debtor-btn') && !e.target.classList.contains('delete-debtor-btn')) {
+                        showDebtorDetail(debtor._id);
+                    }
+                });
+
+                debtorItem.querySelector('.edit-debtor-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editDebtor(debtor._id);
+                });
+                debtorItem.querySelector('.delete-debtor-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteDebtor(debtor._id);
+                });
+
+                debtorsListElement.appendChild(debtorItem);
             });
         };
 
-        if (addEditDebtorForm) {
-            addEditDebtorForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                hideDashboardErrorMessage();
-                hideActionMessage();
-
-                const id = debtorIdInput.value;
-                const name = nameInput.value.trim();
-                const description = descriptionInput.value.trim();
-                const totalAmount = parseFloat(totalAmountInput.value);
-                const installments = parseInt(installmentsInput.value);
-                const startDate = startDateInput.value;
-
-                if (!name || isNaN(totalAmount) || totalAmount <= 0 || isNaN(installments) || installments <= 0 || !startDate) {
-                    displayDashboardErrorMessage(errorMessageElement, 'Por favor, preencha todos os campos obrigatórios corretamente.');
-                    return;
+        const showDebtorDetail = async (id) => {
+            hideErrorMessage();
+            try {
+                const response = await fetchWithAuth(`${API_URL}/debtors/${id}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                const debtor = await response.json();
 
-                setButtonLoading(saveDebtorButton, true);
+                currentDebtor = debtor;
+                selectedPaymentSquare = null;
+                selectedInstallmentAmount = 0;
+                paymentAmountInput.value = '';
+                paymentDateInput.value = new Date().toISOString().split('T')[0];
 
-                try {
-                    const method = id ? 'PUT' : 'POST';
-                    const url = id ? `${API_URL}/debtors/${id}` : `${API_URL}/debtors`;
-                    const body = { name, description, totalAmount, installments, startDate };
+                detailDebtorName.textContent = debtor.name;
+                // NOVO: Exibe a descrição no modal de detalhes
+                detailDebtorDescription.textContent = debtor.description || ''; // Garante que seja vazio se não houver descrição
+                detailDebtorDescription.style.display = debtor.description ? 'block' : 'none'; // Mostra/esconde o elemento
+                
+                detailTotalAmount.textContent = `R$ ${debtor.totalAmount.toFixed(2).replace('.', ',')}`;
+                detailInstallments.textContent = debtor.installments;
+                detailAmountPerInstallment.textContent = `R$ ${debtor.amountPerInstallment.toFixed(2).replace('.', ',')}`;
+                detailStartDate.textContent = new Date(debtor.startDate).toLocaleDateString('pt-BR');
 
-                    const response = await fetchWithAuth(url, {
-                        method: method,
-                        body: JSON.stringify(body)
-                    });
+                renderPayments(debtor.payments || []);
 
-                    if (response.ok) {
-                        showCustomMessage('Sucesso!', `Devedor ${id ? 'atualizado' : 'adicionado'} com sucesso!`, 'success', () => {
-                            if (addEditDebtorModal) addEditDebtorModal.style.display = 'none';
-                            loadDebtors();
-                        });
-                    } else {
-                        const errorData = await response.json();
-                        displayDashboardErrorMessage(errorMessageElement, errorData.message || `Erro ao ${id ? 'atualizar' : 'adicionar'} devedor.`);
-                    }
-                } catch (error) {
-                    console.error('Erro ao salvar devedor:', error);
-                    displayDashboardErrorMessage(errorMessageElement, 'Erro de conexão. Tente novamente mais tarde.');
-                } finally {
-                    setButtonLoading(saveDebtorButton, false);
+                debtorDetailModal.style.display = 'flex';
+            } catch (error) {
+                console.error('Erro ao carregar detalhes do devedor:', error);
+                if (!errorMessageElement.style.display || errorMessageElement.style.display === 'none') {
+                    showErrorMessage('Não foi possível carregar os detalhes do devedor.');
                 }
-            });
-        }
-
-        // --- Detalhes do Devedor e Pagamentos ---
-
-        if (debtorsListElement) {
-            debtorsListElement.addEventListener('click', async (e) => {
-                if (e.target.classList.contains('details-button')) {
-                    hideDashboardErrorMessage();
-                    hideActionMessage();
-                    const debtorId = e.target.dataset.id;
-                    if (currentDebtorIdInput) currentDebtorIdInput.value = debtorId;
-                    if (paymentsGrid) paymentsGrid.innerHTML = '<p class="loading-message">Carregando pagamentos...</p>';
-
-                    try {
-                        const response = await fetchWithAuth(`${API_URL}/debtors/${debtorId}`);
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        const debtor = await response.json();
-                        displayDebtorDetails(debtor);
-                        renderPayments(debtor.payments);
-                        if (debtorDetailsModal) debtorDetailsModal.style.display = 'flex';
-                    } catch (error) {
-                        console.error('Erro ao buscar detalhes do devedor:', error);
-                        displayDashboardErrorMessage(errorMessageElement, 'Erro ao carregar detalhes do devedor.');
-                        if (paymentsGrid) paymentsGrid.innerHTML = '<p class="error-message">Não foi possível carregar os pagamentos.</p>';
-                    }
-                }
-            });
-        }
-
-        const displayDebtorDetails = (debtor) => {
-            if (detailsDebtorName) detailsDebtorName.textContent = debtor.name;
-            if (detailsDebtorDescription) detailsDebtorDescription.textContent = debtor.description || 'Nenhuma descrição.';
-            if (detailsTotalAmount) detailsTotalAmount.textContent = `R$ ${debtor.totalAmount.toFixed(2).replace('.', ',')}`;
-            if (detailsInstallments) detailsInstallments.textContent = debtor.installments;
-            if (detailsAmountPerInstallment) detailsAmountPerInstallment.textContent = `R$ ${debtor.amountPerInstallment.toFixed(2).replace('.', ',')}`;
-            if (detailsStartDate) detailsStartDate.textContent = new Date(debtor.startDate + 'T00:00:00').toLocaleDateString('pt-BR');
-            if (detailsRemainingBalance) detailsRemainingBalance.textContent = `R$ ${debtor.remainingBalance.toFixed(2).replace('.', ',')}`;
-
-            if (addPaymentForm) addPaymentForm.reset();
+            }
         };
 
         const renderPayments = (payments) => {
-            if (!paymentsGrid) return;
             paymentsGrid.innerHTML = '';
-            if (payments.length === 0) {
-                paymentsGrid.innerHTML = '<p class="no-data-message">Nenhum pagamento registrado ainda.</p>';
-                return;
+
+            if (!currentDebtor) return;
+
+            const installmentData = [];
+            for (let i = 0; i < currentDebtor.installments; i++) {
+                installmentData.push({
+                    number: i + 1,
+                    amount: currentDebtor.amountPerInstallment,
+                    paid: false,
+                    paymentDate: null,
+                    paymentId: null,
+                    coveredAmount: 0
+                });
             }
-            payments.forEach(payment => {
-                const paymentCard = document.createElement('div');
-                paymentCard.className = 'payment-card';
-                paymentCard.innerHTML = `
-                    <p class="payment-amount">R$ ${payment.amount.toFixed(2).replace('.', ',')}</p>
-                    <p>${new Date(payment.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
-                    <button class="delete-payment-btn" data-payment-id="${payment._id}">Excluir</button>
-                `;
-                paymentsGrid.appendChild(paymentCard);
+
+            const paymentsWithUsage = payments.map(p => ({ ...p, usedAmount: 0 }));
+            const sortedPayments = [...paymentsWithUsage].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let currentPaymentIndex = 0;
+            for (let i = 0; i < installmentData.length; i++) {
+                let installment = installmentData[i];
+                let amountNeededForInstallment = installment.amount - installment.coveredAmount;
+
+                while (amountNeededForInstallment > 0 && currentPaymentIndex < sortedPayments.length) {
+                    let payment = sortedPayments[currentPaymentIndex];
+                    let remainingPaymentAmount = payment.amount - payment.usedAmount;
+
+                    if (remainingPaymentAmount > 0) {
+                        let amountToCover = Math.min(amountNeededForInstallment, remainingPaymentAmount);
+
+                        installment.coveredAmount += amountToCover;
+                        payment.usedAmount += amountToCover;
+                        amountNeededForInstallment -= amountToCover;
+
+                        if (installment.coveredAmount >= installment.amount - 0.005) {
+                            installment.paid = true;
+                            installment.paymentId = payment._id;
+                            installment.paymentDate = payment.date;
+                        }
+
+                        if (Math.abs(payment.usedAmount - payment.amount) < 0.005) {
+                            currentPaymentIndex++;
+                        }
+                    } else {
+                        currentPaymentIndex++;
+                    }
+                }
+            }
+
+            installmentData.forEach(installment => {
+                const paymentSquare = document.createElement('div');
+                paymentSquare.className = 'payment-square';
+                paymentSquare.dataset.installmentNumber = installment.number;
+                paymentSquare.dataset.installmentAmount = installment.amount.toFixed(2);
+
+                const displayAmount = installment.amount.toFixed(2).replace('.', ',');
+
+                if (installment.paid) {
+                    paymentSquare.classList.add('paid');
+                    paymentSquare.innerHTML = `
+                        <span>Parcela ${installment.number}</span>
+                        <span>R$ ${displayAmount}</span>
+                        <span>Pago em: ${new Date(installment.paymentDate + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                        ${installment.paymentId ? `<button class="delete-payment-btn" data-payment-id="${installment.paymentId}">Excluir</button>` : ''}
+                    `;
+                } else {
+                    let pendingText = 'Pendente';
+                    if (installment.coveredAmount > 0) {
+                        const remaining = (installment.amount - installment.coveredAmount).toFixed(2).replace('.', ',');
+                        pendingText = `Faltam: R$ ${remaining}`;
+                    }
+
+                    paymentSquare.innerHTML = `
+                        <span>Parcela ${installment.number}</span>
+                        <span>R$ ${displayAmount}</span>
+                        <span>${pendingText}</span>
+                    `;
+                }
+                paymentsGrid.appendChild(paymentSquare);
+
+                paymentSquare.addEventListener('click', () => {
+                    if (selectedPaymentSquare) {
+                        selectedPaymentSquare.classList.remove('selected');
+                    }
+                    paymentSquare.classList.add('selected');
+                    selectedPaymentSquare = paymentSquare;
+
+                    selectedInstallmentAmount = parseFloat(paymentSquare.dataset.installmentAmount);
+                    paymentAmountInput.value = selectedInstallmentAmount.toFixed(2);
+                });
             });
         };
 
-        if (addPaymentForm) {
-            addPaymentForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                hideDashboardErrorMessage();
-                hideActionMessage();
+        fillAmountButton.addEventListener('click', () => {
+            if (selectedInstallmentAmount > 0) {
+                paymentAmountInput.value = selectedInstallmentAmount.toFixed(2);
+            } else {
+                showErrorMessage('Selecione uma parcela para preencher o valor.');
+            }
+        });
 
-                const debtorId = currentDebtorIdInput.value;
-                const amount = parseFloat(paymentAmountInput.value);
-                const date = paymentDateInput.value;
+        addPaymentButton.addEventListener('click', async () => {
+            hideErrorMessage();
+            const amount = parseFloat(paymentAmountInput.value);
+            const date = paymentDateInput.value;
 
-                if (isNaN(amount) || amount <= 0 || !date) {
-                    displayDashboardErrorMessage(errorMessageElement, 'Por favor, insira um valor de pagamento válido e uma data.');
+            if (isNaN(amount) || amount <= 0 || !date) {
+                showErrorMessage('Por favor, insira um valor e uma data válidos para o pagamento.');
+                return;
+            }
+
+            if (!currentDebtor || !currentDebtor._id) {
+                showErrorMessage('Nenhum devedor selecionado para adicionar pagamento.');
+                return;
+            }
+
+            addPaymentButton.disabled = true;
+            addPaymentButton.textContent = 'Adicionando...';
+
+            try {
+                const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}/payments`, {
+                    method: 'POST',
+                    body: JSON.stringify({ amount, date })
+                });
+
+                if (response.ok) {
+                    alert('Pagamento adicionado com sucesso!');
+                    paymentAmountInput.value = '';
+                    paymentDateInput.value = new Date().toISOString().split('T')[0];
+                    selectedInstallmentAmount = 0;
+                    if (selectedPaymentSquare) {
+                        selectedPaymentSquare.classList.remove('selected');
+                        selectedPaymentSquare = null;
+                    }
+                    showDebtorDetail(currentDebtor._id);
+                    loadDebtors();
+                } else {
+                    const errorText = await response.text();
+                    showErrorMessage(errorText || 'Erro ao adicionar pagamento.');
+                }
+            } catch (error) {
+                console.error('Erro ao adicionar pagamento:', error);
+                showErrorMessage('Erro de rede ao adicionar pagamento.');
+            } finally {
+                addPaymentButton.disabled = false;
+                addPaymentButton.textContent = 'Adicionar Pagamento';
+            }
+        });
+
+        paymentsGrid.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-payment-btn')) {
+                e.stopPropagation();
+                const paymentIdToDelete = e.target.dataset.paymentId;
+
+                if (!currentDebtor || !currentDebtor._id) {
+                    showErrorMessage('Erro: Devedor atual não identificado para exclusão do pagamento.');
                     return;
                 }
 
-                setButtonLoading(addPaymentButton, true);
-
-                try {
-                    const response = await fetchWithAuth(`${API_URL}/debtors/${debtorId}/payments`, {
-                        method: 'POST',
-                        body: JSON.stringify({ amount, date })
-                    });
-
-                    if (response.ok) {
-                        const updatedDebtor = await response.json();
-                        showCustomMessage('Sucesso!', 'Pagamento adicionado com sucesso!', 'success', () => {
-                            displayDebtorDetails(updatedDebtor);
-                            renderPayments(updatedDebtor.payments);
-                            loadDebtors(); // Recarrega a lista principal para atualizar o saldo
+                if (confirm('Tem certeza que deseja excluir este pagamento?')) {
+                    hideErrorMessage();
+                    try {
+                        const response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}/payments/${paymentIdToDelete}`, {
+                            method: 'DELETE'
                         });
-                    } else {
-                        const errorData = await response.json();
-                        displayDashboardErrorMessage(errorMessageElement, errorData.message || 'Erro ao adicionar pagamento.');
-                    }
-                } catch (error) {
-                    console.error('Erro ao adicionar pagamento:', error);
-                    displayDashboardErrorMessage(errorMessageElement, 'Erro de conexão. Tente novamente mais tarde.');
-                } finally {
-                    setButtonLoading(addPaymentButton, false);
-                }
-            });
-        }
-
-        if (paymentsGrid) {
-            paymentsGrid.addEventListener('click', async (e) => {
-                if (e.target.classList.contains('delete-payment-btn')) {
-                    const paymentId = e.target.dataset.paymentId;
-                    const debtorId = currentDebtorIdInput.value;
-
-                    showCustomConfirm('Tem certeza que deseja excluir este pagamento?', async (confirmed) => {
-                        if (confirmed) {
-                            hideDashboardErrorMessage();
-                            hideActionMessage();
-                            setButtonLoading(e.target, true);
-
-                            try {
-                                const response = await fetchWithAuth(`${API_URL}/debtors/${debtorId}/payments/${paymentId}`, {
-                                    method: 'DELETE'
-                                });
-
-                                if (response.ok) {
-                                    showCustomMessage('Sucesso!', 'Pagamento excluído com sucesso!', 'success', async () => {
-                                        const updatedDebtorResponse = await fetchWithAuth(`${API_URL}/debtors/${debtorId}`);
-                                        if (updatedDebtorResponse.ok) {
-                                            const updatedDebtor = await updatedDebtorResponse.json();
-                                            displayDebtorDetails(updatedDebtor);
-                                            renderPayments(updatedDebtor.payments);
-                                            loadDebtors();
-                                        } else {
-                                            throw new Error('Erro ao recarregar devedor após exclusão de pagamento.');
-                                        }
-                                    });
-                                } else {
-                                    const errorData = await response.json();
-                                    displayDashboardErrorMessage(errorMessageElement, errorData.message || 'Erro ao excluir pagamento.');
-                                }
-                            } catch (error) {
-                                console.error('Erro ao deletar pagamento:', error);
-                                displayDashboardErrorMessage(errorMessageElement, 'Erro de conexão. Tente novamente mais tarde.');
-                            } finally {
-                                setButtonLoading(e.target, false);
-                            }
+                        if (response.ok) {
+                            alert('Pagamento excluído com sucesso!');
+                            showDebtorDetail(currentDebtor._id);
+                            loadDebtors();
+                        } else {
+                            const errorText = await response.text();
+                            showErrorMessage(errorText || 'Erro ao excluir pagamento.');
                         }
+                    } catch (error) {
+                        console.error('Erro ao excluir pagamento:', error);
+                        showErrorMessage('Erro de rede ao excluir pagamento.');
+                    }
+                }
+            }
+        });
+
+
+        addDebtorButton.addEventListener('click', () => {
+            addEditModalTitle.textContent = 'Adicionar Novo Devedor';
+            addEditDebtorForm.reset();
+            startDateInput.value = new Date().toISOString().split('T')[0];
+            currentDebtor = null;
+            addEditDebtorModal.style.display = 'flex';
+            hideErrorMessage();
+        });
+
+        const editDebtor = async (id) => {
+            hideErrorMessage();
+            try {
+                const response = await fetchWithAuth(`${API_URL}/debtors/${id}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const debtor = await response.json();
+
+                currentDebtor = debtor;
+                addEditModalTitle.textContent = 'Editar Devedor';
+                debtorNameInput.value = debtor.name;
+                debtorDescriptionInput.value = debtor.description || ''; // NOVO: Preenche a descrição
+                totalAmountInput.value = debtor.totalAmount;
+                installmentsInput.value = debtor.installments;
+                startDateInput.value = debtor.startDate;
+
+                addEditDebtorModal.style.display = 'flex';
+            } catch (error) {
+                console.error('Erro ao carregar devedor para edição:', error);
+                if (!errorMessageElement.style.display || errorMessageElement.style.display === 'none') {
+                    showErrorMessage('Não foi possível carregar os dados do devedor para edição.');
+                }
+            }
+        };
+
+        addEditDebtorForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideErrorMessage();
+
+            const name = debtorNameInput.value.trim();
+            const description = debtorDescriptionInput.value.trim(); // NOVO: Pega o valor da descrição
+            const totalAmount = parseFloat(totalAmountInput.value);
+            const installments = parseInt(installmentsInput.value);
+            const startDate = startDateInput.value;
+
+            if (!name || isNaN(totalAmount) || totalAmount <= 0 || isNaN(installments) || installments <= 0 || !startDate) {
+                showErrorMessage('Por favor, preencha todos os campos corretamente (valores numéricos devem ser maiores que zero).');
+                return;
+            }
+
+            const debtorData = {
+                name,
+                description, // NOVO: Inclui a descrição nos dados
+                totalAmount,
+                installments,
+                amountPerInstallment: totalAmount / installments,
+                startDate
+            };
+
+            saveDebtorButton.disabled = true;
+            saveDebtorButton.textContent = 'Salvando...';
+
+            try {
+                let response;
+                if (currentDebtor) {
+                    response = await fetchWithAuth(`${API_URL}/debtors/${currentDebtor._id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(debtorData)
+                    });
+                } else {
+                    response = await fetchWithAuth(`${API_URL}/debtors`, {
+                        method: 'POST',
+                        body: JSON.stringify(debtorData)
                     });
                 }
-            });
-        }
 
-        if (editDebtorButton) {
-            editDebtorButton.addEventListener('click', async () => {
-                hideDashboardErrorMessage();
-                hideActionMessage();
-                const debtorId = currentDebtorIdInput.value;
-
-                try {
-                    const response = await fetchWithAuth(`${API_URL}/debtors/${debtorId}`);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const debtor = await response.json();
-
-                    if (modalTitle) modalTitle.textContent = 'Editar Devedor';
-                    if (debtorIdInput) debtorIdInput.value = debtor._id;
-                    if (nameInput) nameInput.value = debtor.name;
-                    if (descriptionInput) descriptionInput.value = debtor.description;
-                    if (totalAmountInput) totalAmountInput.value = debtor.totalAmount;
-                    if (installmentsInput) installmentsInput.value = debtor.installments;
-                    if (startDateInput) startDateInput.value = debtor.startDate;
-
-                    if (debtorDetailsModal) debtorDetailsModal.style.display = 'none';
-                    if (addEditDebtorModal) addEditDebtorModal.style.display = 'flex';
-                } catch (error) {
-                    console.error('Erro ao carregar devedor para edição:', error);
-                    displayDashboardErrorMessage(errorMessageElement, 'Erro ao carregar dados para edição.');
+                if (response.ok) {
+                    alert('Devedor salvo com sucesso!');
+                    addEditDebtorModal.style.display = 'none';
+                    loadDebtors();
+                } else {
+                    const errorText = await response.text();
+                    showErrorMessage(errorText || 'Erro ao salvar devedor.');
                 }
-            });
-        }
+            } catch (error) {
+                console.error('Erro ao salvar devedor:', error);
+                showErrorMessage('Erro de rede ao salvar devedor.');
+            } finally {
+                saveDebtorButton.disabled = false;
+                saveDebtorButton.textContent = 'Salvar Devedor';
+            }
+        });
 
-        if (deleteDebtorButton) {
-            deleteDebtorButton.addEventListener('click', async () => {
-                const debtorId = currentDebtorIdInput.value;
-
-                showCustomConfirm('Tem certeza que deseja excluir este devedor e todos os seus pagamentos? Esta ação é irreversível!', async (confirmed) => {
-                    if (confirmed) {
-                        hideDashboardErrorMessage();
-                        hideActionMessage();
-                        setButtonLoading(deleteDebtorButton, true);
-
-                        try {
-                            const response = await fetchWithAuth(`${API_URL}/debtors/${debtorId}`, {
-                                method: 'DELETE'
-                            });
-
-                            if (response.ok) {
-                                showCustomMessage('Sucesso!', 'Devedor excluído com sucesso!', 'success', () => {
-                                    if (debtorDetailsModal) debtorDetailsModal.style.display = 'none';
-                                    loadDebtors();
-                                });
-                            } else {
-                                const errorData = await response.json();
-                                displayDashboardErrorMessage(errorMessageElement, errorData.message || 'Erro ao excluir devedor.');
-                            }
-                        } catch (error) {
-                            console.error('Erro ao deletar devedor:', error);
-                            displayDashboardErrorMessage(errorMessageElement, 'Erro de conexão. Tente novamente mais tarde.');
-                        } finally {
-                            setButtonLoading(deleteDebtorButton, false);
-                        }
+        const deleteDebtor = async (id) => {
+            if (confirm('Tem certeza que deseja excluir este devedor e todos os seus pagamentos? Esta ação é irreversível!')) {
+                hideErrorMessage();
+                try {
+                    const response = await fetchWithAuth(`${API_URL}/debtors/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        alert('Devedor excluído com sucesso!');
+                        loadDebtors();
+                    } else {
+                        const errorText = await response.text();
+                        showErrorMessage(errorText || 'Erro ao excluir devedor.');
                     }
-                });
-            });
-        }
+                } catch (error) {
+                    console.error('Erro ao excluir devedor:', error);
+                    showErrorMessage('Erro de rede ao excluir devedor.');
+                }
+            }
+        };
 
-        // --- Inicialização do Dashboard ---
-        loadDebtors(); // Carrega os devedores ao carregar o dashboard
+        closeDetailModalButton.addEventListener('click', () => {
+            debtorDetailModal.style.display = 'none';
+            hideErrorMessage();
+            if (selectedPaymentSquare) {
+                selectedPaymentSquare.classList.remove('selected');
+                selectedPaymentSquare = null;
+            }
+            selectedInstallmentAmount = 0;
+            paymentAmountInput.value = '';
+        });
+
+        closeAddEditModalButton.addEventListener('click', () => {
+            addEditDebtorModal.style.display = 'none';
+            hideErrorMessage();
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === debtorDetailModal) {
+                debtorDetailModal.style.display = 'none';
+                hideErrorMessage();
+                if (selectedPaymentSquare) {
+                    selectedPaymentSquare.classList.remove('selected');
+                    selectedPaymentSquare = null;
+                }
+                selectedInstallmentAmount = 0;
+                paymentAmountInput.value = '';
+            }
+            if (e.target === addEditDebtorModal) {
+                addEditDebtorModal.style.display = 'none';
+                hideErrorMessage();
+            }
+        });
+
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('accessToken');
+            window.location.href = 'index.html';
+        });
+
+        loadDebtors();
     }
 });
