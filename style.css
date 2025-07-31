@@ -648,7 +648,7 @@ input:checked + .slider:before {
 
 /* --- Estilos para a Logo na tela de Login --- */
 .login-logo {
-    max-width: 150px; /* Define a largura máxima da sua logo */
+    max-width: 300px; /* Define a largura máxima da sua logo */
     height: auto;     /* Mantém a proporção da imagem */
     display: block;   /* Garante que ela se comporte como um bloco para margin: auto */
     margin: 0 auto 30px auto; /* Centraliza horizontalmente e adiciona margem inferior */
