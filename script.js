@@ -89,14 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Elementos do Modal de Detalhes do Devedor
         const detailDebtorName = document.getElementById('detailDebtorName');
         const detailDebtorDescription = document.getElementById('detailDebtorDescription');
-        // NOVOS ELEMENTOS AQUI
         const detailLoanedAmount = document.getElementById('detailLoanedAmount');
         const detailTotalToReceive = document.getElementById('detailTotalToReceive');
         const detailInterestPercentage = document.getElementById('detailInterestPercentage');
         const toggleTotalToReceive = document.getElementById('toggleTotalToReceive'); // Checkbox
-        // FIM DOS NOVOS ELEMENTOS
         const detailInstallments = document.getElementById('detailInstallments');
-        const detailAmountPerInstallment = document.getElementById('detailAmountPerInstallment'); // Agora é um valor de entrada
+        const detailAmountPerInstallment = document.getElementById('detailAmountPerInstallment');
         const detailStartDate = document.getElementById('detailStartDate');
         const paymentsGrid = document.getElementById('paymentsGrid');
         const paymentAmountInput = document.getElementById('paymentAmount');
@@ -109,10 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const addEditDebtorForm = document.getElementById('addEditDebtorForm');
         const debtorNameInput = document.getElementById('debtorName');
         const debtorDescriptionInput = document.getElementById('debtorDescription');
-        // MUDANÇAS AQUI
-        const loanedAmountInput = document.getElementById('loanedAmount'); // Novo campo para Valor Emprestado
-        const amountPerInstallmentInput = document.getElementById('amountPerInstallmentInput'); // Antigo totalAmount, agora o valor por parcela
-        // FIM DAS MUDANÇAS
+        const loanedAmountInput = document.getElementById('loanedAmount');
+        const amountPerInstallmentInput = document.getElementById('amountPerInstallmentInput');
         const installmentsInput = document.getElementById('installments');
         const startDateInput = document.getElementById('startDate');
         const saveDebtorButton = document.getElementById('saveDebtorButton');
@@ -145,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return ((interestAmount / loanedAmount) * 100).toFixed(2); // Duas casas decimais
         }
 
-
         function showError(message) {
             errorMessageDiv.textContent = message;
             errorMessageDiv.style.display = 'block';
@@ -154,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 5000);
         }
 
-        // --- Renderização de Devedores ---
+        // --- Renderização de Devedores na Lista Principal ---
         function renderDebtors() {
             debtorsList.innerHTML = ''; // Limpa a lista antes de renderizar
             if (debtors.length === 0) {
@@ -164,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             debtors.forEach(debtor => {
                 const totalPaid = debtor.payments.reduce((sum, p) => sum + p.amount, 0);
-                // Usamos debtor.totalToReceive agora para o cálculo do restante
                 const remainingAmount = debtor.totalToReceive - totalPaid;
 
                 const debtorItem = document.createElement('div');
@@ -187,22 +181,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Event Listener para abrir modal de detalhes
                 debtorItem.querySelector('.debtor-info').addEventListener('click', (event) => {
-                    // Evita que o clique nos botões de ação também abra o modal de detalhes
                     if (!event.target.closest('.debtor-actions')) {
                          openDebtorDetailModal(debtor.id);
                     }
                 });
 
-
                 // Event Listener para o botão Editar
                 debtorItem.querySelector('.edit-debtor-btn').addEventListener('click', (event) => {
-                    event.stopPropagation(); // Evita que o clique propague para o item do devedor
+                    event.stopPropagation();
                     openAddEditDebtorModal(debtor.id);
                 });
 
                 // Event Listener para o botão Excluir
                 debtorItem.querySelector('.delete-debtor-btn').addEventListener('click', (event) => {
-                    event.stopPropagation(); // Evita que o clique propague para o item do devedor
+                    event.stopPropagation();
                     if (confirm(`Tem certeza que deseja excluir ${debtor.name}?`)) {
                         deleteDebtor(debtor.id);
                     }
@@ -220,10 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const name = debtorNameInput.value;
             const description = debtorDescriptionInput.value;
-            // NOVOS CAMPOS DO FORMULÁRIO
             const loanedAmount = parseFloat(loanedAmountInput.value);
             const amountPerInstallment = parseFloat(amountPerInstallmentInput.value);
-            // FIM DOS NOVOS CAMPOS
             const installments = parseInt(installmentsInput.value);
             const startDate = startDateInput.value;
 
@@ -233,42 +223,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Cálculos
             const totalToReceive = calculateTotalToReceive(amountPerInstallment, installments);
             const interestPercentage = calculateInterestPercentage(loanedAmount, totalToReceive);
 
 
-            if (currentDebtorId) { // Editando devedor existente
+            if (currentDebtorId) {
                 const debtorIndex = debtors.findIndex(d => d.id === currentDebtorId);
                 if (debtorIndex > -1) {
                     const oldDebtor = debtors[debtorIndex];
 
                     oldDebtor.name = name;
                     oldDebtor.description = description;
-                    oldDebtor.loanedAmount = loanedAmount; // Atualiza o valor emprestado
-                    oldDebtor.amountPerInstallment = amountPerInstallment; // Atualiza o valor da parcela
+                    oldDebtor.loanedAmount = loanedAmount;
+                    oldDebtor.amountPerInstallment = amountPerInstallment;
                     oldDebtor.installments = installments;
                     oldDebtor.startDate = startDate;
-                    // Atualiza os valores calculados
                     oldDebtor.totalToReceive = totalToReceive;
                     oldDebtor.interestPercentage = interestPercentage;
 
-                    // Se o número de parcelas mudou, ajuste o array de pagamentos
                     if (oldDebtor.payments.length > installments) {
                         oldDebtor.payments = oldDebtor.payments.slice(0, installments);
                     }
                 }
-            } else { // Adicionando novo devedor
+            } else {
                 const newDebtor = {
-                    id: Date.now(), // ID único baseado no timestamp
+                    id: Date.now(),
                     name,
                     description,
-                    loanedAmount,             // Novo campo
-                    amountPerInstallment,     // Novo campo
+                    loanedAmount,
+                    amountPerInstallment,
                     installments,
                     startDate,
-                    totalToReceive,           // Valor calculado
-                    interestPercentage,       // Valor calculado
+                    totalToReceive,
+                    interestPercentage,
                     payments: []
                 };
                 debtors.push(newDebtor);
@@ -280,8 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         function openAddEditDebtorModal(id = null) {
-            addEditDebtorForm.reset(); // Limpa o formulário
-            currentDebtorId = id; // Define o ID do devedor atual
+            addEditDebtorForm.reset();
+            currentDebtorId = id;
 
             if (id) {
                 addEditModalTitle.textContent = 'Editar Devedor';
@@ -289,15 +276,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (debtor) {
                     debtorNameInput.value = debtor.name;
                     debtorDescriptionInput.value = debtor.description;
-                    loanedAmountInput.value = debtor.loanedAmount;             // Preenche
-                    amountPerInstallmentInput.value = debtor.amountPerInstallment; // Preenche
+                    loanedAmountInput.value = debtor.loanedAmount;
+                    amountPerInstallmentInput.value = debtor.amountPerInstallment;
                     installmentsInput.value = debtor.installments;
                     startDateInput.value = debtor.startDate;
                 }
             } else {
                 addEditModalTitle.textContent = 'Adicionar Novo Devedor';
             }
-            addEditDebtorModal.style.display = 'flex'; // Use flex para centralizar
+            addEditDebtorModal.style.display = 'flex';
         }
 
         function deleteDebtor(id) {
@@ -314,16 +301,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (debtor) {
                 detailDebtorName.textContent = debtor.name;
                 detailDebtorDescription.textContent = debtor.description;
-                // NOVOS CAMPOS NA VISUALIZAÇÃO
                 detailLoanedAmount.textContent = formatCurrency(debtor.loanedAmount);
                 detailTotalToReceive.textContent = formatCurrency(debtor.totalToReceive);
-                detailInterestPercentage.textContent = `${debtor.interestPercentage}%`; // Exibe com '%'
-                // FIM DOS NOVOS CAMPOS
+                detailInterestPercentage.textContent = `${debtor.interestPercentage}%`;
                 detailInstallments.textContent = debtor.installments;
-                detailAmountPerInstallment.textContent = formatCurrency(debtor.amountPerInstallment); // Valor da Parcela
+                detailAmountPerInstallment.textContent = formatCurrency(debtor.amountPerInstallment);
                 detailStartDate.textContent = formatDate(debtor.startDate);
 
-                // Carrega a preferência de ocultar do localStorage
                 const hideTotalToReceivePref = localStorage.getItem('hideTotalToReceive');
                 if (hideTotalToReceivePref === 'true') {
                     toggleTotalToReceive.checked = true;
@@ -333,9 +317,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     detailTotalToReceive.classList.remove('hidden-value');
                 }
 
-
                 renderPaymentsGrid(debtor);
-                debtorDetailModal.style.display = 'flex'; // Use flex para centralizar
+                debtorDetailModal.style.display = 'flex';
             }
         }
         
@@ -350,75 +333,117 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-
+        // --- RENDERIZAÇÃO E LÓGICA DOS QUADRADINHOS DE PAGAMENTO ---
         function renderPaymentsGrid(debtor) {
             paymentsGrid.innerHTML = '';
             selectedPaymentIndex = null; // Reseta seleção
 
-            for (let i = 0; i < debtor.installments; i++) {
-                const payment = debtor.payments[i];
-                const paymentSquare = document.createElement('div');
-                paymentSquare.className = `payment-square ${payment ? 'paid' : ''}`;
-                paymentSquare.setAttribute('data-index', i);
+            // Clonamos os pagamentos para poder manipulá-los temporariamente sem afetar o original
+            // Mapeamos para garantir que cada pagamento tenha uma quantidade 'consumível'
+            let consumablePayments = debtor.payments.map(p => ({ ...p, amountRemaining: p.amount }));
 
+            // Percorre cada parcela esperada
+            for (let i = 0; i < debtor.installments; i++) {
                 const installmentNumber = i + 1;
-                const value = payment ? payment.amount : debtor.amountPerInstallment;
-                const date = payment ? formatDate(payment.date) : 'Pendente';
+                const expectedAmountForThisInstallment = debtor.amountPerInstallment;
+                let paidAmountForThisInstallment = 0;
+                let paymentDateForThisInstallment = 'Pendente';
+                let isPaid = false;
+
+                // Tenta consumir os pagamentos disponíveis para esta parcela
+                for (let j = 0; j < consumablePayments.length; j++) {
+                    const payment = consumablePayments[j];
+                    if (payment && payment.amountRemaining > 0) {
+                        const amountNeededForThisInstallment = expectedAmountForThisInstallment - paidAmountForThisInstallment;
+                        const amountToApply = Math.min(amountNeededForThisInstallment, payment.amountRemaining);
+                        
+                        paidAmountForThisInstallment += amountToApply;
+                        payment.amountRemaining -= amountToApply;
+
+                        // Se esta parcela foi coberta (total ou parcialmente) por este pagamento
+                        if (amountToApply > 0 && paymentDateForThisInstallment === 'Pendente') {
+                             paymentDateForThisInstallment = payment.date; // Atribui a data do primeiro pagamento que contribuiu
+                        }
+
+                        if (paidAmountForThisInstallment >= expectedAmountForThisInstallment) {
+                            isPaid = true;
+                            break; // Parcela coberta, passa para a próxima
+                        }
+                    }
+                }
+                
+                const displayAmount = Math.min(paidAmountForThisInstallment, expectedAmountForThisInstallment);
+                const displayRemaining = expectedAmountForThisInstallment - paidAmountForThisInstallment;
+
+                const paymentSquare = document.createElement('div');
+                paymentSquare.className = `payment-square ${isPaid ? 'paid' : ''}`;
+                paymentSquare.setAttribute('data-index', i); // Índice da parcela esperada
+
+                // Monta o HTML do quadradinho
+                let valueHtml = `<span>${formatCurrency(expectedAmountForThisInstallment)}</span>`; // Sempre mostra o valor total da parcela
+                if (!isPaid) {
+                    valueHtml = `<span>${formatCurrency(displayAmount)} (Faltam: ${formatCurrency(displayRemaining)})</span>`;
+                }
+
+                let dateHtml = `<span style="font-size: 0.75em; color: ${isPaid ? 'rgba(255,255,255,0.8)' : 'var(--light-text)'};">` + 
+                                (paymentDateForThisInstallment === 'Pendente' ? 'Pendente' : `Pago: ${formatDate(paymentDateForThisInstallment)}`) + 
+                                `</span>`;
 
                 paymentSquare.innerHTML = `
                     <span>Parc. ${installmentNumber}</span>
-                    <span>${formatCurrency(value)}</span>
-                    <span style="font-size: 0.75em; color: ${payment ? 'rgba(255,255,255,0.7)' : 'var(--light-text)'};">${date}</span>
-                    ${payment ? `<button class="delete-payment-btn" data-payment-index="${i}">X</button>` : ''}
+                    ${valueHtml}
+                    ${dateHtml}
+                    ${isPaid ? `<button class="delete-payment-btn" data-payment-original-index="${i}">X</button>` : ''}
                 `;
 
-                // Adiciona evento de clique para selecionar a caixinha
+                // Adiciona evento de clique para selecionar a caixinha (para adicionar pagamento)
                 paymentSquare.addEventListener('click', () => {
-                    // Remove 'selected' de todos os outros
                     document.querySelectorAll('.payment-square').forEach(sq => sq.classList.remove('selected'));
-                    
-                    // Adiciona 'selected' ao clicado, se não estiver pago
-                    if (!paymentSquare.classList.contains('paid')) {
+                    if (!isPaid) { // Só permite selecionar parcelas não pagas
                         paymentSquare.classList.add('selected');
-                        selectedPaymentIndex = parseInt(paymentSquare.getAttribute('data-index'));
+                        selectedPaymentIndex = i; // Armazena o índice da parcela *esperada*
+                        paymentAmountInput.value = expectedAmountForThisInstallment.toFixed(2); // Preenche com o valor da parcela
+                        paymentDateInput.valueAsDate = new Date();
                     } else {
-                        selectedPaymentIndex = null; // Não permite selecionar pagamentos já feitos para adicionar
+                        selectedPaymentIndex = null;
+                        paymentAmountInput.value = '';
+                        paymentDateInput.valueAsDate = null;
                     }
                 });
 
-                // Evento para o botão de exclusão de pagamento (se existir)
+                // Evento para o botão de exclusão de pagamento
                 const deleteBtn = paymentSquare.querySelector('.delete-payment-btn');
                 if (deleteBtn) {
                     deleteBtn.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Impede que o clique propague para o paymentSquare
-                        const paymentIdxToDelete = parseInt(e.target.getAttribute('data-payment-index'));
-                        if (confirm('Tem certeza que deseja remover este pagamento?')) {
-                            removePayment(currentDebtorId, paymentIdxToDelete);
+                        e.stopPropagation();
+                        // Importante: A exclusão do pagamento por parcela é complexa.
+                        // Para simplificar, removeremos o ÚLTIMO pagamento efetivado no array de pagamentos
+                        // Isso pode não corresponder exatamente à parcela clicada se um pagamento grande cobriu várias.
+                        if (confirm('Tem certeza que deseja remover o último pagamento registrado? (Isso pode afetar outras parcelas)')) {
+                            removePayment(currentDebtorId, null); // remove o último pagamento por padrão
                         }
                     });
                 }
-
                 paymentsGrid.appendChild(paymentSquare);
             }
 
-            // Preenche o campo de valor com o valor da próxima parcela, se houver
-            const nextPendingInstallmentIndex = debtor.payments.length;
-            if (nextPendingInstallmentIndex < debtor.installments) {
-                paymentAmountInput.value = debtor.amountPerInstallment.toFixed(2);
-                // Opcional: pré-selecionar a próxima parcela para pagamento
-                const nextSquare = paymentsGrid.querySelector(`.payment-square[data-index="${nextPendingInstallmentIndex}"]`);
-                if(nextSquare) {
-                    nextSquare.classList.add('selected');
-                    selectedPaymentIndex = nextPendingInstallmentIndex;
-                }
+            // Define o valor padrão no input de pagamento e data para a próxima parcela pendente
+            const nextPendingSquare = paymentsGrid.querySelector('.payment-square:not(.paid)');
+            if (nextPendingSquare) {
+                const nextExpectedAmount = debtor.amountPerInstallment; // Valor da próxima parcela
+                paymentAmountInput.value = nextExpectedAmount.toFixed(2);
+                paymentDateInput.valueAsDate = new Date();
+                nextPendingSquare.classList.add('selected'); // Pré-seleciona a próxima parcela
+                selectedPaymentIndex = parseInt(nextPendingSquare.getAttribute('data-index'));
             } else {
                 paymentAmountInput.value = ''; // Limpa se todas as parcelas foram pagas
+                paymentDateInput.valueAsDate = null;
                 selectedPaymentIndex = null;
             }
-            paymentDateInput.valueAsDate = new Date(); // Define a data atual como padrão
         }
 
-        // --- Adicionar Pagamento ---
+
+        // --- Adicionar Pagamento (Lógica aprimorada para múltiplos pagamentos) ---
         addPaymentButton.addEventListener('click', () => {
             if (currentDebtorId === null) {
                 showError('Nenhum devedor selecionado para adicionar pagamento.');
@@ -436,21 +461,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const debtorIndex = debtors.findIndex(d => d.id === currentDebtorId);
             if (debtorIndex > -1) {
                 const debtor = debtors[debtorIndex];
+                
+                // Adiciona o novo pagamento ao array de pagamentos do devedor
+                debtor.payments.push({ amount: paymentAmount, date: paymentDate });
+                
+                // Ordena os pagamentos por data (garante que os mais antigos são 'consumidos' primeiro)
+                debtor.payments.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                // Verifica se já há um pagamento para esta parcela, se um index for selecionado
-                if (selectedPaymentIndex !== null && debtor.payments[selectedPaymentIndex]) {
-                    showError('Já existe um pagamento para esta parcela. Remova-o antes de adicionar um novo.');
-                    return;
-                }
-                
-                // Adiciona o pagamento na posição correta ou no fim se nenhuma parcela específica for selecionada
-                const paymentToAdd = { amount: paymentAmount, date: paymentDate };
-                if (selectedPaymentIndex !== null && selectedPaymentIndex < debtor.installments) {
-                    debtor.payments[selectedPaymentIndex] = paymentToAdd;
-                } else {
-                    debtor.payments.push(paymentToAdd);
-                }
-                
                 localStorage.setItem('debtors', JSON.stringify(debtors));
                 renderPaymentsGrid(debtor); // Re-renderiza a grade de pagamentos
                 renderDebtors(); // Atualiza a lista principal de devedores (saldo restante)
@@ -466,22 +483,37 @@ document.addEventListener('DOMContentLoaded', () => {
             const debtor = debtors.find(d => d.id === currentDebtorId);
             if (debtor) {
                 paymentAmountInput.value = debtor.amountPerInstallment.toFixed(2);
+                paymentDateInput.valueAsDate = new Date(); // Garante que a data seja atual
+                // Tenta selecionar a próxima parcela pendente
+                const nextPendingSquare = paymentsGrid.querySelector('.payment-square:not(.paid)');
+                if (nextPendingSquare) {
+                    document.querySelectorAll('.payment-square').forEach(sq => sq.classList.remove('selected'));
+                    nextPendingSquare.classList.add('selected');
+                    selectedPaymentIndex = parseInt(nextPendingSquare.getAttribute('data-index'));
+                }
             }
         });
 
 
         // Função para remover um pagamento
-        function removePayment(debtorId, paymentIndex) {
+        // Agora, 'paymentIndexToRemove' é o índice do pagamento REAL no array 'debtor.payments'
+        // Se for null/indefinido, removerá o último pagamento.
+        function removePayment(debtorId, paymentIndexToRemove = null) {
             const debtorIndex = debtors.findIndex(d => d.id === debtorId);
             if (debtorIndex > -1) {
                 const debtor = debtors[debtorIndex];
-                // Remove o pagamento na posição indicada
-                // Use splice para remover e preencher o "buraco" ou null para manter o slot
-                // Se a intenção é que um pagamento para a parcela N seja sempre a N-ésima posição,
-                // então null é melhor, mas complica a lógica de payments.reduce
-                // Para simplificar, continuaremos a remover o item do array e assumimos
-                // que o ordernação do array de payments reflete a ordem das parcelas pagas.
-                debtor.payments.splice(paymentIndex, 1);
+                
+                if (debtor.payments.length === 0) {
+                    showError('Não há pagamentos para remover.');
+                    return;
+                }
+
+                if (paymentIndexToRemove !== null && paymentIndexToRemove < debtor.payments.length) {
+                    debtor.payments.splice(paymentIndexToRemove, 1);
+                } else {
+                    // Por padrão, remove o último pagamento se nenhum índice específico for fornecido
+                    debtor.payments.pop();
+                }
                 
                 localStorage.setItem('debtors', JSON.stringify(debtors));
                 renderPaymentsGrid(debtor); // Re-renderiza para mostrar a remoção
