@@ -1,71 +1,94 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - RUSSO EMPRÉSTIMOS</title>
+    <title>Gerenciador de Empréstimos - Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header class="header">
-        <h1>RUSSO EMPRÉSTIMOS</h1>
-        <button id="logoutButton" class="logout-button">Sair</button>
+    <header>
+        <h1>Dashboard</h1>
+        <nav>
+            <button id="logoutButton">Sair</button>
+        </nav>
     </header>
 
-    <main class="dashboard-container">
-        <h2>Meus Devedores</h2>
+    <main>
+        <section class="debtor-controls">
+            <button id="addDebtorButton">Adicionar Novo Devedor</button>
+        </section>
 
-        <div id="errorMessage" class="error-message" style="display:none;"></div>
-
-        <div id="debtorsList" class="debtors-list">
-            </div>
-        <button id="addDebtorButton" class="add-button">Adicionar Novo Devedor</button>
+        <section class="debtors-list-section">
+            <h2>Meus Devedores</h2>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <div id="debtorsList" class="debtors-grid">
+                </div>
+        </section>
     </main>
 
     <div id="debtorDetailModal" class="modal">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2 id="detailDebtorName"></h2>
-            <p>Valor Total: <span id="detailTotalAmount"></span></p>
-            <p>Parcelas: <span id="detailInstallments"></span></p>
-            <p>Valor por Parcela: <span id="detailAmountPerInstallment"></span></p>
-            <p>Data de Início: <span id="detailStartDate"></span></p>
-
-            <h3>Pagamentos</h3>
-            <div id="paymentsGrid" class="payments-grid">
+            <div class="modal-header">
+                <h2 id="detailDebtorName"></h2>
+                <p id="detailDebtorDescription" style="font-style: italic; color: #666; margin-top: 5px;"></p>
+                <span class="close-button">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="debtor-details-info">
+                    <p><strong>Valor Total:</strong> <span id="detailTotalAmount"></span></p>
+                    <p><strong>Parcelas:</strong> <span id="detailInstallments"></span></p>
+                    <p><strong>Valor por Parcela:</strong> <span id="detailAmountPerInstallment"></span></p>
+                    <p><strong>Data de Início:</strong> <span id="detailStartDate"></span></p>
                 </div>
 
-            <div class="payment-input">
-                <h4>Registrar Novo Pagamento</h4>
-                <label for="paymentAmount">Valor do Pagamento:</label>
-                <input type="number" id="paymentAmount" step="0.01" min="0" placeholder="Ex: 200.00">
-                <button id="fillAmountButton" class="small-button">Usar Valor da Parcela</button>
-                <label for="paymentDate">Data do Pagamento:</label>
-                <input type="date" id="paymentDate">
-                <button id="addPaymentButton">Adicionar Pagamento</button>
+                <h3>Pagamentos</h3>
+                <div class="payments-grid" id="paymentsGrid">
+                    </div>
+
+                <div class="add-payment-section">
+                    <h4>Adicionar Pagamento</h4>
+                    <div class="input-group">
+                        <label for="paymentAmount">Valor:</label>
+                        <input type="number" id="paymentAmount" step="0.01" required>
+                        <button id="fillAmountButton" class="fill-amount-btn">Preencher Valor Parcela</button>
+                    </div>
+                    <div class="input-group">
+                        <label for="paymentDate">Data:</label>
+                        <input type="date" id="paymentDate" required>
+                    </div>
+                    <button id="addPaymentButton">Adicionar Pagamento</button>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="addEditDebtorModal" class="modal">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2 id="addEditModalTitle">Adicionar Novo Devedor</h2>
-            <form id="addEditDebtorForm">
-                <label for="debtorName">Nome:</label>
-                <input type="text" id="debtorName" required>
+            <div class="modal-header">
+                <h2 id="addEditModalTitle"></h2>
+                <span class="close-button">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addEditDebtorForm">
+                    <label for="debtorName">Nome do Devedor:</label>
+                    <input type="text" id="debtorName" required>
 
-                <label for="totalAmount">Valor Total:</label>
-                <input type="number" id="totalAmount" step="0.01" required>
+                    <label for="debtorDescription">Descrição (opcional):</label>
+                    <input type="text" id="debtorDescription" placeholder="Ex: João da Padaria, Endereço, etc.">
 
-                <label for="installments">Número de Parcelas:</label>
-                <input type="number" id="installments" required>
+                    <label for="totalAmount">Valor Total Devido:</label>
+                    <input type="number" id="totalAmount" step="0.01" required>
 
-                <label for="startDate">Data de Início:</label>
-                <input type="date" id="startDate" required>
+                    <label for="installments">Número de Parcelas:</label>
+                    <input type="number" id="installments" required>
 
-                <button type="submit" id="saveDebtorButton">Salvar Devedor</button>
-            </form>
+                    <label for="startDate">Data de Início:</label>
+                    <input type="date" id="startDate" required>
+
+                    <button type="submit" id="saveDebtorButton">Salvar Devedor</button>
+                </form>
+            </div>
         </div>
     </div>
 
