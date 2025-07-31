@@ -670,3 +670,19 @@ input:checked + .slider:before {
         flex-grow: unset; /* Remove o crescimento para não desalinhar */
     }
 }
+
+/* Estilos para o logo na tela de login */
+.login-logo {
+    display: block; /* Garante que a imagem ocupe sua própria linha */
+    max-width: 300px; /* Largura máxima para o logo, ajuste se precisar */
+    height: auto; /* Mantém a proporção da imagem */
+    margin: 0 auto 30px auto; /* Centraliza horizontalmente e adiciona margem inferior */
+}
+
+/* Para telas menores, ajuste se necessário */
+@media (max-width: 480px) {
+    .login-logo {
+        max-width: 200px; /* Diminui um pouco mais em telas muito pequenas */
+        margin-bottom: 20px;
+    }
+}
