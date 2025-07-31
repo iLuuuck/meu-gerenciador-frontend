@@ -517,10 +517,8 @@ input:focus {
 
 /* Novo estilo para ocultar o valor quando o checkbox for marcado */
 .hidden-value {
-    /* Pode ser uma cor diferente, ou texto 'Oculto' */
     color: transparent; /* Torna o texto invisível */
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.4); /* Efeito de borrado */
-    /* ou background-color: var(--text-color); para cobrir */
 }
 /* Estilo para o label da checkbox de ocultar */
 .debtor-details-info label {
