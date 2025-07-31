@@ -49,14 +49,33 @@
                         <label for="loanedAmount">Valor Emprestado:</label>
                         <input type="number" id="loanedAmount" step="0.01" required>
                     </div>
+
                     <div class="input-group">
-                        <label for="amountPerInstallmentInput">Valor por Parcela:</label>
-                        <input type="number" id="amountPerInstallmentInput" step="0.01" required>
+                        <label for="calculationType">Tipo de Cálculo:</label>
+                        <select id="calculationType">
+                            <option value="perInstallment">Valor por Parcela</option>
+                            <option value="percentage">Porcentagem de Juros</option>
+                        </select>
                     </div>
-                    <div class="input-group">
-                        <label for="installments">Número de Parcelas:</label>
-                        <input type="number" id="installments" required>
+
+                    <div id="perInstallmentFields">
+                        <div class="input-group">
+                            <label for="amountPerInstallmentInput">Valor por Parcela:</label>
+                            <input type="number" id="amountPerInstallmentInput" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label for="installments">Número de Parcelas:</label>
+                            <input type="number" id="installments">
+                        </div>
                     </div>
+
+                    <div id="percentageFields" style="display: none;">
+                        <div class="input-group">
+                            <label for="interestPercentageInput">Porcentagem de Juros (%):</label>
+                            <input type="number" id="interestPercentageInput" step="0.01">
+                        </div>
+                    </div>
+
                     <div class="input-group">
                         <label for="startDate">Data de Início:</label>
                         <input type="date" id="startDate" required>
