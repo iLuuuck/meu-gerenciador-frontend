@@ -131,12 +131,12 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const debtorNameInput = document.getElementById('debtorName');
     const debtorDescriptionInput = document.getElementById('debtorDescription');
     const loanedAmountInput = document.getElementById('loanedAmount');
-    const calculationTypeSelect = document.getElementById('calculationType'); // Novo
-    const perInstallmentFields = document.getElementById('perInstallmentFields'); // Novo
-    const percentageFields = document.getElementById('percentageFields'); // Novo
+    const calculationTypeSelect = document.getElementById('calculationType');
+    const perInstallmentFields = document.getElementById('perInstallmentFields');
+    const percentageFields = document.getElementById('percentageFields');
     const amountPerInstallmentInput = document.getElementById('amountPerInstallmentInput');
-    const installmentsInput = document.getElementById('installments');
-    const interestPercentageInput = document.getElementById('interestPercentageInput'); // Novo
+    const installmentsInput = document.getElementById('installments'); // Este campo agora está sempre visível
+    const interestPercentageInput = document.getElementById('interestPercentageInput');
     const startDateInput = document.getElementById('startDate');
     const saveDebtorButton = document.getElementById('saveDebtorButton');
 
@@ -158,31 +158,25 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     }
 
     // Calcula o total a receber e a porcentagem de juros
-    function calculateLoanDetails(loanedAmount, amountPerInstallment, installments, interestPercentage) {
+    function calculateLoanDetails(loanedAmount, amountPerInstallment, installments, interestPercentage, calculationType) {
         let totalToReceive;
         let calculatedAmountPerInstallment;
-        let calculatedInstallments;
-        let calculatedInterestPercentage;
+        let calculatedInstallments = parseInt(installments); // Sempre usa o valor do input de parcelas
 
-        if (calculationTypeSelect.value === 'perInstallment') {
+        if (isNaN(calculatedInstallments) || calculatedInstallments <= 0) {
+            calculatedInstallments = 1; // Garante que o número de parcelas seja pelo menos 1
+        }
+
+        if (calculationType === 'perInstallment') {
             calculatedAmountPerInstallment = parseFloat(amountPerInstallment);
-            calculatedInstallments = parseInt(installments);
             totalToReceive = calculatedAmountPerInstallment * calculatedInstallments;
-            calculatedInterestPercentage = ((totalToReceive - loanedAmount) / loanedAmount * 100).toFixed(2);
+            interestPercentage = ((totalToReceive - loanedAmount) / loanedAmount * 100);
+            if (isNaN(interestPercentage) || !isFinite(interestPercentage)) { // Trata divisão por zero ou infinito
+                interestPercentage = 0;
+            }
         } else { // percentage
-            calculatedInterestPercentage = parseFloat(interestPercentage);
-            totalToReceive = loanedAmount * (1 + calculatedInterestPercentage / 100);
-            // Para calcular parcelas e valor por parcela quando a porcentagem é dada,
-            // vamos assumir um número padrão de parcelas (ex: 12) ou deixar em branco
-            // ou exigir que o usuário preencha as parcelas mesmo com porcentagem.
-            // Para simplificar, vou deixar as parcelas como 1 e o valor por parcela como o total a receber
-            // se o usuário não preencher as parcelas.
-            // OU, podemos exigir que ele preencha as parcelas para calcular o valor por parcela.
-            // Para este caso, vamos manter a lógica de que se for por porcentagem, as parcelas são 1
-            // e o valor por parcela é o total a receber, a menos que ele especifique as parcelas.
-            // Vamos fazer o seguinte: se for por porcentagem, o número de parcelas é opcional.
-            // Se ele preencher, calculamos o valor por parcela. Se não, é uma parcela única.
-            calculatedInstallments = parseInt(installmentsInput.value) || 1;
+            interestPercentage = parseFloat(interestPercentage);
+            totalToReceive = loanedAmount * (1 + interestPercentage / 100);
             calculatedAmountPerInstallment = totalToReceive / calculatedInstallments;
         }
 
@@ -190,7 +184,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             totalToReceive: parseFloat(totalToReceive.toFixed(2)),
             amountPerInstallment: parseFloat(calculatedAmountPerInstallment.toFixed(2)),
             installments: calculatedInstallments,
-            interestPercentage: parseFloat(calculatedInterestPercentage)
+            interestPercentage: parseFloat(interestPercentage.toFixed(2))
         };
     }
 
@@ -277,16 +271,15 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         if (calculationTypeSelect.value === 'perInstallment') {
             perInstallmentFields.style.display = 'block';
             amountPerInstallmentInput.setAttribute('required', 'required');
-            installmentsInput.setAttribute('required', 'required');
             percentageFields.style.display = 'none';
             interestPercentageInput.removeAttribute('required');
-        } else {
+        } else { // percentage
             perInstallmentFields.style.display = 'none';
             amountPerInstallmentInput.removeAttribute('required');
-            installmentsInput.removeAttribute('required');
             percentageFields.style.display = 'block';
             interestPercentageInput.setAttribute('required', 'required');
         }
+        // O campo installmentsInput agora está sempre visível e required no HTML
     });
 
     addEditDebtorForm.addEventListener('submit', async (event) => {
@@ -296,9 +289,14 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         const description = debtorDescriptionInput.value;
         const loanedAmount = parseFloat(loanedAmountInput.value);
         const startDate = startDateInput.value;
+        const inputInstallments = parseInt(installmentsInput.value); // Sempre lê o número de parcelas
 
         if (isNaN(loanedAmount) || loanedAmount <= 0) {
             showError('Por favor, insira um valor emprestado válido e maior que zero.');
+            return;
+        }
+        if (isNaN(inputInstallments) || inputInstallments <= 0) {
+            showError('Por favor, insira um número de parcelas válido e maior que zero.');
             return;
         }
 
@@ -306,25 +304,20 @@ if (window.location.pathname.endsWith('dashboard.html')) {
 
         if (calculationTypeSelect.value === 'perInstallment') {
             const inputAmountPerInstallment = parseFloat(amountPerInstallmentInput.value);
-            const inputInstallments = parseInt(installmentsInput.value);
-
-            if (isNaN(inputAmountPerInstallment) || inputAmountPerInstallment <= 0 ||
-                isNaN(inputInstallments) || inputInstallments <= 0) {
-                showError('Por favor, insira valores válidos e maiores que zero para "Valor por Parcela" e "Número de Parcelas".');
+            if (isNaN(inputAmountPerInstallment) || inputAmountPerInstallment <= 0) {
+                showError('Por favor, insira um valor válido e maior que zero para "Valor por Parcela".');
                 return;
             }
             ({ totalToReceive, amountPerInstallment, installments, interestPercentage } =
-                calculateLoanDetails(loanedAmount, inputAmountPerInstallment, inputInstallments, 0)); // 0 para porcentagem não usada
+                calculateLoanDetails(loanedAmount, inputAmountPerInstallment, inputInstallments, 0, 'perInstallment'));
         } else { // percentage
             const inputInterestPercentage = parseFloat(interestPercentageInput.value);
-            const inputInstallments = parseInt(installmentsInput.value) || 1; // Permite parcelas opcionais para porcentagem
-
             if (isNaN(inputInterestPercentage) || inputInterestPercentage < 0) {
                 showError('Por favor, insira uma porcentagem de juros válida e não negativa.');
                 return;
             }
             ({ totalToReceive, amountPerInstallment, installments, interestPercentage } =
-                calculateLoanDetails(loanedAmount, 0, inputInstallments, inputInterestPercentage)); // 0 para valor por parcela não usado
+                calculateLoanDetails(loanedAmount, 0, inputInstallments, inputInterestPercentage, 'percentage'));
         }
 
 
@@ -399,10 +392,9 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         calculationTypeSelect.value = 'perInstallment';
         perInstallmentFields.style.display = 'block';
         amountPerInstallmentInput.setAttribute('required', 'required');
-        installmentsInput.setAttribute('required', 'required');
         percentageFields.style.display = 'none';
         interestPercentageInput.removeAttribute('required');
-
+        installmentsInput.setAttribute('required', 'required'); // Garante que parcelas seja sempre obrigatório
 
         if (id) {
             addEditModalTitle.textContent = 'Editar Devedor';
@@ -412,32 +404,36 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                 debtorDescriptionInput.value = debtor.description;
                 loanedAmountInput.value = debtor.loanedAmount;
                 startDateInput.value = debtor.startDate;
+                installmentsInput.value = debtor.installments; // Preenche o número de parcelas
 
                 // Preencher campos com base nos dados existentes
-                // Se o devedor já tem amountPerInstallment e installments, presume-se que foi calculado assim
-                if (debtor.amountPerInstallment && debtor.installments) {
-                    calculationTypeSelect.value = 'perInstallment';
-                    amountPerInstallmentInput.value = debtor.amountPerInstallment;
-                    installmentsInput.value = debtor.installments;
-                    perInstallmentFields.style.display = 'block';
-                    amountPerInstallmentInput.setAttribute('required', 'required');
-                    installmentsInput.setAttribute('required', 'required');
-                    percentageFields.style.display = 'none';
-                    interestPercentageInput.removeAttribute('required');
+                // Se o devedor já tem amountPerInstallment, presume-se que foi calculado assim
+                if (debtor.amountPerInstallment && debtor.totalToReceive && debtor.loanedAmount) {
+                    // Tenta inferir o tipo de cálculo original para preencher corretamente
+                    const calculatedInterestFromInstallment = ((debtor.totalToReceive - debtor.loanedAmount) / debtor.loanedAmount * 100);
+                    // Se a porcentagem armazenada for próxima da calculada por parcela, ou se a porcentagem for 0
+                    if (Math.abs(calculatedInterestFromInstallment - debtor.interestPercentage) < 0.01 || debtor.interestPercentage === 0) {
+                         calculationTypeSelect.value = 'perInstallment';
+                         amountPerInstallmentInput.value = debtor.amountPerInstallment;
+                         perInstallmentFields.style.display = 'block';
+                         amountPerInstallmentInput.setAttribute('required', 'required');
+                         percentageFields.style.display = 'none';
+                         interestPercentageInput.removeAttribute('required');
+                    } else {
+                         // Caso contrário, assume que foi por porcentagem
+                         calculationTypeSelect.value = 'percentage';
+                         interestPercentageInput.value = debtor.interestPercentage;
+                         perInstallmentFields.style.display = 'none';
+                         amountPerInstallmentInput.removeAttribute('required');
+                         percentageFields.style.display = 'block';
+                         interestPercentageInput.setAttribute('required', 'required');
+                    }
                 } else if (debtor.interestPercentage) {
                     // Se tem porcentagem, mas não parcelas/valor por parcela definidos explicitamente
                     calculationTypeSelect.value = 'percentage';
                     interestPercentageInput.value = debtor.interestPercentage;
-                    // Se houver installments (mesmo que 1), preencher
-                    if (debtor.installments) {
-                        installmentsInput.value = debtor.installments;
-                    } else {
-                        installmentsInput.value = ''; // Limpar se não houver
-                    }
-
                     perInstallmentFields.style.display = 'none';
                     amountPerInstallmentInput.removeAttribute('required');
-                    installmentsInput.removeAttribute('required');
                     percentageFields.style.display = 'block';
                     interestPercentageInput.setAttribute('required', 'required');
                 }
@@ -584,8 +580,6 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         const nextPendingSquare = paymentsGrid.querySelector('.payment-square:not(.paid)');
         if (nextPendingSquare) {
             const nextExpectedAmount = debtor.amountPerInstallment;
-            // A lógica de "paidForNext" aqui pode ser mais complexa se houver pagamentos parciais.
-            // Por simplicidade, vamos preencher com o valor total da parcela pendente.
             paymentAmountInput.value = nextExpectedAmount.toFixed(2);
             paymentDateInput.valueAsDate = new Date();
             document.querySelectorAll('.payment-square').forEach(sq => sq.classList.remove('selected'));
@@ -650,8 +644,6 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             const nextPendingSquare = paymentsGrid.querySelector('.payment-square:not(.paid)');
             if (nextPendingSquare) {
                 const nextExpectedAmount = debtor.amountPerInstallment;
-                // A lógica de "paidForNext" aqui pode ser mais complexa se houver pagamentos parciais.
-                // Por simplicidade, vamos preencher com o valor total da parcela pendente.
                 paymentAmountInput.value = nextExpectedAmount.toFixed(2);
                 paymentDateInput.valueAsDate = new Date();
                 document.querySelectorAll('.payment-square').forEach(sq => sq.classList.remove('selected'));
