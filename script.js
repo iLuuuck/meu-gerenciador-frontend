@@ -123,6 +123,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const paymentAmountInput = document.getElementById('paymentAmount');
     const paymentDateInput = document.getElementById('paymentDate');
     const addPaymentButton = document.getElementById('addPaymentButton');
+    const showAllPaymentsButton = document.getElementById('showAllPaymentsButton');
     const fillAmountButton = document.getElementById('fillAmountButton');
 
     // Elementos do Modal de Adicionar/Editar Devedor
@@ -746,4 +747,13 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             console.log("Nenhum usuário logado.");
         }
     });
+
+    // Listener para o novo botão "Exibir Todos"
+if (showAllPaymentsButton) {
+    showAllPaymentsButton.addEventListener('click', () => {
+        // Rola a área de pagamentos para o final para garantir que todos os quadrados estejam visíveis
+        paymentsGrid.scrollTop = paymentsGrid.scrollHeight;
+    });
 }
+}
+
