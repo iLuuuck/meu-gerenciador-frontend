@@ -107,6 +107,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     // Modals e seus elementos
     const debtorDetailModal = document.getElementById('debtorDetailModal');
     const addEditDebtorModal = document.getElementById('addEditDebtorModal');
+    const paymentsFullscreenModal = document.getElementById('paymentsFullscreenModal'); // Adicionado
     const closeButtons = document.querySelectorAll('.modal .close-button');
 
     // Elementos do Modal de Detalhes do Devedor
@@ -124,7 +125,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const paymentDateInput = document.getElementById('paymentDate');
     const addPaymentButton = document.getElementById('addPaymentButton');
     const fillAmountButton = document.getElementById('fillAmountButton');
-    const showAllPaymentsButton = document.getElementById('showAllPaymentsButton'); // Adicionado
+    const showAllPaymentsButton = document.getElementById('showAllPaymentsButton');
     
 
     // Elementos do Modal de Adicionar/Editar Devedor
@@ -141,6 +142,10 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const interestPercentageInput = document.getElementById('interestPercentageInput');
     const startDateInput = document.getElementById('startDate');
     const saveDebtorButton = document.getElementById('saveDebtorButton');
+    
+    // Elementos do Novo Modal de Pagamentos em Tela Cheia
+    const paymentsGridFullscreen = document.getElementById('paymentsGridFullscreen');
+    const closePaymentsFullscreenButton = document.getElementById('closePaymentsFullscreen');
 
     let debtors = [];
     let currentDebtorId = null;
@@ -497,6 +502,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     // --- RENDERIZAÇÃO E LÓGICA DOS QUADRADINHOS DE PAGAMENTO ---
     function renderPaymentsGrid(debtor) {
         paymentsGrid.innerHTML = '';
+        paymentsGridFullscreen.innerHTML = ''; // Limpa também a grade do novo modal
         selectedPaymentIndex = null;
 
         const validPayments = (Array.isArray(debtor.payments) ? debtor.payments : []).filter(p => p && typeof p.amount === 'number' && p.amount > 0);
@@ -576,7 +582,15 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                     }
                 });
             }
+            
             paymentsGrid.appendChild(paymentSquare);
+
+            // CLONA o quadrado para o novo modal
+            const paymentSquareClone = paymentSquare.cloneNode(true);
+            paymentSquareClone.querySelector('.delete-payment-btn')?.remove(); // Remove o botão de exclusão do clone
+            paymentSquareClone.classList.remove('selected'); // Remove a seleção
+            paymentSquareClone.style.cursor = 'default'; // Altera o cursor
+            paymentsGridFullscreen.appendChild(paymentSquareClone);
         }
 
         const nextPendingSquare = paymentsGrid.querySelector('.payment-square:not(.paid)');
@@ -696,9 +710,17 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         button.addEventListener('click', () => {
             debtorDetailModal.style.display = 'none';
             addEditDebtorModal.style.display = 'none';
+            paymentsFullscreenModal.style.display = 'none'; // Fecha o novo modal
             selectedPaymentIndex = null;
         });
     });
+    
+    // Novo listener para o botão de fechar do modal em tela cheia
+    if (closePaymentsFullscreenButton) {
+        closePaymentsFullscreenButton.addEventListener('click', () => {
+            paymentsFullscreenModal.style.display = 'none';
+        });
+    }
 
     window.addEventListener('click', (event) => {
         if (event.target === debtorDetailModal) {
@@ -708,13 +730,15 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         if (event.target === addEditDebtorModal) {
             addEditDebtorModal.style.display = 'none';
         }
+        if (event.target === paymentsFullscreenModal) {
+            paymentsFullscreenModal.style.display = 'none';
+        }
     });
 
     // --- Listener para o novo botão "Exibir Todos" ---
     if (showAllPaymentsButton) {
         showAllPaymentsButton.addEventListener('click', () => {
-            // Rola a área de pagamentos para o final para garantir que todos os quadrados estejam visíveis
-            paymentsGrid.scrollTop = paymentsGrid.scrollHeight;
+            paymentsFullscreenModal.style.display = 'flex';
         });
     }
 
