@@ -19,7 +19,7 @@
     --button-secondary-bg: #5a5a5a; /* Botão secundário cinza */
     --button-secondary-hover-bg: #6a6a6a; /* Hover do botão secundário */
     /* NOVA VARIÁVEL: Cor do texto para botões primários no tema dark */
-    --button-primary-text-color: #212121; /* Um tom escuro para o texto */
+    --button-primary-text-color: #212121; /* Um ton escuro para o texto */
 }
 
 /* Tema Claro (aplicado quando a classe light-theme está no body) - Mantém o que já está bom */
