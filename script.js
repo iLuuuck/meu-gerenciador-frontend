@@ -128,7 +128,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const showAllPaymentsButton = document.getElementById('showAllPaymentsButton');
     
 
-    // Elementos do Modal de Adicionar/Editar Devedor
+    // Elementos do Novo Modal de Adicionar/Editar Devedor
     const addEditModalTitle = document.getElementById('addEditModalTitle');
     const addEditDebtorForm = document.getElementById('addEditDebtorForm');
     const debtorNameInput = document.getElementById('debtorName');
