@@ -123,8 +123,9 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const paymentAmountInput = document.getElementById('paymentAmount');
     const paymentDateInput = document.getElementById('paymentDate');
     const addPaymentButton = document.getElementById('addPaymentButton');
-    const showAllPaymentsButton = document.getElementById('showAllPaymentsButton');
     const fillAmountButton = document.getElementById('fillAmountButton');
+    const showAllPaymentsButton = document.getElementById('showAllPaymentsButton'); // Adicionado
+    
 
     // Elementos do Modal de Adicionar/Editar Devedor
     const addEditModalTitle = document.getElementById('addEditModalTitle');
@@ -709,6 +710,14 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         }
     });
 
+    // --- Listener para o novo botão "Exibir Todos" ---
+    if (showAllPaymentsButton) {
+        showAllPaymentsButton.addEventListener('click', () => {
+            // Rola a área de pagamentos para o final para garantir que todos os quadrados estejam visíveis
+            paymentsGrid.scrollTop = paymentsGrid.scrollHeight;
+        });
+    }
+
     // --- Listener em Tempo Real do Firestore (AGORA FILTRADO POR USUÁRIO) ---
     // Este listener só será ativado quando um usuário estiver logado
     auth.onAuthStateChanged((user) => {
@@ -747,13 +756,4 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             console.log("Nenhum usuário logado.");
         }
     });
-
-    // Listener para o novo botão "Exibir Todos"
-if (showAllPaymentsButton) {
-    showAllPaymentsButton.addEventListener('click', () => {
-        // Rola a área de pagamentos para o final para garantir que todos os quadrados estejam visíveis
-        paymentsGrid.scrollTop = paymentsGrid.scrollHeight;
-    });
 }
-}
-
