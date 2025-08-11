@@ -575,6 +575,88 @@ input:checked + .slider:before {
     color: var(--button-primary-text-color); /* AGORA USA A NOVA VARIÁVEL */
 }
 
+/* --- NOVO MODAL EM TELA CHEIA E CSS DO PRINT --- */
+.fullscreen-content {
+    max-width: 95%;
+    width: 95%;
+    max-height: 95vh; /* Ocupa a altura total da tela */
+    display: flex;
+    flex-direction: column;
+}
+
+.payments-grid-fullscreen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Mais quadrados por linha */
+    gap: 10px;
+    overflow-y: auto; /* Adiciona scroll se necessário */
+    padding: 10px;
+    border-radius: 8px;
+    background-color: var(--input-background-color);
+    flex-grow: 1;
+}
+
+/* Estilos específicos para a impressão */
+@media print {
+    body > *:not(.modal) {
+        display: none !important; /* Esconde todos os elementos do body, exceto o modal */
+    }
+
+    .modal {
+        position: static; /* Volta para o fluxo normal do documento */
+        display: block !important;
+        width: auto;
+        height: auto;
+        background: none;
+        overflow: visible;
+        padding: 0;
+    }
+
+    .modal-content.fullscreen-content {
+        max-width: 100%;
+        width: 100%;
+        max-height: none;
+        box-shadow: none;
+        border: none;
+        background-color: #fff; /* Fundo branco para impressão */
+        color: #000;
+        padding: 0;
+    }
+
+    .payments-header {
+        display: none; /* Esconde o título e o botão de fechar */
+    }
+
+    .payments-grid-fullscreen {
+        border: none;
+        background: none;
+        padding: 0;
+        max-height: none; /* Permite que a grade cresça */
+        overflow: visible;
+    }
+
+    .payment-square {
+        border: 1px solid #ccc; /* Adiciona uma borda sutil para a impressão */
+        color: #000; /* Cor do texto preta para impressão */
+        background-color: #f4f4f4; /* Fundo mais claro */
+        box-shadow: none;
+        page-break-inside: avoid; /* Evita quebras de página dentro de um quadrado */
+    }
+
+    .payment-square.paid {
+        background-color: #e0f2f1; /* Verde mais claro para impressão */
+    }
+
+    /* Esconde o botão de exclusão, caso ainda exista por algum motivo */
+    .payment-square .delete-payment-btn {
+        display: none;
+    }
+
+    .payments-grid-fullscreen h3 {
+        color: #000 !important;
+    }
+}
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-container {
