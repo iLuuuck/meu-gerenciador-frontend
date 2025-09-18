@@ -495,6 +495,26 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                 detailTotalToReceive.classList.remove('hidden-value');
             }
 
+            // --- CÓDIGO DO BOTÃO EXIBIR TODAS AS PARCELAS ---
+            const showAllInstallmentsButton = document.getElementById('showAllInstallmentsButton');
+            
+            // Remove qualquer listener anterior para evitar duplicação
+            const oldButton = showAllInstallmentsButton.cloneNode(true);
+            showAllInstallmentsButton.parentNode.replaceChild(oldButton, showAllInstallmentsButton);
+            const newButton = document.getElementById('showAllInstallmentsButton');
+
+            // Adiciona o novo listener para alternar a visualização
+            newButton.textContent = 'Exibir Todas as Parcelas';
+            newButton.addEventListener('click', () => {
+                if (newButton.textContent === 'Exibir Todas as Parcelas') {
+                    renderAllInstallments(debtor);
+                    newButton.textContent = 'Ocultar Todas as Parcelas';
+                } else {
+                    renderPaymentsGrid(debtor);
+                    newButton.textContent = 'Exibir Todas as Parcelas';
+                }
+            });
+
             renderPaymentsGrid(debtor);
             debtorDetailModal.style.display = 'flex';
         }
@@ -609,6 +629,40 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             paymentAmountInput.value = '';
             paymentDateInput.valueAsDate = null;
             selectedPaymentIndex = null;
+        }
+    }
+
+    // --- NOVA FUNÇÃO PARA EXIBIR TODAS AS PARCELAS ---
+    function renderAllInstallments(debtor) {
+        paymentsGrid.innerHTML = '';
+        const showAllInstallmentsButton = document.getElementById('showAllInstallmentsButton');
+        
+        const installmentValue = debtor.totalToReceive / debtor.installments;
+        const startDate = new Date(debtor.startDate + 'T00:00:00');
+
+        for (let i = 0; i < debtor.installments; i++) {
+            const paymentSquare = document.createElement('div');
+            paymentSquare.className = 'payment-square';
+            
+            const installmentDate = new Date(startDate);
+            
+            if (debtor.frequency === 'daily') {
+                installmentDate.setDate(startDate.getDate() + i);
+            } else if (debtor.frequency === 'weekly') {
+                installmentDate.setDate(startDate.getDate() + (i * 7));
+            } else if (debtor.frequency === 'monthly') {
+                installmentDate.setMonth(startDate.getMonth() + i);
+            }
+            
+            const formattedDate = installmentDate.toLocaleDateString('pt-BR');
+            
+            paymentSquare.innerHTML = `
+                <span>Parc. ${i + 1}</span>
+                <span>${formatCurrency(installmentValue)}</span>
+                <span style="font-size: 0.75em;">Data: ${formattedDate}</span>
+            `;
+            
+            paymentsGrid.appendChild(paymentSquare);
         }
     }
 
@@ -826,4 +880,3 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         }
     });
 }
-
