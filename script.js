@@ -125,6 +125,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const paymentDateInput = document.getElementById('paymentDate');
     const addPaymentButton = document.getElementById('addPaymentButton');
     const fillAmountButton = document.getElementById('fillAmountButton');
+    const showAllInstallmentsButton = document.getElementById('showAllInstallmentsButton'); // NOVO: Botão para exibir todas as parcelas
 
     // Elementos do Modal de Adicionar/Editar Devedor
     const addEditModalTitle = document.getElementById('addEditModalTitle');
@@ -613,6 +614,87 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     }
 
 
+    // --- Lógica para o botão "Exibir Todas as Parcelas" ---
+    function showAllInstallments() {
+        if (!currentDebtorId) return;
+
+        const debtor = debtors.find(d => d.id === currentDebtorId);
+        if (!debtor) return;
+
+        const modal = document.createElement('div');
+        modal.className = 'fullscreen-modal';
+        modal.innerHTML = `
+            <div class="fullscreen-modal-content">
+                <div class="fullscreen-modal-header">
+                    <h2>Parcelas de ${debtor.name}</h2>
+                    <span class="close-button">&times;</span>
+                </div>
+                <div class="all-installments-list"></div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        const closeButton = modal.querySelector('.close-button');
+        closeButton.addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+
+        const installmentsList = modal.querySelector('.all-installments-list');
+
+        const debtorPayments = Array.isArray(debtor.payments) ? debtor.payments : [];
+        const consumablePayments = debtorPayments.map(p => ({ ...p, amountRemaining: p.amount }));
+        consumablePayments.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        for (let i = 0; i < debtor.installments; i++) {
+            const installmentNumber = i + 1;
+            const expectedAmountForThisInstallment = debtor.amountPerInstallment;
+            let paidAmountForThisInstallment = 0;
+            let paymentDateForThisInstallment = 'Pendente';
+            let isPaid = false;
+
+            for (let j = 0; j < consumablePayments.length; j++) {
+                const payment = consumablePayments[j];
+                if (payment && payment.amountRemaining > 0) {
+                    const amountNeededForThisInstallment = expectedAmountForThisInstallment - paidAmountForThisInstallment;
+                    const amountToApply = Math.min(amountNeededForThisInstallment, payment.amountRemaining);
+
+                    paidAmountForThisInstallment += amountToApply;
+                    payment.amountRemaining -= amountToApply;
+
+                    if (amountToApply > 0 && paymentDateForThisInstallment === 'Pendente') {
+                        paymentDateForThisInstallment = payment.date;
+                    }
+
+                    if (paidAmountForThisInstallment >= expectedAmountForThisInstallment - 0.005) {
+                        isPaid = true;
+                        break;
+                    }
+                }
+            }
+
+            const installmentItem = document.createElement('div');
+            installmentItem.className = `installment-item ${isPaid ? 'paid' : 'pending'}`;
+            installmentItem.innerHTML = `
+                <div>
+                    <h4>Parcela #${installmentNumber}</h4>
+                    <p>Status: <span class="status">${isPaid ? 'PAGA' : 'PENDENTE'}</span></p>
+                </div>
+                <div>
+                    <p>Valor Esperado: ${formatCurrency(expectedAmountForThisInstallment)}</p>
+                    <p>Valor Pago: ${formatCurrency(paidAmountForThisInstallment)}</p>
+                </div>
+                <div>
+                    <p>Data de Pagamento: ${paymentDateForThisInstallment === 'Pendente' ? '---' : formatDate(paymentDateForThisInstallment)}</p>
+                </div>
+            `;
+            installmentsList.appendChild(installmentItem);
+        }
+    }
+
+    if(showAllInstallmentsButton) {
+        showAllInstallmentsButton.addEventListener('click', showAllInstallments);
+    }
+
     // --- Adicionar Pagamento ---
     if(addPaymentButton) {
         addPaymentButton.addEventListener('click', async () => {
@@ -826,4 +908,3 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         }
     });
 }
-
