@@ -471,6 +471,14 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             detailAmountPerInstallment.textContent = formatCurrency(debtor.amountPerInstallment);
             detailStartDate.textContent = formatDate(debtor.startDate);
 
+            // Adiciona a frequência de recebimento
+            const translatedFrequency = {
+            daily: 'Diário',
+            weekly: 'Semanal',
+            monthly: 'Mensal'
+            };
+            document.getElementById('detailFrequency').textContent = translatedFrequency[debtor.frequency];
+
             const hideTotalToReceivePref = localStorage.getItem('hideTotalToReceive');
             if (hideTotalToReceivePref === 'true') {
                 toggleTotalToReceive.checked = true;
@@ -750,5 +758,6 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         }
     });
 }
+
 
 
