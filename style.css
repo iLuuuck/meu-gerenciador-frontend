@@ -793,24 +793,27 @@ input:checked + .slider:before {
 
 /* Estilos para o container de filtros */
 .filter-actions {
-    display: flex; /* Habilita o Flexbox para alinhar os botões */
-    flex-wrap: wrap; /* Permite que os botões quebrem para a próxima linha em telas pequenas */
+    display: flex; /* Habilita o Flexbox */
+    flex-wrap: wrap; /* Permite que os botões quebrem em telas pequenas */
+    justify-content: center; /* Centraliza os botões no container */
     gap: 10px; /* Adiciona um espaçamento entre os botões */
     margin-bottom: 20px; /* Espaço abaixo dos botões */
 }
 
 /* Garante que os botões dentro do .filter-actions tenham um estilo consistente */
 .filter-actions .button {
-    flex-grow: 1; /* Permite que os botões cresçam para ocupar o espaço disponível */
-    min-width: 100px; /* Evita que os botões fiquem muito pequenos */
-    text-align: center; /* Centraliza o texto nos botões */
-    font-size: 0.9em; /* Ajusta o tamanho da fonte */
+    /* Remove a propriedade flex-grow que causava a quebra de linha */
+    text-align: center;
+    font-size: 0.9em;
 }
 
 /* Ajuste para telas menores */
 @media (max-width: 600px) {
+    .filter-actions {
+        flex-direction: column; /* Faz com que os botões voltem a se empilhar em telas pequenas */
+        align-items: center; /* Centraliza os botões empilhados */
+    }
     .filter-actions .button {
-        flex-grow: unset; /* Desabilita o crescimento em telas pequenas para evitar que fiquem muito grandes */
-        width: 100%; /* Faz cada botão ocupar uma linha inteira */
+        width: 100%; /* Faz cada botão ocupar uma linha inteira em telas pequenas */
     }
 }
