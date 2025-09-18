@@ -844,7 +844,7 @@ input:checked + .slider:before {
 .filter-actions {
     display: flex;
     flex-wrap: nowrap; /* Mantém todos na mesma linha */
-    justify-content: flex-start; /* Alinha à esquerda */
+    justify-content: center;
     gap: 12px; /* Espaçamento entre os botões */
     margin-bottom: 30px;
 }
@@ -862,5 +862,6 @@ input:checked + .slider:before {
         width: 100%;
     }
 }
+
 
 
