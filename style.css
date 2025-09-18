@@ -871,7 +871,7 @@ input:checked + .slider:before {
 .fullscreen-modal {
     display: flex;
     position: fixed;
-    z-index: 100;
+    z-index: 9999; /* Valor alto para garantir que apareça na frente de tudo */
     left: 0;
     top: 0;
     width: 100%;
