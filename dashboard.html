@@ -18,7 +18,6 @@
             <div class="header-actions" style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
                 <button id="addDebtorButton" class="button">Adicionar Novo Devedor</button>
                 
-                <!-- Linha com Tema + Sair -->
                 <div style="display: flex; gap: 10px;">
                     <button id="themeToggleButton" class="theme-toggle-button" aria-label="Tema"></button>
                     <button id="logoutButton" class="button">Sair</button>
@@ -128,27 +127,19 @@
                 <p><strong>Valor por Parcela:</strong> <span id="detailAmountPerInstallment"></span></p>
                 <p><strong>Data Início:</strong> <span id="detailStartDate"></span></p>
                 <p><strong>Frequência:</strong> <span id="detailFrequency"></span></p>
-<div class="toggle-switch" style="display: flex; align-items: center; gap: 10px;">
-    <label for="toggleTotalToReceive">Esconder Total a Receber:</label>
-    <label class="switch">
-        <input type="checkbox" id="toggleTotalToReceive">
-        <span class="slider round"></span>
-    </label>
-    <button id="showAllInstallmentsButton" class="button button-secondary" style="height: 30px; font-size: 12px;">Exibir Parcelas</button>
-</div>
-
+                <div class="toggle-switch">
+                    <label for="toggleTotalToReceive">Esconder Total a Receber:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="toggleTotalToReceive">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
             </div>
 
-    <div>
-        <button id="showAllInstallmentsButton" class="button button-secondary" style="height: 30px; font-size: 12px;">Exibir Parcelas</button>
-    </div>
-</div>
-
-
-
+            <div class="payment-header">
+                <h3>Pagamentos</h3>
+                <button id="showAllInstallmentsButton" class="button button-secondary">Exibir Todas as Parcelas</button>
             </div>
-
-            <h3>Pagamentos</h3>
             <div id="paymentsGrid" class="payments-grid"></div>
 
             <div class="payment-actions">
@@ -170,12 +161,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
