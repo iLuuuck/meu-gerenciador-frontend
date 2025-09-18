@@ -850,7 +850,10 @@ input:checked + .slider:before {
 }
 
 .filter-actions .button {
-    flex: 0 0 auto; /* Impede que os botões encolham ou expandam */
+    flex: 0 0 auto; /* impede crescimento ou encolhimento */
+    width: auto;    /* remove a largura 100% herdada */
+    padding: 8px 16px; /* ajuste de padding para ficar proporcional */
+    font-size: 0.9em;  /* tamanho de fonte adequado */
 }
 
 @media (max-width: 600px) {
@@ -862,6 +865,7 @@ input:checked + .slider:before {
         width: 100%;
     }
 }
+
 
 
 
