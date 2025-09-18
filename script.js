@@ -108,6 +108,10 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const debtorDetailModal = document.getElementById('debtorDetailModal');
     const addEditDebtorModal = document.getElementById('addEditDebtorModal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
+    const fullScreenPaymentsModal = document.getElementById('fullScreenPaymentsModal');
+    const fullScreenPaymentsGrid = document.getElementById('fullScreenPaymentsGrid');
+    const closeFullScreenPaymentsModal = document.getElementById('closeFullScreenPaymentsModal');
+    const fullScreenTitle = document.getElementById('fullScreenTitle');
 
     // Elementos do Modal de Detalhes do Devedor
     const detailDebtorName = document.getElementById('detailDebtorName');
@@ -495,25 +499,9 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                 detailTotalToReceive.classList.remove('hidden-value');
             }
 
-            // --- CÓDIGO DO BOTÃO EXIBIR TODAS AS PARCELAS ---
+            // Lógica para o botão "Exibir Todas as Parcelas"
             const showAllInstallmentsButton = document.getElementById('showAllInstallmentsButton');
-            
-            // Remove qualquer listener anterior para evitar duplicação
-            const oldButton = showAllInstallmentsButton.cloneNode(true);
-            showAllInstallmentsButton.parentNode.replaceChild(oldButton, showAllInstallmentsButton);
-            const newButton = document.getElementById('showAllInstallmentsButton');
-
-            // Adiciona o novo listener para alternar a visualização
-            newButton.textContent = 'Exibir Todas as Parcelas';
-            newButton.addEventListener('click', () => {
-                if (newButton.textContent === 'Exibir Todas as Parcelas') {
-                    renderAllInstallments(debtor);
-                    newButton.textContent = 'Ocultar Todas as Parcelas';
-                } else {
-                    renderPaymentsGrid(debtor);
-                    newButton.textContent = 'Exibir Todas as Parcelas';
-                }
-            });
+            showAllInstallmentsButton.onclick = () => openFullScreenPaymentsModal(debtor);
 
             renderPaymentsGrid(debtor);
             debtorDetailModal.style.display = 'flex';
@@ -632,38 +620,62 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         }
     }
 
-    // --- NOVA FUNÇÃO PARA EXIBIR TODAS AS PARCELAS ---
-    function renderAllInstallments(debtor) {
-        paymentsGrid.innerHTML = '';
-        const showAllInstallmentsButton = document.getElementById('showAllInstallmentsButton');
-        
-        const installmentValue = debtor.totalToReceive / debtor.installments;
-        const startDate = new Date(debtor.startDate + 'T00:00:00');
+    // --- NOVA FUNÇÃO PARA ABRIR O MODAL EM TELA CHEIA E EXIBIR AS PARCELAS ---
+    function openFullScreenPaymentsModal(debtor) {
+        fullScreenPaymentsGrid.innerHTML = '';
+        fullScreenTitle.textContent = `Parcelas de ${debtor.name}`;
+    
+        const validPayments = (Array.isArray(debtor.payments) ? debtor.payments : []).filter(p => p && typeof p.amount === 'number' && p.amount > 0);
+        let consumablePayments = validPayments.map(p => ({ ...p, amountRemaining: p.amount }));
+        consumablePayments.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         for (let i = 0; i < debtor.installments; i++) {
-            const paymentSquare = document.createElement('div');
-            paymentSquare.className = 'payment-square';
-            
-            const installmentDate = new Date(startDate);
-            
-            if (debtor.frequency === 'daily') {
-                installmentDate.setDate(startDate.getDate() + i);
-            } else if (debtor.frequency === 'weekly') {
-                installmentDate.setDate(startDate.getDate() + (i * 7));
-            } else if (debtor.frequency === 'monthly') {
-                installmentDate.setMonth(startDate.getMonth() + i);
+            const installmentNumber = i + 1;
+            const expectedAmountForThisInstallment = debtor.amountPerInstallment;
+            let paidAmountForThisInstallment = 0;
+            let paymentDateForThisInstallment = 'Pendente';
+            let isPaid = false;
+
+            for (let j = 0; j < consumablePayments.length; j++) {
+                const payment = consumablePayments[j];
+                if (payment && payment.amountRemaining > 0) {
+                    const amountNeededForThisInstallment = expectedAmountForThisInstallment - paidAmountForThisInstallment;
+                    const amountToApply = Math.min(amountNeededForThisInstallment, payment.amountRemaining);
+
+                    paidAmountForThisInstallment += amountToApply;
+                    payment.amountRemaining -= amountToApply;
+
+                    if (amountToApply > 0 && paymentDateForThisInstallment === 'Pendente') {
+                         paymentDateForThisInstallment = payment.date;
+                    }
+
+                    if (paidAmountForThisInstallment >= expectedAmountForThisInstallment - 0.005) { // Tolerância para float
+                        isPaid = true;
+                        break;
+                    }
+                }
             }
+
+            const displayAmount = Math.min(paidAmountForThisInstallment, expectedAmountForThisInstallment);
+            const displayRemaining = expectedAmountForThisInstallment - displayAmount;
+
+            const installmentDiv = document.createElement('div');
+            installmentDiv.classList.add('payment-item');
             
-            const formattedDate = installmentDate.toLocaleDateString('pt-BR');
-            
-            paymentSquare.innerHTML = `
-                <span>Parc. ${i + 1}</span>
-                <span>${formatCurrency(installmentValue)}</span>
-                <span style="font-size: 0.75em;">Data: ${formattedDate}</span>
+            const statusClass = isPaid ? 'paid' : 'pending';
+
+            installmentDiv.innerHTML = `
+                <p><strong>Parcela ${installmentNumber}</strong></p>
+                <p>Valor Total: ${formatCurrency(expectedAmountForThisInstallment)}</p>
+                <p class="${statusClass}">Status: ${isPaid ? 'Paga' : 'Pendente'}</p>
+                ${isPaid ? `<p>Valor Pago: ${formatCurrency(displayAmount)}</p>` : `<p>Valor Faltante: ${formatCurrency(displayRemaining)}</p>`}
+                ${isPaid ? `<p>Data do Pagamento: ${formatDate(paymentDateForThisInstallment)}</p>` : ''}
             `;
             
-            paymentsGrid.appendChild(paymentSquare);
+            fullScreenPaymentsGrid.appendChild(installmentDiv);
         }
+
+        fullScreenPaymentsModal.style.display = 'flex';
     }
 
 
@@ -776,6 +788,10 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         });
     });
 
+    closeFullScreenPaymentsModal.addEventListener('click', () => {
+        fullScreenPaymentsModal.style.display = 'none';
+    });
+
     window.addEventListener('click', (event) => {
         if (event.target === debtorDetailModal) {
             debtorDetailModal.style.display = 'none';
@@ -783,6 +799,9 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         }
         if (event.target === addEditDebtorModal) {
             addEditDebtorModal.style.display = 'none';
+        }
+        if (event.target === fullScreenPaymentsModal) {
+            fullScreenPaymentsModal.style.display = 'none';
         }
     });
 
