@@ -372,6 +372,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                     totalToReceive,
                     interestPercentage,
                     payments: [],
+                    frequency: frequency, // <-- Adicionado aqui
                     userId: currentUserId // SALVA O ID DO USUÁRIO LOGADO
                 };
 
@@ -747,3 +748,4 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         }
     });
 }
+
