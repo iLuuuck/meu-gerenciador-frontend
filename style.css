@@ -790,3 +790,27 @@ input:checked + .slider:before {
         margin-bottom: 20px;
     }
 }
+
+/* Estilos para o container de filtros */
+.filter-actions {
+    display: flex; /* Habilita o Flexbox para alinhar os botões */
+    flex-wrap: wrap; /* Permite que os botões quebrem para a próxima linha em telas pequenas */
+    gap: 10px; /* Adiciona um espaçamento entre os botões */
+    margin-bottom: 20px; /* Espaço abaixo dos botões */
+}
+
+/* Garante que os botões dentro do .filter-actions tenham um estilo consistente */
+.filter-actions .button {
+    flex-grow: 1; /* Permite que os botões cresçam para ocupar o espaço disponível */
+    min-width: 100px; /* Evita que os botões fiquem muito pequenos */
+    text-align: center; /* Centraliza o texto nos botões */
+    font-size: 0.9em; /* Ajusta o tamanho da fonte */
+}
+
+/* Ajuste para telas menores */
+@media (max-width: 600px) {
+    .filter-actions .button {
+        flex-grow: unset; /* Desabilita o crescimento em telas pequenas para evitar que fiquem muito grandes */
+        width: 100%; /* Faz cada botão ocupar uma linha inteira */
+    }
+}
