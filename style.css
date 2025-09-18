@@ -843,15 +843,14 @@ input:checked + .slider:before {
 
 .filter-actions {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
+    flex-wrap: nowrap; /* Mantém todos na mesma linha */
+    justify-content: flex-start; /* Alinha à esquerda */
+    gap: 12px; /* Espaçamento entre os botões */
     margin-bottom: 30px;
 }
 
 .filter-actions .button {
-    text-align: center;
-    font-size: 0.9em;
+    flex: 0 0 auto; /* Impede que os botões encolham ou expandam */
 }
 
 @media (max-width: 600px) {
@@ -863,4 +862,5 @@ input:checked + .slider:before {
         width: 100%;
     }
 }
+
 
