@@ -78,31 +78,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Listener de estado de autenticação: Redireciona quando o usuário loga/desloga
-    auth.onAuthStateChanged((user) => {
-const welcomeMessage = document.getElementById('welcomeMessage'); // Adicione esta linha
+auth.onAuthStateChanged((user) => {
     if (user) {
         // Usuário logado
-        
-        // NOVO CÓDIGO AQUI 👇
-        if (welcomeMessage) {
-            welcomeMessage.textContent = `Bem-vindo(a), ${user.email.split('@')[0]}!`;
-            welcomeMessage.style.display = 'block';
-        }
-        // NOVO CÓDIGO AQUI 👆
+        // A variável 'welcomeMessage' só existe no dashboard.html
+        // e por isso deve ser definida e usada APENAS aqui.
+        const welcomeMessage = document.getElementById('welcomeMessage');
 
         if (window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/')) {
             window.location.href = 'dashboard.html';
         }
-        // Se já estiver no dashboard, o script continuará
+
+        if (welcomeMessage) {
+            welcomeMessage.textContent = `Bem-vindo(a), ${user.email.split('@')[0]}!`;
+            welcomeMessage.style.display = 'block';
+        }
+
     } else {
         // Usuário deslogado
-        
-        // NOVO CÓDIGO AQUI 👇
+        // Aqui também usamos a verificação para evitar erros
+        const welcomeMessage = document.getElementById('welcomeMessage');
         if (welcomeMessage) {
             welcomeMessage.style.display = 'none';
         }
-        // NOVO CÓDIGO AQUI 👆
-        
+
         if (window.location.pathname.endsWith('dashboard.html')) {
             window.location.href = 'index.html'; // Redireciona para login
         }
@@ -841,4 +840,5 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         }
     });
 }
+
 
