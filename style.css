@@ -867,5 +867,97 @@ input:checked + .slider:before {
 }
 
 
+/* --- Estilo para o Modal de Tela Cheia de Parcelas --- */
+.fullscreen-modal {
+    display: flex;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.fullscreen-modal-content {
+    background-color: var(--background-color);
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    color: var(--text-color);
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.fullscreen-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.fullscreen-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.all-installments-list {
+    display: grid;
+    gap: 15px;
+}
+
+.installment-item {
+    background-color: var(--secondary-color);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid;
+    transition: transform 0.2s ease-in-out;
+}
+
+.installment-item:hover {
+    transform: translateY(-2px);
+}
+
+.installment-item.paid {
+    border-color: var(--success-color);
+}
+
+.installment-item.pending {
+    border-color: var(--error-color);
+}
+
+.installment-item p {
+    margin: 5px 0;
+    font-size: 0.9em;
+}
+
+.installment-item h4 {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.installment-item .status {
+    font-weight: bold;
+    color: var(--success-color);
+}
+
+.installment-item.pending .status {
+    color: var(--error-color);
+}
 
 
