@@ -125,8 +125,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const paymentDateInput = document.getElementById('paymentDate');
     const addPaymentButton = document.getElementById('addPaymentButton');
     const fillAmountButton = document.getElementById('fillAmountButton');
-    const showAllInstallmentsButton = document.getElementById('showAllInstallmentsButton'); // NOVO: Botão para exibir todas as parcelas
-    
+
     // Elementos do Modal de Adicionar/Editar Devedor
     const addEditModalTitle = document.getElementById('addEditModalTitle');
     const addEditDebtorForm = document.getElementById('addEditDebtorForm');
@@ -253,7 +252,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
 
             debtorItem.querySelector('.debtor-info').addEventListener('click', (event) => {
                 if (!event.target.closest('.debtor-actions')) {
-                    openDebtorDetailModal(debtor.id);
+                     openDebtorDetailModal(debtor.id);
                 }
             });
 
@@ -513,26 +512,6 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         });
     }
 
-    // --- Lógica para o novo botão "Exibir Todas as Parcelas" ---
-    if (showAllInstallmentsButton) {
-        showAllInstallmentsButton.addEventListener('click', () => {
-            // Esconde os checkboxes e o contêiner de ações de pagamento
-            const paymentCheckboxes = document.querySelectorAll('.payments-grid .delete-payment-btn');
-            const paymentActionsContainer = document.querySelector('.payment-actions');
-            
-            paymentCheckboxes.forEach(btn => {
-                btn.style.display = 'none';
-            });
-            
-            if (paymentActionsContainer) {
-                paymentActionsContainer.style.display = 'none';
-            }
-
-            // Opcional: esconde o próprio botão para que ele não apareça no print
-            showAllInstallmentsButton.style.display = 'none';
-        });
-    }
-
     // --- RENDERIZAÇÃO E LÓGICA DOS QUADRADINHOS DE PAGAMENTO ---
     function renderPaymentsGrid(debtor) {
         paymentsGrid.innerHTML = '';
@@ -582,8 +561,8 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             }
 
             let dateHtml = `<span style="font-size: 0.75em; color: ${isPaid ? 'rgba(255,255,255,0.8)' : 'var(--text-color)'};">` +
-                         (paymentDateForThisInstallment === 'Pendente' ? 'Pendente' : `Pago: ${formatDate(paymentDateForThisInstallment)}`) +
-                         `</span>`;
+                            (paymentDateForThisInstallment === 'Pendente' ? 'Pendente' : `Pago: ${formatDate(paymentDateForThisInstallment)}`) +
+                            `</span>`;
 
             paymentSquare.innerHTML = `
                 <span>Parc. ${installmentNumber}</span>
@@ -675,7 +654,176 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                 }
             } catch (error) {
                 console.error("Erro ao adicionar pagamento:", error);
+                showError('Erro ao adicionar pagamento. Verifique o console para mais detalhes.');
             }
         });
     }
+
+    if(fillAmountButton) {
+        fillAmountButton.addEventListener('click', () => {
+            if (currentDebtorId === null) return;
+            const debtor = debtors.find(d => d.id === currentDebtorId);
+            if (debtor) {
+                const nextPendingSquare = paymentsGrid.querySelector('.payment-square:not(.paid)');
+                if (nextPendingSquare) {
+                    const nextExpectedAmount = debtor.amountPerInstallment;
+                    paymentAmountInput.value = nextExpectedAmount.toFixed(2);
+                    paymentDateInput.valueAsDate = new Date();
+                    document.querySelectorAll('.payment-square').forEach(sq => sq.classList.remove('selected'));
+                    nextPendingSquare.classList.add('selected');
+                    selectedPaymentIndex = parseInt(nextPendingSquare.getAttribute('data-index'));
+                } else {
+                    paymentAmountInput.value = debtor.amountPerInstallment.toFixed(2);
+                    paymentDateInput.valueAsDate = new Date();
+                    selectedPaymentIndex = null;
+                }
+            }
+        });
+    }
+
+
+    async function removeLastPayment(debtorId) {
+        try {
+            const debtorRef = db.collection('debtors').doc(debtorId);
+            const doc = await debtorRef.get();
+            if (doc.exists) {
+                const debtorData = doc.data();
+                // Verifica se o devedor pertence ao usuário logado ANTES de modificar
+                if (debtorData.userId !== currentUserId) {
+                    showError("Você não tem permissão para modificar este devedor.");
+                    return;
+                }
+
+                let updatedPayments = Array.isArray(debtorData.payments) ? [...debtorData.payments] : [];
+
+                if (updatedPayments.length === 0) {
+                    showError('Não há pagamentos para remover.');
+                    return;
+                }
+
+                updatedPayments.pop();
+                await debtorRef.update({ payments: updatedPayments });
+            } else {
+                showError("Devedor não encontrado para remover pagamento.");
+            }
+        } catch (error) {
+            console.error("Erro ao remover pagamento:", error);
+            showError('Erro ao remover pagamento. Verifique o console para mais detalhes.');
+        }
+    }
+
+
+    // --- Fechar Modals ---
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            debtorDetailModal.style.display = 'none';
+            addEditDebtorModal.style.display = 'none';
+            selectedPaymentIndex = null;
+        });
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === debtorDetailModal) {
+            debtorDetailModal.style.display = 'none';
+            selectedPaymentIndex = null;
+        }
+        if (event.target === addEditDebtorModal) {
+            addEditDebtorModal.style.display = 'none';
+        }
+    });
+
+    // --- Listener em Tempo Real do Firestore (AGORA FILTRADO POR USUÁRIO E FREQUÊNCIA) ---
+    // Função para configurar o listener com base no filtro atual
+    function setupFirestoreListener() {
+        if (!currentUserId) {
+            console.log("Usuário não logado, não é possível configurar o listener.");
+            return;
+        }
+
+        let query = db.collection('debtors').where('userId', '==', currentUserId);
+
+        // Se o filtro não for 'all', adiciona a condição de filtro
+        if (currentFilter !== 'all') {
+            query = query.where('frequency', '==', currentFilter);
+        }
+
+        query.onSnapshot((snapshot) => {
+            debtors = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            renderDebtors();
+
+            if (debtorDetailModal.style.display === 'flex' && currentDebtorId) {
+                const currentDebtorInModal = debtors.find(d => d.id === currentDebtorId);
+                if (currentDebtorInModal) {
+                    renderPaymentsGrid(currentDebtorInModal);
+                } else {
+                    // Se o devedor foi excluído enquanto o modal estava aberto, feche-o
+                    debtorDetailModal.style.display = 'none';
+                }
+            }
+        }, (error) => {
+            console.error("Erro ao carregar devedores do Firestore:", error);
+            showError("Erro ao carregar dados. Verifique sua conexão ou as regras do Firebase.");
+            debtorsList.innerHTML = '<p class="loading-message error">Erro ao carregar dados. Tente novamente mais tarde.</p>';
+        });
+    }
+
+    // Função para atualizar o estado visual dos botões de filtro
+    function updateFilterButtons(activeButtonId) {
+        document.querySelectorAll('.filter-actions .button').forEach(button => {
+            if (button.id === activeButtonId) {
+                button.classList.remove('button-secondary');
+            } else {
+                button.classList.add('button-secondary');
+            }
+        });
+    }
+
+    // Event listeners para os botões de filtro
+    if(filterAllButton) {
+        filterAllButton.addEventListener('click', () => {
+            currentFilter = 'all';
+            updateFilterButtons('filterAllButton');
+            setupFirestoreListener();
+        });
+    }
+    if(filterDailyButton) {
+        filterDailyButton.addEventListener('click', () => {
+            currentFilter = 'daily';
+            updateFilterButtons('filterDailyButton');
+            setupFirestoreListener();
+        });
+    }
+    if(filterWeeklyButton) {
+        filterWeeklyButton.addEventListener('click', () => {
+            currentFilter = 'weekly';
+            updateFilterButtons('filterWeeklyButton');
+            setupFirestoreListener();
+        });
+    }
+    if(filterMonthlyButton) {
+        filterMonthlyButton.addEventListener('click', () => {
+            currentFilter = 'monthly';
+            updateFilterButtons('filterMonthlyButton');
+            setupFirestoreListener();
+        });
+    }
+
+
+    // O listener de autenticação agora apenas armazena o UID e chama a função de setup
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUserId = user.uid; // Armazena o ID do usuário logado
+            console.log("Usuário logado:", user.email, "UID:", user.uid);
+            setupFirestoreListener(); // Inicia o listener do Firestore
+        } else {
+            currentUserId = null; // Nenhum usuário logado
+            debtors = []; // Limpa a lista de devedores
+            renderDebtors(); // Renderiza a lista vazia
+            console.log("Nenhum usuário logado.");
+        }
+    });
 }
+
