@@ -629,7 +629,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                     <h2>Parcelas de ${debtor.name}</h2>
                     <span class="close-button">&times;</span>
                 </div>
-                <div class="all-installments-list"></div>
+                <div class="all-installments-grid"></div>
             </div>
         `;
 
@@ -639,7 +639,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             document.body.removeChild(modal);
         });
 
-        const installmentsList = modal.querySelector('.all-installments-list');
+        const installmentsGrid = modal.querySelector('.all-installments-grid');
 
         const debtorPayments = Array.isArray(debtor.payments) ? debtor.payments : [];
         const consumablePayments = debtorPayments.map(p => ({ ...p, amountRemaining: p.amount }));
@@ -649,7 +649,6 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             const installmentNumber = i + 1;
             const expectedAmountForThisInstallment = debtor.amountPerInstallment;
             let paidAmountForThisInstallment = 0;
-            let paymentDateForThisInstallment = 'Pendente';
             let isPaid = false;
 
             for (let j = 0; j < consumablePayments.length; j++) {
@@ -661,10 +660,6 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                     paidAmountForThisInstallment += amountToApply;
                     payment.amountRemaining -= amountToApply;
 
-                    if (amountToApply > 0 && paymentDateForThisInstallment === 'Pendente') {
-                        paymentDateForThisInstallment = payment.date;
-                    }
-
                     if (paidAmountForThisInstallment >= expectedAmountForThisInstallment - 0.005) {
                         isPaid = true;
                         break;
@@ -672,22 +667,14 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                 }
             }
 
-            const installmentItem = document.createElement('div');
-            installmentItem.className = `installment-item ${isPaid ? 'paid' : 'pending'}`;
-            installmentItem.innerHTML = `
-                <div>
-                    <h4>Parcela #${installmentNumber}</h4>
-                    <p>Status: <span class="status">${isPaid ? 'PAGA' : 'PENDENTE'}</span></p>
-                </div>
-                <div>
-                    <p>Valor Esperado: ${formatCurrency(expectedAmountForThisInstallment)}</p>
-                    <p>Valor Pago: ${formatCurrency(paidAmountForThisInstallment)}</p>
-                </div>
-                <div>
-                    <p>Data de Pagamento: ${paymentDateForThisInstallment === 'Pendente' ? '---' : formatDate(paymentDateForThisInstallment)}</p>
-                </div>
+            const installmentSquare = document.createElement('div');
+            installmentSquare.className = `installment-square ${isPaid ? 'paid' : 'pending'}`;
+            installmentSquare.innerHTML = `
+                <h4>Parc. ${installmentNumber}</h4>
+                <p>Valor: ${formatCurrency(expectedAmountForThisInstallment)}</p>
+                <p class="status">${isPaid ? 'PAGA' : 'PENDENTE'}</p>
             `;
-            installmentsList.appendChild(installmentItem);
+            installmentsGrid.appendChild(installmentSquare);
         }
     }
 
