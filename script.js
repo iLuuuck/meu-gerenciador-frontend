@@ -362,6 +362,8 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                     return;
                 }
 
+                const frequency = document.getElementById('frequency').value;
+                
                 const newDebtorData = {
                     name,
                     description,
@@ -748,4 +750,5 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         }
     });
 }
+
 
