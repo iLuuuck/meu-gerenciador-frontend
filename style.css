@@ -912,52 +912,54 @@ input:checked + .slider:before {
     font-size: 1.5rem;
 }
 
-.all-installments-list {
+.all-installments-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 15px;
 }
 
-.installment-item {
+.installment-square {
     background-color: var(--secondary-color);
     padding: 15px;
     border-radius: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border-left: 5px solid;
     transition: transform 0.2s ease-in-out;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
 }
 
-.installment-item:hover {
+.installment-square:hover {
     transform: translateY(-2px);
 }
 
-.installment-item.paid {
+.installment-square.paid {
     border-color: var(--success-color);
 }
 
-.installment-item.pending {
+.installment-square.pending {
     border-color: var(--error-color);
 }
 
-.installment-item p {
-    margin: 5px 0;
+.installment-square p {
+    margin: 0;
     font-size: 0.9em;
 }
 
-.installment-item h4 {
+.installment-square h4 {
     margin: 0;
     font-size: 1.1em;
 }
 
-.installment-item .status {
+.installment-square .status {
     font-weight: bold;
     color: var(--success-color);
 }
 
-.installment-item.pending .status {
+.installment-square.pending .status {
     color: var(--error-color);
 }
-
-
