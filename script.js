@@ -161,11 +161,31 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
     }
 
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        const [year, month, day] = dateString.split('-');
-        return `${day}/${month}/${year}`;
+// NOVA VERSÃO para substituir a sua função formatDate em script.js
+function formatDate(timestampOrString) {
+    if (!timestampOrString) return 'N/A';
+
+    let date;
+
+    // Verifica se é um objeto Timestamp (vindo do bot ou do Firebase)
+    // No JS de front-end, o Timestamp será um objeto com o método toDate()
+    if (typeof timestampOrString === 'object' && typeof timestampOrString.toDate === 'function') {
+        date = timestampOrString.toDate();
+    } 
+    // Verifica se é uma string (pagamentos antigos)
+    else if (typeof timestampOrString === 'string') {
+        date = new Date(timestampOrString);
+    } 
+    // Se for outro tipo, tenta converter (fallback)
+    else {
+        date = new Date(timestampOrString);
     }
+
+    if (isNaN(date.getTime())) return 'N/A';
+
+    // Retorna no formato DD/MM/AAAA
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
 
     // Calcula o total a receber e a porcentagem de juros
     function calculateLoanDetails(loanedAmount, amountPerInstallment, installments, interestPercentage, calculationType) {
@@ -273,6 +293,40 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         });
     }
 
+    function updateStats() {
+  const totalLoanedAmountEl = document.getElementById('totalLoanedAmount');
+  const activeClientsEl = document.getElementById('activeClients');
+  const totalToReceiveEl = document.getElementById('totalToReceive');
+  const toggleHideTotal = document.getElementById('toggleHideTotal');
+
+  if (!debtors || debtors.length === 0) {
+    totalLoanedAmountEl.textContent = "R$ 0,00";
+    activeClientsEl.textContent = "0";
+    totalToReceiveEl.textContent = "R$ 0,00";
+    return;
+  }
+
+  let totalLoaned = 0;
+  let totalToReceive = 0;
+
+  debtors.forEach(d => {
+    totalLoaned += d.loanedAmount || 0;
+    totalToReceive += d.totalToReceive || 0;
+  });
+
+  totalLoanedAmountEl.textContent = formatCurrency(totalLoaned);
+  activeClientsEl.textContent = debtors.length;
+  totalToReceiveEl.textContent = formatCurrency(totalToReceive);
+
+  // toggle de esconder total
+  toggleHideTotal.addEventListener("change", () => {
+    if (toggleHideTotal.checked) {
+      totalToReceiveEl.style.filter = "blur(6px)";
+    } else {
+      totalToReceiveEl.style.filter = "none";
+    }
+  });
+}
     // --- Adicionar/Editar Devedor ---
     addDebtorButton.addEventListener('click', () => openAddEditDebtorModal());
 
@@ -822,6 +876,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
                 ...doc.data()
             }));
             renderDebtors();
+            updateStats();
 
             if (debtorDetailModal.style.display === 'flex' && currentDebtorId) {
                 const currentDebtorInModal = debtors.find(d => d.id === currentDebtorId);
@@ -894,4 +949,90 @@ if (window.location.pathname.endsWith('dashboard.html')) {
             console.log("Nenhum usuário logado.");
         }
     });
-}
+
+    // --- LÓGICA DO VÍNCULO TELEGRAM (NOVO) ---
+
+    // Função auxiliar para gerar um código alfanumérico aleatório
+    function generateRandomCode(length) {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return result;
+    }
+
+    // Lógica para gerar o código de vínculo do Telegram
+    const generateLinkCodeButton = document.getElementById('generateLinkCodeButton');
+    const linkCodeDisplay = document.getElementById('linkCodeDisplay');
+    // A seção 'telegramLinkSection' não é usada diretamente no JS, mas o botão e o display sim
+
+    if (generateLinkCodeButton) { // Checa se o botão existe (apenas no dashboard)
+        generateLinkCodeButton.addEventListener('click', async () => {
+            if (!currentUserId) {
+                alert('Você precisa estar logado para gerar o código.');
+                return;
+            }
+
+            try {
+                // 1. Gera um código único
+                const code = generateRandomCode(6);
+                
+                // 2. Salva o código no Firestore para que o bot possa encontrá-lo
+                await db.collection('link_codes').add({
+                    code: code,
+                    userId: currentUserId,
+                    email: auth.currentUser.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    expiresAt: firebase.firestore.Timestamp.fromMillis(Date.now() + 1000 * 60 * 5) // Expira em 5 minutos
+                });
+
+                // 3. Exibe o código na tela
+                linkCodeDisplay.textContent = code;
+                generateLinkCodeButton.textContent = 'Gerado! (5 min)';
+                generateLinkCodeButton.disabled = true;
+
+                alert(`Código gerado: ${code}\nUse o comando /vincular ${code} no Telegram. Expira em 5 minutos.`);
+                
+                // Reabilita o botão após 5 minutos
+                setTimeout(() => {
+                    generateLinkCodeButton.textContent = 'Gerar Código Telegram';
+                    generateLinkCodeButton.disabled = false;
+                    linkCodeDisplay.textContent = '';
+                }, 1000 * 60 * 5); // 5 minutos
+
+            } catch (error) {
+                console.error("Erro ao gerar código de vínculo:", error);
+                alert('Erro ao gerar código. Tente novamente.');
+            }
+        });
+    }
+// --- MENU DE TRÊS PONTOS ---
+document.addEventListener("DOMContentLoaded", () => {
+  const menuToggle = document.getElementById("menuToggleButton");
+  const menuDropdown = document.getElementById("menuDropdown");
+
+  if (menuToggle && menuDropdown) {
+    menuToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      menuDropdown.classList.toggle("active");
+    });
+
+    // Fecha o menu ao clicar fora
+    document.addEventListener("click", (e) => {
+      if (!menuDropdown.contains(e.target) && !menuToggle.contains(e.target)) {
+        menuDropdown.classList.remove("active");
+      }
+    });
+  }
+});
+
+
+} // FIM do if (window.location.pathname.endsWith('dashboard.html')) { ... }
+ // FIM do document.addEventListener('DOMContentLoaded', ...)
+
+
+
+
+
+
