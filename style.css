@@ -9,7 +9,7 @@
 
     --background-color: #121212; /* Fundo bem escuro */
     --text-color: #e0e0e0; /* Texto cinza claro */
-    --card-background-color: #1e1e1e; /* Fundo de card mais escuro */
+    --card-background-color: #1e1e1e; /* Fundo de card mais escuro (Será ignorado em cards com glass-morphism) */
     --border-color: #424242; /* Borda sutil */
     --input-background-color: #2c2c2c;
     --input-text-color: #ffffff; /* Texto do input branco puro */
@@ -83,6 +83,7 @@ button:active {
 
 /* --- Layout da Página de Login (index.html) --- */
 .container {
+    /* Mantido o estilo de card opaco para contraste */
     background-color: var(--card-background-color);
     padding: 40px;
     border-radius: 12px;
@@ -149,6 +150,7 @@ button:active {
 
 /* --- Layout da Página do Dashboard (dashboard.html) --- */
 .dashboard-container {
+    /* Mantido o estilo de card opaco para contraste */
     max-width: 1400px;
     margin: 20px auto;
     padding: 30px;
@@ -265,25 +267,48 @@ button:active {
     color: var(--error-color);
 }
 
-/* Efeito 3D e moderno para os itens de devedores */
+/* Efeito GLASS-MORPHISM para os itens de devedores */
 .debtor-item {
-    background-color: var(--input-background-color);
+    /* GLASS EFFECT */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px); /* Suporte para Safari */
+    background-color: rgba(30, 30, 30, 0.5); /* Fundo semi-transparente (Dark Mode) */
+    
+    /* MUDANÇA: Borda Colorida Leve (Verde Primário) */
+    border: 1px solid rgba(0, 230, 118, 0.4); 
+    
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); /* Sombra mais intensa */
+    /* Fim do GLASS EFFECT */
+
     padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 4px 8px var(--box-shadow-color),
-                0 6px 20px var(--box-shadow-color);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    border: 1px solid var(--border-color);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Glass effect para o tema CLARO */
+body.light-theme .debtor-item {
+    background-color: rgba(255, 255, 255, 0.7); /* Fundo semi-transparente (Light Mode) */
+    
+    /* MUDANÇA: Borda Colorida Leve (Azul Primário) */
+    border: 1px solid rgba(26, 115, 232, 0.5);
+    
+    box-shadow: 0 8px 32px 0 rgba(30, 30, 30, 0.1);
 }
 
 .debtor-item:hover {
     transform: translateY(-8px);
-    box-shadow: 0 8px 16px var(--box-shadow-color),
-                0 12px 40px var(--box-shadow-color);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6),
+                0 12px 40px rgba(0, 0, 0, 0.6);
 }
+/* Glass effect para o tema CLARO no hover (para manter a sombra discreta) */
+body.light-theme .debtor-item:hover {
+    box-shadow: 0 8px 16px rgba(30, 30, 30, 0.3),
+                0 12px 40px rgba(30, 30, 30, 0.3);
+}
+
 
 .debtor-info h2 {
     margin-top: 0;
@@ -551,8 +576,19 @@ input:checked + .slider:before {
     margin-bottom: 25px;
 }
 
+/* Efeito GLASS-MORPHISM para os quadradinhos de pagamento */
 .payment-square {
-    background-color: var(--button-secondary-bg);
+    /* GLASS EFFECT (MILD) */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background-color: rgba(66, 66, 66, 0.4); /* Fundo semi-transparente (Dark Mode) */
+    
+    /* MUDANÇA: Borda Colorida Leve (Verde Primário) */
+    border: 1px solid rgba(0, 230, 118, 0.2); 
+    
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    /* Fim do GLASS EFFECT */
+
     padding: 12px;
     border-radius: 8px;
     text-align: center;
@@ -563,8 +599,17 @@ input:checked + .slider:before {
     justify-content: space-between;
     min-height: 90px;
     position: relative;
-    box-shadow: 0 2px 5px var(--box-shadow-color);
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Glass effect para o tema CLARO nos quadradinhos de pagamento */
+body.light-theme .payment-square {
+    background-color: rgba(224, 224, 224, 0.7); /* Fundo semi-transparente (Light Mode) */
+    
+    /* MUDANÇA: Borda Colorida Leve (Azul Primário) */
+    border: 1px solid rgba(26, 115, 232, 0.3);
+    
+    box-shadow: 0 2px 5px rgba(30, 30, 30, 0.1);
 }
 
 .payment-square:hover:not(.paid) {
@@ -574,6 +619,7 @@ input:checked + .slider:before {
 }
 
 .payment-square.paid {
+    /* Mantém a cor sólida para o status pago */
     background-color: var(--success-color);
     color: white;
 }
@@ -919,7 +965,8 @@ input:checked + .slider:before {
 }
 
 .installment-square {
-    background-color: var(--secondary-color);
+    /* Manteve o estilo opaco aqui, mas se quiser glass-morphism aqui também é só aplicar */
+    background-color: var(--button-secondary-bg); 
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -932,6 +979,11 @@ input:checked + .slider:before {
     align-items: center;
     gap: 5px;
 }
+
+body.light-theme .installment-square {
+    background-color: var(--button-secondary-bg);
+}
+
 
 .installment-square:hover {
     transform: translateY(-2px);
@@ -962,4 +1014,122 @@ input:checked + .slider:before {
 
 .installment-square.pending .status {
     color: var(--error-color);
+}
+
+/* --- MENU DE TRÊS PONTOS (ao lado do botão) --- */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+
+.menu-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.menu-toggle {
+    background-color: var(--button-secondary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    font-size: 20px;
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    height: 100%;
+}
+
+.menu-toggle:hover {
+    background-color: var(--button-secondary-hover-bg);
+}
+
+.menu-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    background-color: var(--card-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px var(--box-shadow-color);
+    overflow: hidden;
+    z-index: 1000;
+    min-width: 150px;
+}
+
+.menu-dropdown.active {
+    display: block;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.menu-item {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    color: var(--text-color);
+    font-size: 0.95em;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background-color: var(--button-secondary-hover-bg);
+}
+
+/* === DASHBOARD DE ESTATÍSTICAS === */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.stat-card {
+  background-color: var(--card-background-color);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  padding: 20px 25px;
+  box-shadow: 0 4px 12px var(--box-shadow-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 5px;
+  background-color: var(--primary-color);
+}
+
+.stat-title {
+  font-size: 0.95em;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+.stat-card h2 {
+  font-size: 1.8em;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.switch.small-switch {
+  transform: scale(0.8);
 }
