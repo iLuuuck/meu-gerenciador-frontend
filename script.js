@@ -43,8 +43,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth(); // Referência ao serviço de autenticação
+const DEBTORS_COLLECTION = 'debtors'; // Constante para o nome da coleção
 
-// --- Lógica de Autenticação (Login) ---
+// --- Lógica de Autenticação (Login em index.html) ---
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const loginError = document.getElementById('loginError'); // Para exibir erros de login
@@ -76,6 +77,42 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    // Lógica para alternar formulário de login/cadastro (se existir no index.html)
+    const registerButton = document.getElementById('registerButton');
+    const registerForm = document.getElementById('registerForm');
+    const loginSection = document.querySelector('.login-section');
+    const registerSection = document.querySelector('.register-section');
+
+    if (registerButton) {
+        registerButton.addEventListener('click', () => {
+            if(loginSection) loginSection.classList.remove('active');
+            if(registerSection) registerSection.classList.add('active');
+        });
+    }
+
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                alert('As senhas não coincidem!');
+                return;
+            }
+
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+                // Redireciona para o painel após o registro
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                console.error("Erro no registro:", error);
+                alert(`Erro de registro: ${error.message}`);
+            }
+        });
+    }
 
     // Listener de estado de autenticação: Redireciona quando o usuário loga/desloga
     auth.onAuthStateChanged((user) => {
@@ -84,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/')) {
                 window.location.href = 'dashboard.html';
             }
-            // Se já estiver no dashboard, o script continuará
         } else {
             // Usuário deslogado
             if (window.location.pathname.endsWith('dashboard.html')) {
@@ -94,118 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Estas são as novas funções que você deve adicionar ao seu script.js
 
-// --- VARIÁVEIS E FUNÇÕES DE GERAÇÃO DE CÓDIGO (Adicionar no topo do script.js) ---
-
-// Certifique-se de que 'db' esteja inicializado com: const db = firebase.firestore();
-const linkCodeDurationMinutes = 5; 
-const telegramLinkModal = document.getElementById('telegramLinkModal');
-const generateCodeInModalBtn = document.getElementById('generateCodeInModalBtn');
-
-/**
- * Gera um código alfanumérico curto e fácil de digitar.
- */
-function generateRandomCode(length = 6) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
-    for (let i = 0; i < length; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-}
-
-/**
- * Cria um código de vínculo temporário no Firestore e o exibe.
- */
-async function generateLinkCode() {
-    const codeDisplay = document.getElementById('codeDisplay');
-    const generatedCodeSpan = document.getElementById('generatedCode');
-    
-    const user = firebase.auth().currentUser;
-    if (!user) {
-        alert('Você precisa estar logado para gerar um código de vínculo.');
-        return;
-    }
-
-    generateCodeInModalBtn.disabled = true;
-    generateCodeInModalBtn.textContent = 'Gerando...';
-    
-    try {
-        const userId = user.uid;
-        const email = user.email;
-        const code = generateRandomCode(6); 
-        const now = firebase.firestore.Timestamp.now();
-        
-        // Data de expiração: 5 minutos no futuro
-        const expiresAt = new firebase.firestore.Timestamp(now.seconds + (linkCodeDurationMinutes * 60), 0);
-
-        // Salva o código na coleção 'link_codes'
-        await db.collection('link_codes').doc(code).set({
-            userId: userId,
-            email: email,
-            createdAt: now,
-            expiresAt: expiresAt,
-            code: code // Salva o código dentro do documento (opcional, mas útil)
-        });
-
-        // Exibe o código na interface
-        generatedCodeSpan.textContent = code;
-        codeDisplay.style.display = 'block';
-        
-        generateCodeInModalBtn.textContent = 'Código Gerado!';
-
-        // Configura um timer para reativar o botão após o tempo de expiração
-        setTimeout(() => {
-            generateCodeInModalBtn.disabled = false;
-            generateCodeInModalBtn.textContent = 'Gerar Novo Código de Vínculo';
-            codeDisplay.style.display = 'none'; 
-        }, linkCodeDurationMinutes * 60 * 1000); 
-
-    } catch (error) {
-        console.error('Erro ao gerar código de vínculo:', error);
-        alert('Erro ao gerar código. Tente novamente mais tarde.');
-        generateCodeInModalBtn.disabled = false;
-        generateCodeInModalBtn.textContent = 'Gerar Código de Vínculo';
-        codeDisplay.style.display = 'none';
-    }
-}
-
-
-// --- FUNÇÕES DE CONTROLE DO MODAL DE VÍNCULO (Adicionar no script.js) ---
-
-// Abre o modal de vínculo
-function openTelegramLinkModal() {
-    telegramLinkModal.style.display = 'block';
-    // Garante que o botão de geração de código esteja visível ao abrir
-    generateCodeInModalBtn.textContent = 'Gerar Código de Vínculo';
-    generateCodeInModalBtn.disabled = false;
-    document.getElementById('codeDisplay').style.display = 'none';
-    
-    // Fecha o menu suspenso após clicar
-    const menuDropdown = document.getElementById('menuDropdown');
-    if (menuDropdown) {
-        menuDropdown.style.display = 'none'; 
-    }
-}
-
-// Fecha o modal de vínculo
-function closeTelegramLinkModal() {
-    telegramLinkModal.style.display = 'none';
-}
-
-// Fechar modal ao clicar fora
-window.addEventListener('click', (event) => {
-    if (event.target === telegramLinkModal) {
-        closeTelegramLinkModal();
-    }
-});
-
-
-// --- Lógica do Dashboard (agora dependente da autenticação Firebase) ---
-// Este código só será executado se estivermos no dashboard.html
+// --- LÓGICA DO DASHBOARD (dashboard.html) ---
 if (window.location.pathname.endsWith('dashboard.html')) {
-    // --- Variáveis e Elementos do Dashboard ---
+    // --- VARIÁVEIS DO DOM EXISTENTES ---
     const logoutButton = document.getElementById('logoutButton');
     const addDebtorButton = document.getElementById('addDebtorButton');
     const debtorsList = document.getElementById('debtorsList');
@@ -215,7 +143,8 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const debtorDetailModal = document.getElementById('debtorDetailModal');
     const addEditDebtorModal = document.getElementById('addEditDebtorModal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
-
+    const telegramLinkModal = document.getElementById('telegramLinkModal'); 
+    
     // Elementos do Modal de Detalhes do Devedor
     const detailDebtorName = document.getElementById('detailDebtorName');
     const detailDebtorDescription = document.getElementById('detailDebtorDescription');
@@ -226,13 +155,14 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const detailInstallments = document.getElementById('detailInstallments');
     const detailAmountPerInstallment = document.getElementById('detailAmountPerInstallment');
     const detailStartDate = document.getElementById('detailStartDate');
-    const detailFrequency = document.getElementById('detailFrequency'); // Novo elemento de frequência
+    const detailFrequency = document.getElementById('detailFrequency');
+    const detailAccessCode = document.getElementById('detailAccessCode');
     const paymentsGrid = document.getElementById('paymentsGrid');
     const paymentAmountInput = document.getElementById('paymentAmount');
     const paymentDateInput = document.getElementById('paymentDate');
     const addPaymentButton = document.getElementById('addPaymentButton');
     const fillAmountButton = document.getElementById('fillAmountButton');
-    const showAllInstallmentsButton = document.getElementById('showAllInstallmentsButton'); // NOVO: Botão para exibir todas as parcelas
+    const showAllInstallmentsButton = document.getElementById('showAllInstallmentsButton'); 
 
     // Elementos do Modal de Adicionar/Editar Devedor
     const addEditModalTitle = document.getElementById('addEditModalTitle');
@@ -240,75 +170,118 @@ if (window.location.pathname.endsWith('dashboard.html')) {
     const debtorNameInput = document.getElementById('debtorName');
     const debtorDescriptionInput = document.getElementById('debtorDescription');
     const loanedAmountInput = document.getElementById('loanedAmount');
-    const frequencyInput = document.getElementById('frequency'); // Novo campo de frequência
+    const frequencyInput = document.getElementById('frequency'); 
     const calculationTypeSelect = document.getElementById('calculationType');
     const perInstallmentFields = document.getElementById('perInstallmentFields');
     const percentageFields = document.getElementById('percentageFields');
     const amountPerInstallmentInput = document.getElementById('amountPerInstallmentInput');
-    const installmentsInput = document.getElementById('installments'); // Este campo agora está sempre visível
+    const installmentsInput = document.getElementById('installments');
     const interestPercentageInput = document.getElementById('interestPercentageInput');
     const startDateInput = document.getElementById('startDate');
-    const saveDebtorButton = document.getElementById('saveDebtorButton');
-
+    
     // Elementos do filtro
     const filterAllButton = document.getElementById('filterAllButton');
     const filterDailyButton = document.getElementById('filterDailyButton');
     const filterWeeklyButton = document.getElementById('filterWeeklyButton');
     const filterMonthlyButton = document.getElementById('filterMonthlyButton');
 
+    // Variáveis de Estado
     let debtors = [];
     let currentDebtorId = null;
     let selectedPaymentIndex = null;
-    let currentUserId = null; // Para armazenar o ID do usuário logado
-    let currentFilter = 'all'; // Variável para controlar o filtro atual
+    let currentUserId = null; 
+    let currentFilter = 'all'; 
+    const linkCodeDurationMinutes = 5; 
 
-    // --- Funções Auxiliares ---
+    // --- FUNÇÕES DE GERAÇÃO E MODAL DE SUCESSO DO ACCESS CODE (ADICIONADAS) ---
+    
+    /**
+     * Gera um código de acesso alfanumérico aleatório de 6 caracteres.
+     * @returns {string} O código de acesso.
+     */
+    function generateAccessCode() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+
+    // Variável para referência ao novo modal (successModal)
+    const successModal = document.getElementById('successModal');
+
+    function openSuccessModal(code) {
+        if (!successModal) {
+             alert(`Sucesso! Devedor cadastrado. CÓDIGO DE ACESSO: ${code}`);
+             return; 
+        }
+        document.getElementById('displayedAccessCode').textContent = code;
+        successModal.style.display = 'flex';
+        successModal.style.zIndex = '1001'; // Garante que esteja acima
+    }
+
+    function closeSuccessModal() {
+        if (!successModal) return;
+        successModal.style.display = 'none';
+        addEditDebtorModal.style.display = 'none'; // Fecha o modal de cadastro após o sucesso
+    }
+
+    function copyAccessCode() {
+        const code = document.getElementById('displayedAccessCode').textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            alert("Código de Acesso copiado para a área de transferência!");
+        }).catch(err => {
+             console.error('Erro ao copiar código:', err);
+             alert('Não foi possível copiar o código. Tente manualmente.');
+        });
+    }
+
+    // Adiciona as funções ao escopo global para que o HTML possa chamá-las
+    window.closeSuccessModal = closeSuccessModal;
+    window.copyAccessCode = copyAccessCode;
+    
+    // --- FIM DAS FUNÇÕES DE GERAÇÃO E MODAL DE SUCESSO ---
+
+
+    // --- Funções Auxiliares Existentes ---
 
     function formatCurrency(amount) {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
     }
 
-// NOVA VERSÃO para substituir a sua função formatDate em script.js
-function formatDate(timestampOrString) {
-    if (!timestampOrString) return 'N/A';
+    function formatDate(timestampOrString) {
+        if (!timestampOrString) return 'N/A';
 
-    let date;
+        let date;
+        if (typeof timestampOrString === 'object' && typeof timestampOrString.toDate === 'function') {
+            date = timestampOrString.toDate();
+        } 
+        else if (typeof timestampOrString === 'string') {
+            date = new Date(timestampOrString);
+        } 
+        else {
+            date = new Date(timestampOrString);
+        }
 
-    // Verifica se é um objeto Timestamp (vindo do bot ou do Firebase)
-    // No JS de front-end, o Timestamp será um objeto com o método toDate()
-    if (typeof timestampOrString === 'object' && typeof timestampOrString.toDate === 'function') {
-        date = timestampOrString.toDate();
-    } 
-    // Verifica se é uma string (pagamentos antigos)
-    else if (typeof timestampOrString === 'string') {
-        date = new Date(timestampOrString);
-    } 
-    // Se for outro tipo, tenta converter (fallback)
-    else {
-        date = new Date(timestampOrString);
+        if (isNaN(date.getTime())) return 'N/A';
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
-    if (isNaN(date.getTime())) return 'N/A';
-
-    // Retorna no formato DD/MM/AAAA
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-    // Calcula o total a receber e a porcentagem de juros
     function calculateLoanDetails(loanedAmount, amountPerInstallment, installments, interestPercentage, calculationType) {
         let totalToReceive;
         let calculatedAmountPerInstallment;
-        let calculatedInstallments = parseInt(installments); // Sempre usa o valor do input de parcelas
+        let calculatedInstallments = parseInt(installments); 
 
         if (isNaN(calculatedInstallments) || calculatedInstallments <= 0) {
-            calculatedInstallments = 1; // Garante que o número de parcelas seja pelo menos 1
+            calculatedInstallments = 1; 
         }
 
         if (calculationType === 'perInstallment') {
             calculatedAmountPerInstallment = parseFloat(amountPerInstallment);
             totalToReceive = calculatedAmountPerInstallment * calculatedInstallments;
             interestPercentage = ((totalToReceive - loanedAmount) / loanedAmount * 100);
-            if (isNaN(interestPercentage) || !isFinite(interestPercentage)) { // Trata divisão por zero ou infinito
+            if (isNaN(interestPercentage) || !isFinite(interestPercentage)) { 
                 interestPercentage = 0;
             }
         } else { // percentage
@@ -325,7 +298,6 @@ function formatDate(timestampOrString) {
         };
     }
 
-
     function showError(message) {
         errorMessageDiv.textContent = message;
         errorMessageDiv.style.display = 'block';
@@ -339,13 +311,126 @@ function formatDate(timestampOrString) {
         logoutButton.addEventListener('click', async () => {
             try {
                 await auth.signOut();
-                // O redirecionamento para index.html será tratado pelo auth.onAuthStateChanged
             } catch (error) {
                 console.error("Erro ao fazer logout:", error);
                 alert("Erro ao fazer logout. Tente novamente.");
             }
         });
     }
+
+    // --- Lógica de Cadastro/Edição de Devedor (MODIFICADA COM accessCode) ---
+    addDebtorButton.addEventListener('click', () => openAddEditDebtorModal());
+    
+    if (calculationTypeSelect) {
+        calculationTypeSelect.addEventListener('change', () => {
+            if (calculationTypeSelect.value === 'perInstallment') {
+                perInstallmentFields.style.display = 'block';
+                amountPerInstallmentInput.setAttribute('required', 'required');
+                percentageFields.style.display = 'none';
+                interestPercentageInput.removeAttribute('required');
+            } else { // percentage
+                perInstallmentFields.style.display = 'none';
+                amountPerInstallmentInput.removeAttribute('required');
+                percentageFields.style.display = 'block';
+                interestPercentageInput.setAttribute('required', 'required');
+            }
+        });
+    }
+
+    addEditDebtorForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const name = debtorNameInput.value;
+        const description = debtorDescriptionInput.value;
+        const loanedAmount = parseFloat(loanedAmountInput.value);
+        const startDate = startDateInput.value;
+        const inputInstallments = parseInt(installmentsInput.value); 
+        const frequency = frequencyInput.value; 
+
+        if (isNaN(loanedAmount) || loanedAmount <= 0) {
+            showError('Por favor, insira um valor emprestado válido e maior que zero.');
+            return;
+        }
+        if (isNaN(inputInstallments) || inputInstallments <= 0) {
+            showError('Por favor, insira um número de parcelas válido e maior que zero.');
+            return;
+        }
+
+        let totalToReceive, amountPerInstallment, installments, interestPercentage;
+
+        if (calculationTypeSelect.value === 'perInstallment') {
+            const inputAmountPerInstallment = parseFloat(amountPerInstallmentInput.value);
+            if (isNaN(inputAmountPerInstallment) || inputAmountPerInstallment <= 0) {
+                showError('Por favor, insira um valor válido e maior que zero para "Valor por Parcela".');
+                return;
+            }
+            ({ totalToReceive, amountPerInstallment, installments, interestPercentage } =
+                calculateLoanDetails(loanedAmount, inputAmountPerInstallment, inputInstallments, 0, 'perInstallment'));
+        } else { // percentage
+            const inputInterestPercentage = parseFloat(interestPercentageInput.value);
+            if (isNaN(inputInterestPercentage) || inputInterestPercentage < 0) {
+                showError('Por favor, insira uma porcentagem de juros válida e não negativa.');
+                return;
+            }
+            ({ totalToReceive, amountPerInstallment, installments, interestPercentage } =
+                calculateLoanDetails(loanedAmount, 0, inputInstallments, inputInterestPercentage, 'percentage'));
+        }
+
+
+        try {
+            if (currentDebtorId) {
+                // ATUALIZAR DEVEDOR EXISTENTE
+                const debtorRef = db.collection(DEBTORS_COLLECTION).doc(currentDebtorId);
+                const doc = await debtorRef.get();
+                if (doc.exists) {
+                    const oldDebtor = doc.data();
+                    if (oldDebtor.userId !== currentUserId) {
+                        showError("Você não tem permissão para modificar este devedor.");
+                        return;
+                    }
+
+                    let updatedPayments = Array.isArray(oldDebtor.payments) ? [...oldDebtor.payments] : [];
+                    if (installments < updatedPayments.length) {
+                        updatedPayments = updatedPayments.slice(0, installments);
+                    }
+
+                    await debtorRef.update({
+                        name, description, loanedAmount, amountPerInstallment, installments, startDate, totalToReceive, interestPercentage, frequency, payments: updatedPayments 
+                    });
+                     addEditDebtorModal.style.display = 'none'; // Fecha o modal após a atualização
+                } else {
+                    showError("Devedor não encontrado para atualização.");
+                }
+            } else {
+                // ADICIONAR NOVO DEVEDOR (AGORA COM ACCESS CODE E MODAL DE SUCESSO)
+
+                if (!currentUserId) {
+                    showError("Erro: Usuário não autenticado. Não é possível adicionar devedor.");
+                    return;
+                }
+
+                // GERAÇÃO DO CÓDIGO DE ACESSO
+                const accessCode = generateAccessCode(); 
+
+                const newDebtorData = {
+                    name, description, loanedAmount, amountPerInstallment, installments, startDate, totalToReceive, interestPercentage, frequency, 
+                    payments: [],
+                    userId: currentUserId, // ID do Admin que cadastrou
+                    accessCode: accessCode // NOVO CAMPO SALVO
+                };
+
+                await db.collection(DEBTORS_COLLECTION).add(newDebtorData);
+                
+                // SUCESSO: ABRE O NOVO MODAL EXIBINDO O CÓDIGO
+                addEditDebtorModal.style.display = 'none';
+                openSuccessModal(accessCode); // <--- Chamada para exibir o código!
+            }
+            
+        } catch (error) {
+            console.error("Erro ao salvar devedor:", error);
+            showError('Erro ao salvar devedor. Verifique o console para mais detalhes.');
+        }
+    });
 
     // --- Renderização de Devedores na Lista Principal ---
     function renderDebtors() {
@@ -401,165 +486,42 @@ function formatDate(timestampOrString) {
     }
 
     function updateStats() {
-  const totalLoanedAmountEl = document.getElementById('totalLoanedAmount');
-  const activeClientsEl = document.getElementById('activeClients');
-  const totalToReceiveEl = document.getElementById('totalToReceive');
-  const toggleHideTotal = document.getElementById('toggleHideTotal');
+      const totalLoanedAmountEl = document.getElementById('totalLoanedAmount');
+      const activeClientsEl = document.getElementById('activeClients');
+      const totalToReceiveEl = document.getElementById('totalToReceive');
+      const toggleHideTotal = document.getElementById('toggleHideTotal');
 
-  if (!debtors || debtors.length === 0) {
-    totalLoanedAmountEl.textContent = "R$ 0,00";
-    activeClientsEl.textContent = "0";
-    totalToReceiveEl.textContent = "R$ 0,00";
-    return;
-  }
+      if (!debtors || debtors.length === 0) {
+        totalLoanedAmountEl.textContent = "R$ 0,00";
+        activeClientsEl.textContent = "0";
+        totalToReceiveEl.textContent = "R$ 0,00";
+        return;
+      }
 
-  let totalLoaned = 0;
-  let totalToReceive = 0;
+      let totalLoaned = 0;
+      let totalToReceiveAmount = 0;
 
-  debtors.forEach(d => {
-    totalLoaned += d.loanedAmount || 0;
-    totalToReceive += d.totalToReceive || 0;
-  });
+      debtors.forEach(d => {
+        totalLoaned += d.loanedAmount || 0;
+        totalToReceiveAmount += d.totalToReceive || 0;
+      });
 
-  totalLoanedAmountEl.textContent = formatCurrency(totalLoaned);
-  activeClientsEl.textContent = debtors.length;
-  totalToReceiveEl.textContent = formatCurrency(totalToReceive);
+      totalLoanedAmountEl.textContent = formatCurrency(totalLoaned);
+      activeClientsEl.textContent = debtors.length;
+      totalToReceiveEl.textContent = formatCurrency(totalToReceiveAmount);
 
-  // toggle de esconder total
-  toggleHideTotal.addEventListener("change", () => {
-    if (toggleHideTotal.checked) {
-      totalToReceiveEl.style.filter = "blur(6px)";
-    } else {
-      totalToReceiveEl.style.filter = "none";
-    }
-  });
-}
-    // --- Adicionar/Editar Devedor ---
-    addDebtorButton.addEventListener('click', () => openAddEditDebtorModal());
-
-    // Lógica para alternar campos de cálculo
-    if (calculationTypeSelect) {
-        calculationTypeSelect.addEventListener('change', () => {
-            if (calculationTypeSelect.value === 'perInstallment') {
-                perInstallmentFields.style.display = 'block';
-                amountPerInstallmentInput.setAttribute('required', 'required');
-                percentageFields.style.display = 'none';
-                interestPercentageInput.removeAttribute('required');
-            } else { // percentage
-                perInstallmentFields.style.display = 'none';
-                amountPerInstallmentInput.removeAttribute('required');
-                percentageFields.style.display = 'block';
-                interestPercentageInput.setAttribute('required', 'required');
-            }
-            // O campo installmentsInput agora está sempre visível e required no HTML
-        });
-    }
-
-    addEditDebtorForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        const name = debtorNameInput.value;
-        const description = debtorDescriptionInput.value;
-        const loanedAmount = parseFloat(loanedAmountInput.value);
-        const startDate = startDateInput.value;
-        const inputInstallments = parseInt(installmentsInput.value); // Sempre lê o número de parcelas
-        const frequency = frequencyInput.value; // Pega o novo campo de frequência
-
-        if (isNaN(loanedAmount) || loanedAmount <= 0) {
-            showError('Por favor, insira um valor emprestado válido e maior que zero.');
-            return;
-        }
-        if (isNaN(inputInstallments) || inputInstallments <= 0) {
-            showError('Por favor, insira um número de parcelas válido e maior que zero.');
-            return;
-        }
-
-        let totalToReceive, amountPerInstallment, installments, interestPercentage;
-
-        if (calculationTypeSelect.value === 'perInstallment') {
-            const inputAmountPerInstallment = parseFloat(amountPerInstallmentInput.value);
-            if (isNaN(inputAmountPerInstallment) || inputAmountPerInstallment <= 0) {
-                showError('Por favor, insira um valor válido e maior que zero para "Valor por Parcela".');
-                return;
-            }
-            ({ totalToReceive, amountPerInstallment, installments, interestPercentage } =
-                calculateLoanDetails(loanedAmount, inputAmountPerInstallment, inputInstallments, 0, 'perInstallment'));
-        } else { // percentage
-            const inputInterestPercentage = parseFloat(interestPercentageInput.value);
-            if (isNaN(inputInterestPercentage) || inputInterestPercentage < 0) {
-                showError('Por favor, insira uma porcentagem de juros válida e não negativa.');
-                return;
-            }
-            ({ totalToReceive, amountPerInstallment, installments, interestPercentage } =
-                calculateLoanDetails(loanedAmount, 0, inputInstallments, inputInterestPercentage, 'percentage'));
-        }
-
-
-        try {
-            if (currentDebtorId) {
-                // Atualizar devedor existente no Firestore
-                const debtorRef = db.collection('debtors').doc(currentDebtorId);
-                const doc = await debtorRef.get();
-                if (doc.exists) {
-                    const oldDebtor = doc.data();
-                    // Verifica se o devedor pertence ao usuário logado ANTES de modificar
-                    if (oldDebtor.userId !== currentUserId) {
-                        showError("Você não tem permissão para modificar este devedor.");
-                        return;
-                    }
-
-                    let updatedPayments = Array.isArray(oldDebtor.payments) ? [...oldDebtor.payments] : [];
-
-                    // Se o número de parcelas mudou e é menor que o anterior, truncar pagamentos
-                    if (installments < updatedPayments.length) {
-                        updatedPayments = updatedPayments.slice(0, installments);
-                    }
-
-                    await debtorRef.update({
-                        name,
-                        description,
-                        loanedAmount,
-                        amountPerInstallment,
-                        installments,
-                        startDate,
-                        totalToReceive,
-                        interestPercentage,
-                        frequency, // Salva o novo campo de frequência
-                        payments: updatedPayments // Mantém ou trunca os pagamentos existentes
-                    });
-                } else {
-                    showError("Devedor não encontrado para atualização.");
-                }
+      // toggle de esconder total
+      if (toggleHideTotal) {
+          toggleHideTotal.addEventListener("change", () => {
+            if (toggleHideTotal.checked) {
+              totalToReceiveEl.style.filter = "blur(6px)";
             } else {
-                // Adicionar novo devedor ao Firestore
-                if (!currentUserId) {
-                    showError("Erro: Usuário não autenticado. Não é possível adicionar devedor.");
-                    return;
-                }
-
-                const newDebtorData = {
-                    name,
-                    description,
-                    loanedAmount,
-                    amountPerInstallment,
-                    installments,
-                    startDate,
-                    totalToReceive,
-                    interestPercentage,
-                    frequency, // Salva o novo campo de frequência
-                    payments: [],
-                    userId: currentUserId // SALVA O ID DO USUÁRIO LOGADO
-                };
-
-                await db.collection('debtors').add(newDebtorData);
+              totalToReceiveEl.style.filter = "none";
             }
-            addEditDebtorModal.style.display = 'none';
-        } catch (error) {
-            console.error("Erro ao salvar devedor:", error);
-            showError('Erro ao salvar devedor. Verifique o console para mais detalhes.');
-        }
-    });
-
+          });
+      }
+    }
+    
     function openAddEditDebtorModal(id = null) {
         addEditDebtorForm.reset();
         currentDebtorId = id;
@@ -572,7 +534,7 @@ function formatDate(timestampOrString) {
             percentageFields.style.display = 'none';
             interestPercentageInput.removeAttribute('required');
         }
-        if(installmentsInput) installmentsInput.setAttribute('required', 'required'); // Garante que parcelas seja sempre obrigatório
+        if(installmentsInput) installmentsInput.setAttribute('required', 'required'); 
 
         if (id) {
             addEditModalTitle.textContent = 'Editar Devedor';
@@ -582,15 +544,12 @@ function formatDate(timestampOrString) {
                 debtorDescriptionInput.value = debtor.description;
                 loanedAmountInput.value = debtor.loanedAmount;
                 startDateInput.value = debtor.startDate;
-                installmentsInput.value = debtor.installments; // Preenche o número de parcelas
-                if (frequencyInput) frequencyInput.value = debtor.frequency; // Preenche a frequência
+                installmentsInput.value = debtor.installments; 
+                if (frequencyInput) frequencyInput.value = debtor.frequency; 
 
                 // Preencher campos com base nos dados existentes
-                // Se o devedor já tem amountPerInstallment, presume-se que foi calculado assim
                 if (debtor.amountPerInstallment && debtor.totalToReceive && debtor.loanedAmount) {
-                    // Tenta inferir o tipo de cálculo original para preencher corretamente
                     const calculatedInterestFromInstallment = ((debtor.totalToReceive - debtor.loanedAmount) / debtor.loanedAmount * 100);
-                    // Se a porcentagem armazenada for próxima da calculada por parcela, ou se a porcentagem for 0
                     if (Math.abs(calculatedInterestFromInstallment - debtor.interestPercentage) < 0.01 || debtor.interestPercentage === 0) {
                          if(calculationTypeSelect) calculationTypeSelect.value = 'perInstallment';
                          amountPerInstallmentInput.value = debtor.amountPerInstallment;
@@ -599,7 +558,6 @@ function formatDate(timestampOrString) {
                          if(percentageFields) percentageFields.style.display = 'none';
                          if(interestPercentageInput) interestPercentageInput.removeAttribute('required');
                     } else {
-                         // Caso contrário, assume que foi por porcentagem
                          if(calculationTypeSelect) calculationTypeSelect.value = 'percentage';
                          interestPercentageInput.value = debtor.interestPercentage;
                          if(perInstallmentFields) perInstallmentFields.style.display = 'none';
@@ -608,7 +566,6 @@ function formatDate(timestampOrString) {
                          if(interestPercentageInput) interestPercentageInput.setAttribute('required', 'required');
                     }
                 } else if (debtor.interestPercentage) {
-                    // Se tem porcentagem, mas não parcelas/valor por parcela definidos explicitamente
                     if(calculationTypeSelect) calculationTypeSelect.value = 'percentage';
                     interestPercentageInput.value = debtor.interestPercentage;
                     if(perInstallmentFields) perInstallmentFields.style.display = 'none';
@@ -625,7 +582,7 @@ function formatDate(timestampOrString) {
 
     async function deleteDebtor(id) {
         try {
-            await db.collection('debtors').doc(id).delete();
+            await db.collection(DEBTORS_COLLECTION).doc(id).delete();
         } catch (error) {
             console.error("Erro ao excluir devedor:", error);
             showError('Erro ao excluir devedor. Verifique o console para mais detalhes.');
@@ -642,18 +599,22 @@ function formatDate(timestampOrString) {
             detailDebtorDescription.textContent = debtor.description;
             detailLoanedAmount.textContent = formatCurrency(debtor.loanedAmount);
             detailTotalToReceive.textContent = formatCurrency(debtor.totalToReceive);
-            detailInterestPercentage.textContent = `${debtor.interestPercentage || 0}%`; // Garante que % juros seja exibido
+            detailInterestPercentage.textContent = `${debtor.interestPercentage || 0}%`; 
             detailInstallments.textContent = debtor.installments;
             detailAmountPerInstallment.textContent = formatCurrency(debtor.amountPerInstallment);
             detailStartDate.textContent = formatDate(debtor.startDate);
             detailFrequency.textContent = debtor.frequency === 'daily' ? 'Diário' : debtor.frequency === 'weekly' ? 'Semanal' : 'Mensal';
 
+            if (detailAccessCode) {
+                detailAccessCode.textContent = debtor.accessCode || 'N/A';
+            }
+
             const hideTotalToReceivePref = localStorage.getItem('hideTotalToReceive');
             if (hideTotalToReceivePref === 'true') {
-                toggleTotalToReceive.checked = true;
+                if (toggleTotalToReceive) toggleTotalToReceive.checked = true;
                 detailTotalToReceive.classList.add('hidden-value');
             } else {
-                toggleTotalToReceive.checked = false;
+                if (toggleTotalToReceive) toggleTotalToReceive.checked = false;
                 detailTotalToReceive.classList.remove('hidden-value');
             }
 
@@ -768,8 +729,8 @@ function formatDate(timestampOrString) {
             nextPendingSquare.classList.add('selected');
             selectedPaymentIndex = parseInt(nextPendingSquare.getAttribute('data-index'));
         } else {
-            paymentAmountInput.value = '';
-            paymentDateInput.valueAsDate = null;
+            if (paymentAmountInput) paymentAmountInput.value = '';
+            if (paymentDateInput) paymentDateInput.valueAsDate = null;
             selectedPaymentIndex = null;
         }
     }
@@ -860,11 +821,10 @@ function formatDate(timestampOrString) {
             }
 
             try {
-                const debtorRef = db.collection('debtors').doc(currentDebtorId);
+                const debtorRef = db.collection(DEBTORS_COLLECTION).doc(currentDebtorId);
                 const doc = await debtorRef.get();
                 if (doc.exists) {
                     const debtorData = doc.data();
-                    // Verifica se o devedor pertence ao usuário logado ANTES de modificar
                     if (debtorData.userId !== currentUserId) {
                         showError("Você não tem permissão para modificar este devedor.");
                         return;
@@ -914,11 +874,10 @@ function formatDate(timestampOrString) {
 
     async function removeLastPayment(debtorId) {
         try {
-            const debtorRef = db.collection('debtors').doc(debtorId);
+            const debtorRef = db.collection(DEBTORS_COLLECTION).doc(debtorId);
             const doc = await debtorRef.get();
             if (doc.exists) {
                 const debtorData = doc.data();
-                // Verifica se o devedor pertence ao usuário logado ANTES de modificar
                 if (debtorData.userId !== currentUserId) {
                     showError("Você não tem permissão para modificar este devedor.");
                     return;
@@ -946,8 +905,8 @@ function formatDate(timestampOrString) {
     // --- Fechar Modals ---
     closeButtons.forEach(button => {
         button.addEventListener('click', () => {
-            debtorDetailModal.style.display = 'none';
-            addEditDebtorModal.style.display = 'none';
+            if(debtorDetailModal) debtorDetailModal.style.display = 'none';
+            if(addEditDebtorModal) addEditDebtorModal.style.display = 'none';
             selectedPaymentIndex = null;
         });
     });
@@ -961,18 +920,94 @@ function formatDate(timestampOrString) {
             addEditDebtorModal.style.display = 'none';
         }
     });
+    
+    // --- LÓGICA DE VÍNCULO TELEGRAM (EXISTENTES) ---
 
-    // --- Listener em Tempo Real do Firestore (AGORA FILTRADO POR USUÁRIO E FREQUÊNCIA) ---
-    // Função para configurar o listener com base no filtro atual
+    function generateRandomCode(length) {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return result;
+    }
+
+    async function generateLinkCode() {
+        const generatedCodeSpan = document.getElementById('generatedCode');
+        const generateCodeInModalBtn = document.getElementById('generateCodeInModalBtn');
+        const codeDisplay = document.getElementById('codeDisplay');
+        
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            alert('Você precisa estar logado para gerar um código de vínculo.');
+            return;
+        }
+
+        generateCodeInModalBtn.disabled = true;
+        generateCodeInModalBtn.textContent = 'Gerando...';
+        
+        try {
+            const userId = user.uid;
+            const email = user.email;
+            const code = generateRandomCode(6); 
+            const now = firebase.firestore.Timestamp.now();
+            
+            const expiresAt = new firebase.firestore.Timestamp(now.seconds + (linkCodeDurationMinutes * 60), 0);
+
+            await db.collection('link_codes').doc(code).set({
+                userId: userId,
+                email: email,
+                createdAt: now,
+                expiresAt: expiresAt,
+                code: code
+            });
+
+            generatedCodeSpan.textContent = code;
+            codeDisplay.style.display = 'block';
+            
+            generateCodeInModalBtn.textContent = 'Código Gerado!';
+
+            setTimeout(() => {
+                generateCodeInModalBtn.disabled = false;
+                generateCodeInModalBtn.textContent = 'Gerar Novo Código de Vínculo';
+                codeDisplay.style.display = 'none'; 
+            }, linkCodeDurationMinutes * 60 * 1000); 
+
+        } catch (error) {
+            console.error('Erro ao gerar código de vínculo:', error);
+            alert('Erro ao gerar código. Tente novamente mais tarde.');
+            generateCodeInModalBtn.disabled = false;
+            generateCodeInModalBtn.textContent = 'Gerar Código de Vínculo';
+            codeDisplay.style.display = 'none';
+        }
+    }
+
+    // Adiciona a função ao escopo global para que o HTML possa chamá-la
+    window.generateLinkCode = generateLinkCode;
+    window.closeTelegramLinkModal = () => {
+        if(telegramLinkModal) telegramLinkModal.style.display = 'none';
+    };
+
+    const generateLinkCodeBtnHeader = document.getElementById("generateLinkCodeBtn");
+
+    if (generateLinkCodeBtnHeader) {
+        generateLinkCodeBtnHeader.addEventListener('click', (e) => {
+            e.preventDefault();
+            if(telegramLinkModal) telegramLinkModal.style.display = 'flex';
+            const menuDropdown = document.getElementById('menuDropdown');
+            if (menuDropdown) menuDropdown.classList.remove("active");
+        });
+    }
+
+    // --- SETUP DO LISTENER DO FIREBASE (EXISTENTE) ---
     function setupFirestoreListener() {
         if (!currentUserId) {
             console.log("Usuário não logado, não é possível configurar o listener.");
             return;
         }
 
-        let query = db.collection('debtors').where('userId', '==', currentUserId);
+        let query = db.collection(DEBTORS_COLLECTION).where('userId', '==', currentUserId);
 
-        // Se o filtro não for 'all', adiciona a condição de filtro
         if (currentFilter !== 'all') {
             query = query.where('frequency', '==', currentFilter);
         }
@@ -982,15 +1017,15 @@ function formatDate(timestampOrString) {
                 id: doc.id,
                 ...doc.data()
             }));
+            
             renderDebtors();
             updateStats();
-
-            if (debtorDetailModal.style.display === 'flex' && currentDebtorId) {
+            
+            if (debtorDetailModal && debtorDetailModal.style.display === 'flex' && currentDebtorId) {
                 const currentDebtorInModal = debtors.find(d => d.id === currentDebtorId);
                 if (currentDebtorInModal) {
                     renderPaymentsGrid(currentDebtorInModal);
                 } else {
-                    // Se o devedor foi excluído enquanto o modal estava aberto, feche-o
                     debtorDetailModal.style.display = 'none';
                 }
             }
@@ -1041,99 +1076,39 @@ function formatDate(timestampOrString) {
             setupFirestoreListener();
         });
     }
+    
+    // --- MENU DE TRÊS PONTOS ---
+    document.addEventListener("DOMContentLoaded", () => {
+      const menuToggle = document.getElementById("menuToggleButton");
+      const menuDropdown = document.getElementById("menuDropdown");
 
-
-    // O listener de autenticação agora apenas armazena o UID e chama a função de setup
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            currentUserId = user.uid; // Armazena o ID do usuário logado
-            console.log("Usuário logado:", user.email, "UID:", user.uid);
-            setupFirestoreListener(); // Inicia o listener do Firestore
-        } else {
-            currentUserId = null; // Nenhum usuário logado
-            debtors = []; // Limpa a lista de devedores
-            renderDebtors(); // Renderiza a lista vazia
-            console.log("Nenhum usuário logado.");
-        }
-    });
-
-    // --- LÓGICA DO VÍNCULO TELEGRAM (NOVO) ---
-
-    // Função auxiliar para gerar um código alfanumérico aleatório
-    function generateRandomCode(length) {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * characters.length));
-        }
-        return result;
-    }
-
-    // Lógica para gerar o código de vínculo do Telegram
-    const generateLinkCodeButton = document.getElementById('generateLinkCodeButton');
-    const linkCodeDisplay = document.getElementById('linkCodeDisplay');
-    // A seção 'telegramLinkSection' não é usada diretamente no JS, mas o botão e o display sim
-
-    if (generateLinkCodeButton) { // Checa se o botão existe (apenas no dashboard)
-        generateLinkCodeButton.addEventListener('click', async () => {
-            if (!currentUserId) {
-                alert('Você precisa estar logado para gerar o código.');
-                return;
-            }
-
-            try {
-                // 1. Gera um código único
-                const code = generateRandomCode(6);
-                
-                // 2. Salva o código no Firestore para que o bot possa encontrá-lo
-                await db.collection('link_codes').add({
-                    code: code,
-                    userId: currentUserId,
-                    email: auth.currentUser.email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    expiresAt: firebase.firestore.Timestamp.fromMillis(Date.now() + 1000 * 60 * 5) // Expira em 5 minutos
-                });
-
-                // 3. Exibe o código na tela
-                linkCodeDisplay.textContent = code;
-                generateLinkCodeButton.textContent = 'Gerado! (5 min)';
-                generateLinkCodeButton.disabled = true;
-
-                alert(`Código gerado: ${code}\nUse o comando /vincular ${code} no Telegram. Expira em 5 minutos.`);
-                
-                // Reabilita o botão após 5 minutos
-                setTimeout(() => {
-                    generateLinkCodeButton.textContent = 'Gerar Código Telegram';
-                    generateLinkCodeButton.disabled = false;
-                    linkCodeDisplay.textContent = '';
-                }, 1000 * 60 * 5); // 5 minutos
-
-            } catch (error) {
-                console.error("Erro ao gerar código de vínculo:", error);
-                alert('Erro ao gerar código. Tente novamente.');
-            }
+      if (menuToggle && menuDropdown) {
+        menuToggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          menuDropdown.classList.toggle("active");
         });
-    }
-// --- MENU DE TRÊS PONTOS ---
-document.addEventListener("DOMContentLoaded", () => {
-  const menuToggle = document.getElementById("menuToggleButton");
-  const menuDropdown = document.getElementById("menuDropdown");
 
-  if (menuToggle && menuDropdown) {
-    menuToggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      menuDropdown.classList.toggle("active");
-    });
-
-    // Fecha o menu ao clicar fora
-    document.addEventListener("click", (e) => {
-      if (!menuDropdown.contains(e.target) && !menuToggle.contains(e.target)) {
-        menuDropdown.classList.remove("active");
+        // Fecha o menu ao clicar fora
+        document.addEventListener("click", (e) => {
+          if (!menuDropdown.contains(e.target) && !menuToggle.contains(e.target)) {
+            menuDropdown.classList.remove("active");
+          }
+        });
       }
     });
-  }
-});
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUserId = user.uid; 
+            setupFirestoreListener(); 
+        } else {
+            currentUserId = null; 
+            debtors = []; 
+        }
+    });
 
 
-} // FIM do if (window.location.pathname.endsWith('dashboard.html')) { ... }
- // FIM do document.addEventListener('DOMContentLoaded', ...)
+} // FIM do if (window.location.pathname.endsWith('dashboard.html'))
+
+
+
