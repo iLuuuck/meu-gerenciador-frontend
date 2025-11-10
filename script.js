@@ -250,23 +250,27 @@ if (window.location.pathname.endsWith('dashboard.html')) {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
     }
 
-    function formatDate(timestampOrString) {
-        if (!timestampOrString) return 'N/A';
+function formatDate(timestampOrString) {
+    if (!timestampOrString) return 'N/A';
 
-        let date;
-        if (typeof timestampOrString === 'object' && typeof timestampOrString.toDate === 'function') {
-            date = timestampOrString.toDate();
-        } 
-        else if (typeof timestampOrString === 'string') {
-            date = new Date(timestampOrString);
-        } 
-        else {
-            date = new Date(timestampOrString);
-        }
-
-        if (isNaN(date.getTime())) return 'N/A';
-        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    let date;
+    if (typeof timestampOrString === 'object' && typeof timestampOrString.toDate === 'function') {
+        date = timestampOrString.toDate();
+    } else {
+        date = new Date(timestampOrString);
     }
+
+    if (isNaN(date.getTime())) return 'N/A';
+
+    // Ajustar para UTC-3 (Brasília)
+    date.setHours(date.getHours() - 3);
+
+    return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
 
     function calculateLoanDetails(loanedAmount, amountPerInstallment, installments, interestPercentage, calculationType) {
         let totalToReceive;
@@ -1109,6 +1113,7 @@ if (window.location.pathname.endsWith('dashboard.html')) {
 
 
 } // FIM do if (window.location.pathname.endsWith('dashboard.html'))
+
 
 
 
