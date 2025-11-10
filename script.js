@@ -254,8 +254,9 @@ function formatDate(timestampOrString) {
     if (!timestampOrString) return 'N/A';
 
     let date;
+
+    // Caso venha do Firestore
     if (typeof timestampOrString === 'object' && typeof timestampOrString.toDate === 'function') {
-        // Timestamp do Firestore (UTC)
         date = timestampOrString.toDate();
     } else {
         date = new Date(timestampOrString);
@@ -263,15 +264,15 @@ function formatDate(timestampOrString) {
 
     if (isNaN(date.getTime())) return 'N/A';
 
-    // Corrigir UTC → Brasília (UTC-3)
-    const dateBrasilia = new Date(date.getTime() - 3 * 60 * 60 * 1000);
-
-    return dateBrasilia.toLocaleDateString('pt-BR', {
+    // ✅ Forçar o timezone correto (São Paulo)
+    return new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
-    });
+    }).format(date);
 }
+
 
     function calculateLoanDetails(loanedAmount, amountPerInstallment, installments, interestPercentage, calculationType) {
         let totalToReceive;
@@ -1114,6 +1115,7 @@ function formatDate(timestampOrString) {
 
 
 } // FIM do if (window.location.pathname.endsWith('dashboard.html'))
+
 
 
 
