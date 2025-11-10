@@ -255,16 +255,29 @@ function formatDate(timestampOrString) {
 
     let date;
 
-    // Caso venha do Firestore
+    // Caso venha do Firestore como Timestamp (objeto com .toDate)
     if (typeof timestampOrString === 'object' && typeof timestampOrString.toDate === 'function') {
         date = timestampOrString.toDate();
-    } else {
+    } 
+    // Caso seja uma string (o formato "YYYY-MM-DD" que vem do input)
+    else if (typeof timestampOrString === 'string') {
+        // CORREÇÃO CRUCIAL: Adiciona 'T12:00:00' para forçar a interpretação como 
+        // meio-dia local. Isso garante que, mesmo com a conversão de fuso horário, 
+        // a data resultante não caia no dia anterior ou posterior.
+        if (timestampOrString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            date = new Date(timestampOrString + 'T12:00:00'); 
+        } else {
+             date = new Date(timestampOrString);
+        }
+    }
+    // Outros casos (Ex: se for um número de milissegundos)
+    else {
         date = new Date(timestampOrString);
     }
 
     if (isNaN(date.getTime())) return 'N/A';
 
-    // ✅ Forçar o timezone correto (São Paulo)
+    // ✅ Manter a formatação para o fuso horário correto (como você já havia feito)
     return new Intl.DateTimeFormat('pt-BR', {
         timeZone: 'America/Sao_Paulo',
         day: '2-digit',
@@ -272,8 +285,6 @@ function formatDate(timestampOrString) {
         year: 'numeric'
     }).format(date);
 }
-
-
     function calculateLoanDetails(loanedAmount, amountPerInstallment, installments, interestPercentage, calculationType) {
         let totalToReceive;
         let calculatedAmountPerInstallment;
@@ -1115,6 +1126,7 @@ function formatDate(timestampOrString) {
 
 
 } // FIM do if (window.location.pathname.endsWith('dashboard.html'))
+
 
 
 
