@@ -262,14 +262,15 @@ function formatDate(timestampOrString) {
 
     if (isNaN(date.getTime())) return 'N/A';
 
-    // Ajustar para UTC-3 (Brasília)
-    date.setHours(date.getHours() - 3);
-
-    return date.toLocaleDateString('pt-BR', {
+    // Forçar fuso horário de São Paulo
+    const options = {
+        timeZone: 'America/Sao_Paulo',
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
-    });
+    };
+
+    return new Intl.DateTimeFormat('pt-BR', options).format(date);
 }
 
     function calculateLoanDetails(loanedAmount, amountPerInstallment, installments, interestPercentage, calculationType) {
@@ -1113,6 +1114,7 @@ function formatDate(timestampOrString) {
 
 
 } // FIM do if (window.location.pathname.endsWith('dashboard.html'))
+
 
 
 
