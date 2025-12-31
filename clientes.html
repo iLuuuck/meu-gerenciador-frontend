@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russo Empréstimos - Clientes</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="clientes.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+<div id="menuOverlay" class="menu-overlay"></div>
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-top">
+        <button id="toggleSidebar" class="toggle-btn">☰</button>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="inicio.html"><span class="icon">🏠</span> <span class="text">INÍCIO</span></a></li>
+                <li><a href="clientes.html" class="active"><span class="icon">👥</span> <span class="text">CLIENTES</span></a></li>
+                <li><a href="aviso.html"><span class="icon">🔔</span> <span class="text">AVISO</span></a></li>
+                <li><a href="perfil.html"><span class="icon">👤</span> <span class="text">PERFIL</span></a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+             <button id="sidebarLogoutBtn" class="logout-btn">
+                 <span class="icon">🚪</span> 
+                 <span class="text">Sair da Conta</span>
+             </button>
+        </div>
+    </div>
+</div>
+
+<main class="main-content">
+    <header class="header-container">
+        <h2>Gerenciar Clientes</h2>
+        <button id="addDebtorButton" class="button">+ Novo Devedor</button>
+    </header>
+
+    <div class="filter-actions">
+        <button id="filterAllButton" class="button">Todos</button>
+        <button id="filterDailyButton" class="button button-secondary">Diário</button>
+        <button id="filterWeeklyButton" class="button button-secondary">Semanal</button>
+        <button id="filterMonthlyButton" class="button button-secondary">Mensal</button>
+    </div>
+
+    <div id="debtorsList" class="debtors-list">
+        </div>
+</main>
+
+<div id="addEditDebtorModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="addEditModalTitle">Adicionar Novo Devedor</h2>
+            <span class="close-button" onclick="closeModal('addEditDebtorModal')">&times;</span>
+
+        </div>
+        <div class="modal-body">
+            <form id="addEditDebtorForm">
+                <div class="input-group">
+                    <label for="debtorName">Nome:</label>
+                    <input type="text" id="debtorName" required>
+                </div>
+                <div class="input-group">
+                    <label for="debtorDescription">Descrição:</label>
+                    <input type="text" id="debtorDescription">
+                </div>
+                <div class="input-group">
+                    <label for="loanedAmount">Valor Emprestado:</label>
+                    <input type="number" id="loanedAmount" step="0.01" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="frequency">Frequência de Recebimento:</label>
+                    <select id="frequency" required>
+                        <option value="daily">Diário</option>
+                        <option value="weekly">Semanal</option>
+                        <option value="monthly">Mensal</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="calculationType">Tipo de Cálculo:</label>
+                    <select id="calculationType">
+                        <option value="perInstallment">Valor por Parcela</option>
+                        <option value="percentage">Porcentagem de Juros</option>
+                    </select>
+                </div>
+
+                <div id="perInstallmentFields">
+                    <div class="input-group">
+                        <label for="amountPerInstallmentInput">Valor por Parcela:</label>
+                        <input type="number" id="amountPerInstallmentInput" step="0.01">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="installments">Número de Parcelas:</label>
+                    <input type="number" id="installments" required>
+                </div>
+
+                <div id="percentageFields" style="display: none;">
+                    <div class="input-group">
+                        <label for="interestPercentageInput">Porcentagem de Juros (%):</label>
+                        <input type="number" id="interestPercentageInput" step="0.01">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="startDate">Data de Início:</label>
+                    <input type="date" id="startDate" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" id="saveDebtorButton" class="button">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="debtorDetailModal" class="modal">
+    <div class="modal-content payment-modal">
+
+        <div class="modal-header">
+            <h2 id="modalDebtorName">Cliente</h2>
+            <span class="close-button" onclick="closeModal('debtorDetailModal')">&times;</span>
+
+
+        </div>
+
+        <!-- Parcelas -->
+        <div id="paymentsGrid" class="payments-grid"></div>
+
+        <!-- Pagamento -->
+        <div class="payment-form">
+
+            <div class="input-group">
+                <label>Data do Pagamento</label>
+                <input type="date" id="paymentDate">
+            </div>
+
+            <div class="input-group">
+                <label>Valor Pago</label>
+                <input type="number" id="paymentAmount" step="0.01" placeholder="Digite ou selecione uma parcela">
+            </div>
+
+            <div class="button-row">
+                <button id="addPaymentButton" class="btn-primary">
+                    Salvar Pagamento
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+<div id="modalVerParcelas" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2 id="printNomeCliente">Comprovante de Parcelas</h2>
+            <span class="close-button" onclick="document.getElementById('modalVerParcelas').style.display='none'">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="printStats" style="margin-bottom: 20px; color: #888;"></div>
+            <div id="printGrid" class="all-installments-grid"></div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="window.print()" class="button">Imprimir / Salvar PDF</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalInformacoes" class="modal" style="display:none;">
+    <div class="modal-content info-modal-main">
+        <div class="modal-header">
+            <div class="header-title-group">
+                <h2 id="infoNomeCliente">Informações do Cliente</h2>
+                <span class="status-badge">Ativo</span>
+            </div>
+            <span class="close-button" onclick="closeModal('addEditDebtorModal')">&times;</span>
+
+        </div>
+        
+        <div class="modal-body">
+            <div class="info-section">
+                <div class="info-row">
+                    <div class="info-block">
+                        <label>Descrição</label>
+                        <span id="infoDescricao">---</span>
+                    </div>
+                    <div class="info-block">
+                        <label>Código de Acesso</label>
+                        <span id="infoCodigo" class="code-highlight">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section financial-grid">
+                <div class="info-card">
+                    <label>Valor Emprestado</label>
+                    <span id="infoEmprestado" class="val-lent">R$ 0,00</span>
+                </div>
+                <div class="info-card">
+                    <label>Falta Receber</label>
+                    <span id="infoFalta" class="val-pending">R$ 0,00</span>
+                </div>
+                <div class="info-card">
+                    <label>Total a Receber</label>
+                    <span id="infoReceber">R$ 0,00</span>
+                </div>
+                <div class="info-card">
+                    <label>Taxa de Juros</label>
+                    <span id="infoJuros">0%</span>
+                </div>
+            </div>
+
+            <div class="info-section contract-details">
+                <div class="detail-item">
+                    <i class="icon">📅</i>
+                    <div>
+                        <label>Início do Contrato</label>
+                        <p id="infoDataInicio">--/--/--</p>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <i class="icon">🔄</i>
+                    <div>
+                        <label>Frequência</label>
+                        <p id="infoFrequencia">---</p>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <i class="icon">📊</i>
+                    <div>
+                        <label>Parcelamento</label>
+                        <p><span id="infoParcelas">0</span>x de <span id="infoValorParcela">R$ 0,00</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button onclick="document.getElementById('modalInformacoes').style.display='none'" class="btn-fechar">Fechar Detalhes</button>
+        </div>
+    </div>
+</div>
+
+<nav class="mobile-nav">
+    <a href="inicio.html" class="nav-item">
+        <span class="icon">🏠</span>
+        <span class="label">Início</span>
+    </a>
+    <a href="clientes.html" class="nav-item">
+        <span class="icon">👥</span>
+        <span class="label">Clientes</span>
+    </a>
+    <a href="aviso.html" class="nav-item">
+        <span class="icon">🔔</span>
+        <span class="label">Avisos</span>
+    </a>
+    <a href="perfil.html" class="nav-item">
+        <span class="icon">👤</span>
+        <span class="label">Perfil</span>
+    </a>
+</nav>
+
+<script src="script.js"></script>
+</body>
+</html>

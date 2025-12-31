@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russo Empréstimos - Login</title>
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="login.css">
+    
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <img src="logo.png" alt="Logo" class="login-logo">
+                <h2>Área Administrativa</h2>
+                <p>Entre com suas credenciais para gerenciar</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="loginEmail">E-mail</label>
+                    <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="loginPassword">Senha</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+
+                <div class="forgot-pass">
+                    <a href="#" onclick="recoveryPassword()">Esqueceu a senha?</a>
+                </div>
+
+                <button type="submit" class="btn-login">ENTRAR NO SISTEMA</button>
+                <p id="loginError" class="error-message"></p>
+            </form>
+
+            <div class="client-access">
+                <hr>
+                <p>É um cliente?</p>
+                <button onclick="window.location.href='login-cliente.html'" class="btn-client">
+                    ACESSAR COM CÓDIGO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

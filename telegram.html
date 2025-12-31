@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russo Empréstimos - Telegram</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="telegram.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-top">
+        <button id="toggleSidebar" class="toggle-btn">☰</button>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="inicio.html"><span class="icon">🏠</span> <span class="text">INÍCIO</span></a></li>
+                <li><a href="clientes.html"><span class="icon">👥</span> <span class="text">CLIENTES</span></a></li>
+                <li><a href="aviso.html"><span class="icon">🔔</span> <span class="text">AVISO</span></a></li>
+                <li><a href="perfil.html"><span class="icon">👤</span> <span class="text">PERFIL</span></a></li>
+            </ul>
+        </nav>
+<div class="sidebar-footer">
+     <button id="sidebarLogoutBtn" class="logout-btn">
+         <span class="icon">🚪</span> 
+         <span class="text">Sair da Conta</span>
+     </button>
+</div>
+    </div>
+</div>
+
+<main class="main-content">
+    <header class="header-container">
+        <h2>Configurar Bot Telegram</h2>
+        <p>Receba avisos de vencimentos e relatórios direto no seu Telegram.</p>
+    </header>
+
+    <div class="telegram-config">
+        <section class="config-card">
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-text">
+                    <h3>Crie seu Bot</h3>
+                    <p>Fale com o <strong>@BotFather</strong> no Telegram para criar um bot e receber seu <strong>Token API</strong>.</p>
+                </div>
+            </div>
+
+            <form id="telegramForm">
+                <div class="input-group">
+                    <label>Token da API do Bot</label>
+                    <input type="text" id="botToken" placeholder="Ex: 123456789:ABCdefGHI...">
+                </div>
+                <div class="input-group">
+                    <label>Seu Chat ID</label>
+                    <input type="text" id="chatId" placeholder="Ex: 987654321">
+                    <small>Dica: Use o @userinfobot para descobrir seu ID.</small>
+                </div>
+                <button type="submit" class="button">Salvar Configurações</button>
+                <button type="button" id="testTelegramBtn" class="button button-secondary" style="margin-top: 10px;">Enviar Mensagem de Teste</button>
+            </form>
+        </section>
+
+        <section class="status-card">
+            <h3>Status da Integração</h3>
+            <div class="status-indicator inactive" id="telegramStatus">
+                <span class="dot"></span> Desconectado
+            </div>
+            <p class="status-msg">Salve os dados acima para ativar as notificações automáticas.</p>
+        </section>
+    </div>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>

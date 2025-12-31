@@ -1,0 +1,105 @@
+/* --- Estilos da Página de Perfil --- */
+
+.perfil-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    max-width: 1000px;
+}
+
+.perfil-card {
+    background: var(--card-background-color);
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.perfil-card h3 {
+    margin-bottom: 25px;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+/* Avatar Section */
+.user-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    background: var(--primary-color);
+    color: #121212;
+    font-size: 2rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.button-text {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: underline;
+}
+
+/* Formulário e Settings */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin-bottom: 8px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    background: var(--input-background-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 8px;
+}
+
+.input-group input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.setting-info span {
+    display: block;
+    font-weight: 500;
+}
+
+.setting-info small {
+    font-size: 0.8rem;
+    opacity: 0.6;
+}

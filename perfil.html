@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russo Empréstimos - Perfil</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="perfil.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-top">
+        <button id="toggleSidebar" class="toggle-btn">☰</button>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="inicio.html"><span class="icon">🏠</span> <span class="text">INÍCIO</span></a></li>
+                <li><a href="clientes.html"><span class="icon">👥</span> <span class="text">CLIENTES</span></a></li>
+                <li><a href="aviso.html"><span class="icon">🔔</span> <span class="text">AVISO</span></a></li>
+                <li><a href="perfil.html" class="active"><span class="icon">👤</span> <span class="text">PERFIL</span></a></li>
+            </ul>
+        </nav>
+<div class="sidebar-footer">
+     <button id="sidebarLogoutBtn" class="logout-btn">
+         <span class="icon">🚪</span> 
+         <span class="text">Sair da Conta</span>
+     </button>
+</div>
+    </div>
+</div>
+
+<main class="main-content">
+    <header class="header-container">
+        <h2>Meu Perfil</h2>
+        <p>Gerencie suas informações de conta e preferências.</p>
+    </header>
+
+    <div class="perfil-grid">
+        <section class="perfil-card">
+            <h3>Informações Pessoais</h3>
+            <div class="user-avatar-section">
+                <div class="avatar-circle" id="userAvatar">U</div>
+                <button class="button-text">Alterar Foto</button>
+            </div>
+            <form id="profileForm">
+                <div class="input-group">
+                    <label>Nome de Exibição</label>
+                    <input type="text" id="profileName" placeholder="Carregando...">
+                </div>
+                <div class="input-group">
+                    <label>E-mail</label>
+                    <input type="email" id="profileEmail" disabled>
+                </div>
+                <button type="submit" class="button">Salvar Alterações</button>
+            </form>
+        </section>
+
+        <section class="perfil-card">
+            <h3>Segurança e Preferências</h3>
+            <div class="settings-list">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span>Tema do Sistema</span>
+                        <small>Alternar entre modo claro e escuro</small>
+                    </div>
+                    <button id="inlineThemeBtn" class="button button-secondary">Mudar Tema</button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span>Redefinir Senha</span>
+                        <small>Receber um e-mail para nova senha</small>
+                    </div>
+                    <button id="resetPasswordBtn" class="button button-secondary">Enviar E-mail</button>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<nav class="mobile-nav">
+    <a href="inicio.html" class="nav-item">
+        <span class="icon">🏠</span>
+        <span class="label">Início</span>
+    </a>
+    <a href="clientes.html" class="nav-item">
+        <span class="icon">👥</span>
+        <span class="label">Clientes</span>
+    </a>
+    <a href="aviso.html" class="nav-item">
+        <span class="icon">🔔</span>
+        <span class="label">Avisos</span>
+    </a>
+    <a href="perfil.html" class="nav-item">
+        <span class="icon">👤</span>
+        <span class="label">Perfil</span>
+    </a>
+</nav>
+    
+<script src="script.js"></script>
+</body>
+
+</html>

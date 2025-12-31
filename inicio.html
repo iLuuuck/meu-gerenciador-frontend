@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russo Empréstimos - Início</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="inicio.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-top">
+        <button id="toggleSidebar" class="toggle-btn">☰</button>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="inicio.html" class="active"><span class="icon">🏠</span> <span class="text">INÍCIO</span></a></li>
+                <li><a href="clientes.html"><span class="icon">👥</span> <span class="text">CLIENTES</span></a></li>
+                <li><a href="aviso.html"><span class="icon">🔔</span> <span class="text">AVISO</span></a></li>
+                <li><a href="perfil.html"><span class="icon">👤</span> <span class="text">PERFIL</span></a></li>
+            </ul>
+        </nav>
+<div class="sidebar-footer">
+     <button id="sidebarLogoutBtn" class="logout-btn">
+         <span class="icon">🚪</span> 
+         <span class="text">Sair da Conta</span>
+     </button>
+</div>
+    </div>
+</div>
+
+<main class="main-content">
+    <header class="welcome-banner">
+        <h2 id="welcomeMessage">Olá! 👋</h2>
+        <p>Aqui está o resumo dos seus investimentos.</p>
+    </header>
+
+    <section id="dashboard" class="stats-grid">
+        <div class="stat-card-new">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+                <span class="stat-label">Clientes Ativos</span>
+                <span id="stat-active-clients" class="stat-value">0</span>
+            </div>
+        </div>
+
+        <div class="stat-card-new">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+                <span class="stat-label">Total Emprestado</span>
+                <span id="stat-total-lent" class="stat-value">R$ 0,00</span>
+            </div>
+        </div>
+
+        <div class="stat-card-new">
+            <div class="stat-icon">📈</div>
+            <div class="stat-info">
+                <span class="stat-label">Total a Receber</span>
+                <span id="stat-total-receive" class="stat-value">R$ 0,00</span>
+            </div>
+        </div>
+    </section>
+</main>
+
+<nav class="mobile-nav">
+    <a href="inicio.html" class="nav-item">
+        <span class="icon">🏠</span>
+        <span class="label">Início</span>
+    </a>
+    <a href="clientes.html" class="nav-item">
+        <span class="icon">👥</span>
+        <span class="label">Clientes</span>
+    </a>
+    <a href="aviso.html" class="nav-item">
+        <span class="icon">🔔</span>
+        <span class="label">Avisos</span>
+    </a>
+    <a href="perfil.html" class="nav-item">
+        <span class="icon">👤</span>
+        <span class="label">Perfil</span>
+    </a>
+</nav>
+
+<script src="script.js"></script>
+</body>
+
+</html>

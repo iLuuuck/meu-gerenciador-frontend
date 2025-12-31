@@ -1,0 +1,84 @@
+/* --- Estilos da Página de Início --- */
+
+.welcome-banner {
+    margin-bottom: 40px;
+    animation: fadeIn 0.8s ease-out;
+}
+
+.welcome-banner h2 {
+    font-size: 2.2rem;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.welcome-banner p {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+/* Grid de Estatísticas */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+/* Estilo Moderno dos Cards */
+.stat-card-new {
+    background: var(--card-background-color);
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.stat-card-new:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 25px rgba(0, 230, 118, 0.2);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    background: rgba(0, 230, 118, 0.1);
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Ajuste para o valor no modo claro */
+body.light-theme .stat-value {
+    color: #212121;
+}
+
+/* Animação simples */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

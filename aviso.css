@@ -1,0 +1,80 @@
+/* --- Estilos da Página de Avisos --- */
+
+.header-container {
+    margin-bottom: 30px;
+}
+
+.header-container p {
+    opacity: 0.7;
+    margin-top: 5px;
+}
+
+.alerts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 800px;
+}
+
+/* Card de Alerta */
+.alert-card {
+    background: var(--card-background-color);
+    border-left: 5px solid var(--border-color);
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.alert-card:hover {
+    transform: translateX(5px);
+}
+
+/* Cores por tipo de alerta */
+.alert-card.warning {
+    border-left-color: #ffb300; /* Laranja/Amarelo */
+}
+
+.alert-card.info {
+    border-left-color: #2196f3; /* Azul */
+}
+
+.alert-card.error {
+    border-left-color: var(--error-color);
+}
+
+.alert-icon {
+    font-size: 1.5rem;
+}
+
+.alert-content h3 {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.alert-content p {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    opacity: 0.8;
+}
+
+.alert-time {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    opacity: 0.5;
+    font-style: italic;
+}
+
+/* Estilo para quando não houver avisos */
+#noAlertsMessage {
+    text-align: center;
+    padding: 50px;
+    background: var(--card-background-color);
+    border-radius: 15px;
+    opacity: 0.6;
+}
