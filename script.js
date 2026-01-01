@@ -169,75 +169,80 @@ function renderDebtors() {
 // ========================================================
 // 6. CADASTRO E CÁLCULOS (MODAL)
 // ========================================================
-// Certifique-se de que a função começa com async
+// A função PRECISA começar com "async"
 async function handleFormSubmit(e) {
     e.preventDefault();
     
+    // Captura o formulário e verifica se é uma renovação
+    const formElement = e.target;
+    const isRenewal = formElement.dataset.isRenewal === "true";
+    
+    // Busca os dados antigos caso seja uma edição ou renovação
+    const oldData = currentDebtorId ? debtors.find(d => d.id === currentDebtorId) : null;
+
+    const loanedAmount = parseFloat(document.getElementById('loanedAmount').value) || (oldData ? oldData.loanedAmount : 0);
+    const installments = parseInt(document.getElementById('installments').value) || (oldData ? oldData.installments : 1);
+    const calcType = document.getElementById('calculationType').value;
+    
+    let totalToReceive = 0;
+    let amountPerInstallment = 0;
+    let interestPercentage = 0;
+
+    // Lógica de cálculo
+    if (calcType === 'perInstallment') {
+        amountPerInstallment = parseFloat(document.getElementById('amountPerInstallmentInput').value) || 0;
+        totalToReceive = amountPerInstallment * installments;
+        interestPercentage = loanedAmount > 0 ? ((totalToReceive - loanedAmount) / loanedAmount) * 100 : 0;
+    } else {
+        interestPercentage = parseFloat(document.getElementById('interestPercentageInput').value) || 0;
+        totalToReceive = loanedAmount * (1 + interestPercentage / 100);
+        amountPerInstallment = installments > 0 ? totalToReceive / installments : 0;
+    }
+
+    // Montagem do objeto de dados
+    const debtorData = {
+        name: document.getElementById('debtorName').value,
+        description: document.getElementById('debtorDescription').value,
+        loanedAmount: loanedAmount,
+        frequency: document.getElementById('frequency').value,
+        installments: installments,
+        interestPercentage: interestPercentage,
+        amountPerInstallment: amountPerInstallment,
+        totalToReceive: totalToReceive,
+        startDate: document.getElementById('startDate').value,
+        userId: currentUserId,
+        
+        // Se renovar, limpa pagamentos. Se editar, mantém.
+        payments: isRenewal ? [] : (oldData?.payments || []),
+        
+        // Gera novo acesso se for renovação ou cliente novo
+        accessCode: (isRenewal || !currentDebtorId) 
+            ? Math.random().toString(36).substring(2, 8).toUpperCase() 
+            : (oldData?.accessCode || Math.random().toString(36).substring(2, 8).toUpperCase()),
+            
+        lastEdited: new Date().toISOString()
+    };
+
     try {
-        // 1. Definição das variáveis de controle
-        const formElement = e.target;
-        const isRenewal = formElement.dataset.isRenewal === "true";
-        const oldData = currentDebtorId ? debtors.find(d => d.id === currentDebtorId) : null;
-        
-        // 2. Captura e cálculos
-        const loanedAmount = parseFloat(document.getElementById('loanedAmount').value) || (oldData ? oldData.loanedAmount : 0);
-        const installments = parseInt(document.getElementById('installments').value) || (oldData ? oldData.installments : 1);
-        const calcType = document.getElementById('calculationType').value;
-        
-        let totalToReceive = 0;
-        let amountPerInstallment = 0;
-        let interestPercentage = 0;
-
-        if (calcType === 'perInstallment') {
-            amountPerInstallment = parseFloat(document.getElementById('amountPerInstallmentInput').value) || 0;
-            totalToReceive = amountPerInstallment * installments;
-            interestPercentage = loanedAmount > 0 ? ((totalToReceive - loanedAmount) / loanedAmount) * 100 : 0;
-        } else {
-            interestPercentage = parseFloat(document.getElementById('interestPercentageInput').value) || 0;
-            totalToReceive = loanedAmount * (1 + interestPercentage / 100);
-            amountPerInstallment = installments > 0 ? totalToReceive / installments : 0;
-        }
-
-        // 3. Montagem do objeto
-        const debtorData = {
-            name: document.getElementById('debtorName').value,
-            description: document.getElementById('debtorDescription').value,
-            loanedAmount: loanedAmount,
-            frequency: document.getElementById('frequency').value,
-            installments: installments,
-            interestPercentage: interestPercentage,
-            amountPerInstallment: amountPerInstallment,
-            totalToReceive: totalToReceive,
-            startDate: document.getElementById('startDate').value,
-            userId: currentUserId,
-            // Se for renovação, array vazio. Se for edição, mantém antigos.
-            payments: isRenewal ? [] : (oldData?.payments || []),
-            // Gera novo código na renovação ou novo cliente
-            accessCode: (isRenewal || !currentDebtorId) 
-                ? Math.random().toString(36).substring(2, 8).toUpperCase() 
-                : (oldData?.accessCode || Math.random().toString(36).substring(2, 8).toUpperCase()),
-            lastEdited: new Date().toISOString()
-        };
-
-        // 4. Operação no Firebase (O AWAIT SÓ VALE AQUI DENTRO)
+        // Agora o await está seguro dentro da função async
         if (currentDebtorId) {
             await db.collection(DEBTORS_COLLECTION).doc(currentDebtorId).update(debtorData);
-            alert(isRenewal ? "✅ Renovado com sucesso!" : "✅ Atualizado com sucesso!");
+            alert(isRenewal ? "✅ Renovado! Histórico zerado para o novo ciclo." : "✅ Atualizado com sucesso!");
         } else {
             await db.collection(DEBTORS_COLLECTION).add(debtorData);
             alert("✅ Cadastrado com sucesso!");
         }
         
-        // 5. Finalização
+        // Limpa o estado e fecha o modal
         formElement.dataset.isRenewal = "false"; 
         closeModal('addEditDebtorModal');
         currentDebtorId = null; 
 
     } catch (err) {
-        console.error("Erro ao processar formulário:", err);
-        alert("Erro ao salvar: " + err.message);
+        console.error("Erro ao salvar:", err);
+        alert("Erro ao salvar os dados: " + err.message);
     }
-} // <--- Verifique se essa chave de fechamento existe!
+}
 
 // ========================================================
     // MONTAGEM E SALVAMENTO DOS DADOS (CORRIGIDO)
@@ -1119,6 +1124,7 @@ window.renewDebtor = function(id) {
     // Ativa o modo renovação
     document.getElementById('addEditDebtorForm').dataset.isRenewal = "true";
 };
+
 
 
 
