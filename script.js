@@ -193,8 +193,15 @@ async function handleFormSubmit(e) {
         amountPerInstallment = totalToReceive / installments;
     }
 
-    // MONTAGEM DOS DADOS
-// MONTAGEM DOS DADOS (VERSÃO CORRIGIDA)
+// ========================================================
+    // MONTAGEM E SALVAMENTO DOS DADOS (CORRIGIDO)
+    // ========================================================
+
+    // 1. Identifica se é uma renovação e busca dados antigos para segurança
+    const isRenewal = e.target.dataset.isRenewal === "true";
+    const oldData = currentDebtorId ? debtors.find(d => d.id === currentDebtorId) : null;
+
+    // 2. Monta o objeto com os dados atuais (usa os antigos como "plano B" se o input estiver vazio)
     const debtorData = {
         name: document.getElementById('debtorName').value,
         description: document.getElementById('debtorDescription').value,
@@ -207,42 +214,43 @@ async function handleFormSubmit(e) {
         startDate: document.getElementById('startDate').value,
         userId: currentUserId,
         
-        // LÓGICA DE RENOVAÇÃO:
-        payments: isRenewal ? [] : (currentDebtorId ? (debtors.find(d => d.id === currentDebtorId)?.payments || []) : []),
+        // SE FOR RENOVAÇÃO: Zera os pagamentos []
+        // SE FOR EDIÇÃO: Mantém os pagamentos que já existem
+        payments: isRenewal ? [] : (oldData?.payments || []),
         
-        // LÓGICA DO CÓDIGO DE ACESSO (CORRIGIDA):
-        // 1. Se for renovação ou cliente novo, gera um novo.
-        // 2. Se for edição, tenta achar o antigo. Se falhar, gera um novo para não dar erro.
+        // SE FOR RENOVAÇÃO OU NOVO: Gera novo código
+        // SE FOR EDIÇÃO: Mantém o código atual
         accessCode: (isRenewal || !currentDebtorId) 
             ? Math.random().toString(36).substring(2, 8).toUpperCase() 
-            : (debtors.find(d => d.id === currentDebtorId)?.accessCode || Math.random().toString(36).substring(2, 8).toUpperCase()),
+            : (oldData?.accessCode || Math.random().toString(36).substring(2, 8).toUpperCase()),
             
         lastEdited: new Date().toISOString()
     };
 
     try {
         if (currentDebtorId) {
-            // EDITAR OU RENOVAR: Atualiza o documento existente
+            // EDITAR OU RENOVAR: Atualiza o documento existente no Firebase
             await db.collection(DEBTORS_COLLECTION).doc(currentDebtorId).update(debtorData);
             
             if (isRenewal) {
-                alert("Cliente RENOVADO com sucesso! O histórico foi zerado para o novo ciclo.");
+                alert("✅ Cliente RENOVADO! O histórico de pagamentos foi zerado para este novo ciclo.");
             } else {
-                alert("Cliente atualizado com sucesso!");
+                alert("✅ Dados do cliente atualizados!");
             }
         } else {
             // ADICIONAR: Cria um novo documento
             await db.collection(DEBTORS_COLLECTION).add(debtorData);
-            alert("Cliente cadastrado com sucesso!");
+            alert("✅ Cliente cadastrado com sucesso!");
         }
         
-        // LIMPEZA FINAL
-        e.target.dataset.isRenewal = "false"; // Reseta o marcador de renovação
+        // --- LIMPEZA E FINALIZAÇÃO ---
+        e.target.dataset.isRenewal = "false"; // Reseta o estado de renovação
         closeModal('addEditDebtorModal');
         currentDebtorId = null; 
+        
     } catch (err) {
         console.error("Erro ao processar:", err);
-        alert("Erro ao salvar os dados.");
+        alert("❌ Erro ao salvar os dados. Verifique sua conexão.");
     }
 }
 
@@ -1041,26 +1049,29 @@ window.renewDebtor = function(id) {
     const debtor = debtors.find(d => d.id === id);
     if (!debtor) return;
 
-    currentDebtorId = id; // Define qual cliente vamos renovar
+    currentDebtorId = id; 
     
-    // Preenche o formulário com os dados atuais
+    // Preenche os campos do modal com os dados que o cliente JÁ TINHA
     document.getElementById('debtorName').value = debtor.name;
     document.getElementById('debtorDescription').value = debtor.description || '';
     document.getElementById('loanedAmount').value = debtor.loanedAmount;
     document.getElementById('installments').value = debtor.installments;
     document.getElementById('frequency').value = debtor.frequency;
     
-    // Define a data de início para hoje por padrão na renovação
+    // Se o seu formulário tiver campos de juros, preencha também:
+    if(document.getElementById('interestPercentageInput')) {
+        document.getElementById('interestPercentageInput').value = debtor.interestPercentage || 0;
+    }
+
+    // Define a data de início para hoje
     const hoje = new Date().toISOString().split('T')[0];
     document.getElementById('startDate').value = hoje;
 
-    // Muda o título do modal
     document.getElementById('addEditModalTitle').innerText = "🔄 Renovar: " + debtor.name;
-    
-    // Abre o modal
     document.getElementById('addEditDebtorModal').style.display = 'flex';
 
-    // MARCADOR IMPORTANTE: Ativa o modo renovação no formulário
+    // Ativa o modo renovação
     document.getElementById('addEditDebtorForm').dataset.isRenewal = "true";
 };
+
 
