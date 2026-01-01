@@ -194,6 +194,7 @@ async function handleFormSubmit(e) {
     }
 
     // MONTAGEM DOS DADOS
+// MONTAGEM DOS DADOS (VERSÃO CORRIGIDA)
     const debtorData = {
         name: document.getElementById('debtorName').value,
         description: document.getElementById('debtorDescription').value,
@@ -206,15 +207,15 @@ async function handleFormSubmit(e) {
         startDate: document.getElementById('startDate').value,
         userId: currentUserId,
         
-        // LÓGICA DE RENOVAÇÃO: 
-        // Se for renovação, cria array vazio []. 
-        // Se for edição comum, mantém os pagamentos que já existem.
-        payments: isRenewal ? [] : (currentDebtorId ? (debtors.find(d => d.id === currentDebtorId).payments || []) : []),
+        // LÓGICA DE RENOVAÇÃO:
+        payments: isRenewal ? [] : (currentDebtorId ? (debtors.find(d => d.id === currentDebtorId)?.payments || []) : []),
         
-        // Se for renovação, gera um novo código. Se for edição, mantém o código antigo.
+        // LÓGICA DO CÓDIGO DE ACESSO (CORRIGIDA):
+        // 1. Se for renovação ou cliente novo, gera um novo.
+        // 2. Se for edição, tenta achar o antigo. Se falhar, gera um novo para não dar erro.
         accessCode: (isRenewal || !currentDebtorId) 
             ? Math.random().toString(36).substring(2, 8).toUpperCase() 
-            : (debtors.find(d => d.id === currentDebtorId).accessCode),
+            : (debtors.find(d => d.id === currentDebtorId)?.accessCode || Math.random().toString(36).substring(2, 8).toUpperCase()),
             
         lastEdited: new Date().toISOString()
     };
@@ -1062,3 +1063,4 @@ window.renewDebtor = function(id) {
     // MARCADOR IMPORTANTE: Ativa o modo renovação no formulário
     document.getElementById('addEditDebtorForm').dataset.isRenewal = "true";
 };
+
