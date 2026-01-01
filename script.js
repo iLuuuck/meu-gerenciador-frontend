@@ -104,20 +104,17 @@ function updateInicioDashboard() {
 }
 
 // ========================================================
-// 5. LÓGICA DE CLIENTES E FILTROS (CLIENTES.HTML)
+// 5. LÓGICA DE CLIENTES E FILTROS (ATUALIZADA COM RENOVAÇÃO)
 // ========================================================
 function renderDebtors() {
     const list = document.getElementById('debtorsList');
     if (!list) return;
     list.innerHTML = '';
-    
 
-    // --- CORREÇÃO AQUI: Filtrar antes de exibir ---
     const filteredDebtors = currentFilter === 'all' 
         ? debtors 
         : debtors.filter(d => d.frequency === currentFilter);
 
-    // Se não houver ninguém no filtro, mostra aviso
     if (filteredDebtors.length === 0) {
         list.innerHTML = `<p class="empty-msg" style="text-align:center; color:#888; margin-top:20px;">
             Nenhum cliente encontrado para o filtro: ${currentFilter}
@@ -125,12 +122,16 @@ function renderDebtors() {
         return;
     }
 
-    // Usar filteredDebtors em vez de debtors
     filteredDebtors.forEach(d => {
         const paid = (d.payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
         const totalToReceive = parseFloat(d.totalToReceive) || 0;
         const remaining = totalToReceive - paid;
+        
+        // Cálculo de progresso (máximo 100%)
         const progress = totalToReceive > 0 ? Math.min((paid / totalToReceive) * 100, 100).toFixed(0) : 0;
+        
+        // Verifica se está 100% pago
+        const isFinished = parseFloat(progress) >= 100;
 
         const card = document.createElement('div');
         card.className = 'debtor-card';
@@ -142,28 +143,37 @@ function renderDebtors() {
                 <strong class="badge-freq">${translateFrequency(d.frequency)}</strong>
             </div>
             <div class="info-row"><span>Emprestado:</span> <strong>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</strong></div>
-            <div class="info-row"><span>Falta:</span> <strong style="color:red">R$ ${remaining.toFixed(2)}</strong></div>
+            <div class="info-row"><span>Falta:</span> <strong style="color:${isFinished ? 'green' : 'red'}">R$ ${remaining.toFixed(2)}</strong></div>
             
             <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
-            <div style="text-align:right; font-size:12px; color:green">${progress}% Pago</div>
+            <div style="text-align:right; font-size:12px; color:${isFinished ? '#00e676' : '#888'}">${isFinished ? '✅ TOTALMENTE PAGO' : progress + '% Pago'}</div>
 
             <div class="card-footer-actions">
-                <button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Adicionar Pagamento</button>
-                <button onclick="showAllInstallments('${d.id}')" class="btn-action btn-view">Ver Parcelas</button>
-                <button onclick="openInfoModal('${d.id}')" class="btn-action btn-info">Informações</button>
-                <button onclick="copiarTextoAcesso('${d.accessCode}')" class="btn-action btn-copy-access">Copiar Acesso</button>
-                <button onclick="editDebtor('${d.id}')" class="btn-action btn-edit">Editar</button>
-                <button onclick="deleteDebtor('${d.id}')" class="btn-action btn-delete">Excluir</button>
+                ${isFinished ? `
+                    <button onclick="renewDebtor('${d.id}')" class="btn-action btn-renew" style="background:#27ae60 !important; color:white; flex:2;">🔄 Renovar Cliente</button>
+                    <button onclick="deleteDebtor('${d.id}')" class="btn-action btn-delete" style="flex:1;">Excluir</button>
+                ` : `
+                    <button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Adicionar Pagamento</button>
+                    <button onclick="showAllInstallments('${d.id}')" class="btn-action btn-view">Ver Parcelas</button>
+                    <button onclick="openInfoModal('${d.id}')" class="btn-action btn-info">Informações</button>
+                    <button onclick="copiarTextoAcesso('${d.accessCode}')" class="btn-action btn-copy-access">Copiar Acesso</button>
+                    <button onclick="editDebtor('${d.id}')" class="btn-action btn-edit">Editar</button>
+                    <button onclick="deleteDebtor('${d.id}')" class="btn-action btn-delete">Excluir</button>
+                `}
             </div>
         `;
         list.appendChild(card);
     });
 }
+
 // ========================================================
 // 6. CADASTRO E CÁLCULOS (MODAL)
 // ========================================================
 async function handleFormSubmit(e) {
     e.preventDefault();
+    
+    // Captura se o formulário está em modo de renovação
+    const isRenewal = e.target.dataset.isRenewal === "true";
     
     const loanedAmount = parseFloat(document.getElementById('loanedAmount').value);
     const installments = parseInt(document.getElementById('installments').value);
@@ -183,6 +193,7 @@ async function handleFormSubmit(e) {
         amountPerInstallment = totalToReceive / installments;
     }
 
+    // MONTAGEM DOS DADOS
     const debtorData = {
         name: document.getElementById('debtorName').value,
         description: document.getElementById('debtorDescription').value,
@@ -194,26 +205,43 @@ async function handleFormSubmit(e) {
         totalToReceive: totalToReceive,
         startDate: document.getElementById('startDate').value,
         userId: currentUserId,
-        payments: currentDebtorId ? (debtors.find(d => d.id === currentDebtorId).payments || []) : [],
-        accessCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+        
+        // LÓGICA DE RENOVAÇÃO: 
+        // Se for renovação, cria array vazio []. 
+        // Se for edição comum, mantém os pagamentos que já existem.
+        payments: isRenewal ? [] : (currentDebtorId ? (debtors.find(d => d.id === currentDebtorId).payments || []) : []),
+        
+        // Se for renovação, gera um novo código. Se for edição, mantém o código antigo.
+        accessCode: (isRenewal || !currentDebtorId) 
+            ? Math.random().toString(36).substring(2, 8).toUpperCase() 
+            : (debtors.find(d => d.id === currentDebtorId).accessCode),
+            
         lastEdited: new Date().toISOString()
     };
 
-try {
+    try {
         if (currentDebtorId) {
-            // EDITAR: Atualiza o documento existente
+            // EDITAR OU RENOVAR: Atualiza o documento existente
             await db.collection(DEBTORS_COLLECTION).doc(currentDebtorId).update(debtorData);
-            alert("Cliente atualizado com sucesso!");
+            
+            if (isRenewal) {
+                alert("Cliente RENOVADO com sucesso! O histórico foi zerado para o novo ciclo.");
+            } else {
+                alert("Cliente atualizado com sucesso!");
+            }
         } else {
             // ADICIONAR: Cria um novo documento
             await db.collection(DEBTORS_COLLECTION).add(debtorData);
             alert("Cliente cadastrado com sucesso!");
         }
         
+        // LIMPEZA FINAL
+        e.target.dataset.isRenewal = "false"; // Reseta o marcador de renovação
         closeModal('addEditDebtorModal');
-        currentDebtorId = null; // Reseta o ID após salvar
+        currentDebtorId = null; 
     } catch (err) {
         console.error("Erro ao processar:", err);
+        alert("Erro ao salvar os dados.");
     }
 }
 
@@ -1008,3 +1036,29 @@ window.copiarTextoAcesso = function(codigo) {
     });
 };
 
+window.renewDebtor = function(id) {
+    const debtor = debtors.find(d => d.id === id);
+    if (!debtor) return;
+
+    currentDebtorId = id; // Define qual cliente vamos renovar
+    
+    // Preenche o formulário com os dados atuais
+    document.getElementById('debtorName').value = debtor.name;
+    document.getElementById('debtorDescription').value = debtor.description || '';
+    document.getElementById('loanedAmount').value = debtor.loanedAmount;
+    document.getElementById('installments').value = debtor.installments;
+    document.getElementById('frequency').value = debtor.frequency;
+    
+    // Define a data de início para hoje por padrão na renovação
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = hoje;
+
+    // Muda o título do modal
+    document.getElementById('addEditModalTitle').innerText = "🔄 Renovar: " + debtor.name;
+    
+    // Abre o modal
+    document.getElementById('addEditDebtorModal').style.display = 'flex';
+
+    // MARCADOR IMPORTANTE: Ativa o modo renovação no formulário
+    document.getElementById('addEditDebtorForm').dataset.isRenewal = "true";
+};
