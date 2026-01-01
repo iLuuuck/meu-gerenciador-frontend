@@ -441,7 +441,7 @@ window.openPaymentModal = function(id) {
     }
 };
 
-// --- LOGICA DOS BOTÕES DENTRO DO MODAL (ATUALIZADO DEFINITIVO) ---
+// --- LOGICA DOS BOTÕES DENTRO DO MODAL (CORRIGIDO PARA ACEITAR DATA RETROATIVA) ---
 document.addEventListener('DOMContentLoaded', () => {
     const addPaymentBtn = document.getElementById('addPaymentButton');
     if (addPaymentBtn) {
@@ -450,15 +450,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateInput = document.getElementById('paymentDate');
             
             const amount = parseFloat(amountInput.value);
-
-            // --- TRAVA DE SEGURANÇA DEFINITIVA ---
-            // Em vez de confiar no dateInput.value que pode estar atrasado, 
-            // vamos gerar a data de Brasília agora mesmo no clique.
-            const agora = new Date();
-            const dataCorretaBrasil = agora.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }); 
-            // 'sv-SE' gera 2025-12-31 perfeitamente.
             
-            const horaBrasilia = agora.toLocaleTimeString('pt-BR', { 
+            // PEGA A DATA DO INPUT (O que o usuário escolheu no calendário)
+            let dataEscolhida = dateInput.value; 
+
+            // Se por acaso o input estiver vazio, aí sim usamos a data de hoje como padrão
+            if (!dataEscolhida) {
+                dataEscolhida = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+            }
+
+            const horaBrasilia = new Date().toLocaleTimeString('pt-BR', { 
                 timeZone: 'America/Sao_Paulo', 
                 hour: '2-digit', 
                 minute: '2-digit' 
@@ -475,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const newPayment = { 
                     amount: amount, 
-                    date: dataCorretaBrasil, // FORÇA O DIA 31 AGORA
+                    date: dataEscolhida, // Agora usa a data que você selecionou no modal
                     time: horaBrasilia 
                 };
 
@@ -486,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderPaymentsGrid(updatedDebtor);
 
                 amountInput.value = ""; 
-                alert("Pagamento registrado no dia: " + dataCorretaBrasil.split('-').reverse().join('/'));
+                alert("Pagamento registrado para o dia: " + dataEscolhida.split('-').reverse().join('/'));
 
             } catch (e) {
                 console.error("Erro:", e);
@@ -1006,3 +1007,4 @@ window.copiarTextoAcesso = function(codigo) {
         alert("Texto de acesso copiado!");
     });
 };
+
