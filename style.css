@@ -584,3 +584,68 @@ body.light-theme .sidebar-nav ul li a {
 .sidebar.collapsed .sidebar-nav ul li a.active .icon {
     color: #2ecc71; /* Faz o ícone brilhar em verde quando ativo */
 }
+
+/* Configuração Base da Sidebar */
+.sidebar {
+    width: 250px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Quando Fechada */
+.sidebar.collapsed {
+    width: 80px; /* Largura fixa para o menu fechado */
+}
+
+/* Ajuste dos Links e Botão Sair */
+.sidebar-nav ul li a, 
+.logout-btn {
+    display: flex;
+    align-items: center;
+    width: 100%; /* Garante que ocupa toda a largura para a borda não encolher */
+    padding: 12px 20px;
+    text-decoration: none;
+    border-left: 4px solid transparent; /* Reserva o espaço da borda */
+    transition: all 0.3s ease;
+    background: none;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    cursor: pointer;
+}
+
+/* Borda Verde no Item Ativo */
+.sidebar-nav ul li a.active {
+    border-left: 4px solid #2ecc71;
+    background-color: rgba(46, 204, 113, 0.1);
+}
+
+/* Ajuste quando Colapsado (Sidebar Fechada) */
+.sidebar.collapsed .sidebar-nav ul li a,
+.sidebar.collapsed .logout-btn {
+    padding: 15px 0; /* Aumenta o clique vertical */
+    justify-content: center; /* Centraliza o ícone horizontalmente */
+}
+
+.sidebar.collapsed .text {
+    display: none; /* Esconde o texto */
+}
+
+.sidebar.collapsed .icon {
+    margin-right: 0; /* Remove a margem que empurrava o ícone */
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Correção específica para o Botão Sair (Porta) */
+.logout-btn {
+    margin-top: auto; /* Joga para o final da sidebar */
+    color: #e74c3c; /* Cor vermelha para o sair */
+}
+
+.logout-btn:hover {
+    background-color: rgba(231, 76, 60, 0.1);
+}
