@@ -1,4 +1,4 @@
-// Este bloco verifica se o Firebase já foi iniciado por outro script
+// Verifica se o Firebase já foi iniciado para não dar erro de duplicidade
 if (!firebase.apps.length) {
     const firebaseConfig = {
         apiKey: "AIzaSyAEZVCbz39BiqTj5f129PcrVHxfS6OnzLc",
@@ -11,23 +11,30 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
-// Em vez de usar "const", usamos apenas as variáveis se elas ainda não existirem
+// Inicializa db e auth apenas se ainda não existirem globalmente no navegador
 if (typeof db === 'undefined') window.db = firebase.firestore();
 if (typeof auth === 'undefined') window.auth = firebase.auth();
 
-// O RESTANTE DO SEU CÓDIGO SEGUE IGUAL ABAIXO...
-let currentUserId = null, currentFuncId = null, currentQuadradoId = null, idParaExcluirAposRenovar = null, repasses = [];
-// ...
-let filtroFreqAtual = 'todos'; // Variável para controlar o filtro
+// ARRUMANDO O ERRO DE IDENTIFICADOR: Verifica se as variáveis já foram declaradas em outros scripts
+if (typeof currentUserId === 'undefined') window.currentUserId = null;
+if (typeof currentFuncId === 'undefined') window.currentFuncId = null;
+if (typeof currentQuadradoId === 'undefined') window.currentQuadradoId = null;
+if (typeof idParaExcluirAposRenovar === 'undefined') window.idParaExcluirAposRenovar = null;
+if (typeof repasses === 'undefined') window.repasses = [];
+if (typeof filtroFreqAtual === 'undefined') window.filtroFreqAtual = 'todos';
 
 // Trava de Segurança para Servidor Online
 auth.onAuthStateChanged(user => {
     if (user) {
         currentUserId = user.uid;
-        carregarPastas();
+        // Verifica se a função existe na página atual antes de chamar
+        if (typeof carregarPastas === 'function') carregarPastas();
     } else {
         setTimeout(() => { 
-            if (!auth.currentUser) window.location.href = "index.html"; 
+            if (!auth.currentUser) {
+                // Só redireciona se não estiver na página de login (index.html)
+                if(!window.location.href.includes("index.html")) window.location.href = "index.html";
+            }
         }, 5000);
     }
 });
@@ -50,9 +57,11 @@ window.salvarPerfilFuncionario = async function() {
 };
 
 function carregarPastas() {
+    const container = document.getElementById('listaNomesFuncionarios');
+    if (!container) return; // Sai se não estiver na página de funcionários
+
     db.collection('lista_funcionarios').where('userId', '==', currentUserId).onSnapshot(snap => {
-        const container = document.getElementById('listaNomesFuncionarios');
-        if (!container) return; container.innerHTML = '';
+        container.innerHTML = '';
         snap.forEach(doc => {
             const btn = document.createElement('button');
             btn.className = "button button-secondary";
@@ -68,12 +77,11 @@ function carregarPastas() {
     });
 }
 
-// NOVA FUNÇÃO PARA OS FILTROS
 window.setFiltroFreq = function(freq, btn) {
     filtroFreqAtual = freq;
     document.querySelectorAll('.button-filter').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    renderRepasses(); // Re-renderiza aplicando o filtro
+    renderRepasses();
 };
 
 function setupRepassesListener() {
@@ -92,7 +100,6 @@ function renderRepasses() {
     if (!list) return;
     list.innerHTML = '';
 
-    // FILTRAGEM ANTES DO LOOP
     const repassesExibidos = repasses.filter(d => {
         if (filtroFreqAtual === 'todos') return true;
         return d.frequency === filtroFreqAtual;
@@ -104,7 +111,6 @@ function renderRepasses() {
         const remaining = total - paid;
         const progress = total > 0 ? Math.min((paid / total) * 100, 100).toFixed(0) : 0;
         const isFinished = parseFloat(progress) >= 99.9;
-
         const dataFormatada = d.startDate ? d.startDate.split('-').reverse().join('/') : '--/--/----';
         
         const freqPt = {
@@ -120,7 +126,6 @@ function renderRepasses() {
                 <h3>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
                 ${isFinished ? '<span class="status-badge status-paid">QUITADO</span>' : ''}
             </div>
-            
             <div class="info-row">
                 <span><i class="icon">📅</i> Início:</span>
                 <strong>${dataFormatada}</strong>
@@ -133,12 +138,10 @@ function renderRepasses() {
                 <span><i class="icon">💰</i> Falta:</span>
                 <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong>
             </div>
-
             <div class="progress-container">
                 <div class="progress-bar" style="width: ${progress}%"></div>
             </div>
             <div style="text-align:right; font-size:11px; margin-top:5px; color:#aaa;">${progress}% Pago</div>
-
             <div class="card-footer-actions">
                 ${isFinished ? 
                     `<button onclick="renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : 
@@ -169,37 +172,40 @@ window.editRepasse = function(id) {
     document.getElementById('addEditDebtorModal').style.display = 'flex';
 };
 
-document.getElementById('addEditDebtorForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const loanedAmount = parseFloat(document.getElementById('loanedAmount').value);
-    const installments = parseInt(document.getElementById('installments').value);
-    const calcType = document.getElementById('calculationType').value;
-    let totalToReceive, amountPerInstallment;
+const form = document.getElementById('addEditDebtorForm');
+if (form) {
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const loanedAmount = parseFloat(document.getElementById('loanedAmount').value);
+        const installments = parseInt(document.getElementById('installments').value);
+        const calcType = document.getElementById('calculationType').value;
+        let totalToReceive, amountPerInstallment;
 
-    if (calcType === 'perInstallment') {
-        amountPerInstallment = parseFloat(document.getElementById('amountPerInstallmentInput').value);
-        totalToReceive = amountPerInstallment * installments;
-    } else {
-        let juros = parseFloat(document.getElementById('interestPercentageInput').value) || 0;
-        totalToReceive = loanedAmount * (1 + juros / 100);
-        amountPerInstallment = totalToReceive / installments;
-    }
+        if (calcType === 'perInstallment') {
+            amountPerInstallment = parseFloat(document.getElementById('amountPerInstallmentInput').value);
+            totalToReceive = amountPerInstallment * installments;
+        } else {
+            let juros = parseFloat(document.getElementById('interestPercentageInput').value) || 0;
+            totalToReceive = loanedAmount * (1 + juros / 100);
+            amountPerInstallment = totalToReceive / installments;
+        }
 
-    const data = {
-        funcionarioId: currentFuncId, loanedAmount, installments, totalToReceive, amountPerInstallment,
-        frequency: document.getElementById('frequency').value, startDate: document.getElementById('startDate').value,
-        userId: currentUserId, lastEdited: new Date().toISOString()
+        const data = {
+            funcionarioId: currentFuncId, loanedAmount, installments, totalToReceive, amountPerInstallment,
+            frequency: document.getElementById('frequency').value, startDate: document.getElementById('startDate').value,
+            userId: currentUserId, lastEdited: new Date().toISOString()
+        };
+
+        if (currentQuadradoId) {
+            await db.collection('repasses_funcionarios').doc(currentQuadradoId).update(data);
+        } else {
+            if (idParaExcluirAposRenovar) await db.collection('repasses_funcionarios').doc(idParaExcluirAposRenovar).delete();
+            data.payments = [];
+            await db.collection('repasses_funcionarios').add(data);
+        }
+        closeModal('addEditDebtorModal');
     };
-
-    if (currentQuadradoId) {
-        await db.collection('repasses_funcionarios').doc(currentQuadradoId).update(data);
-    } else {
-        if (idParaExcluirAposRenovar) await db.collection('repasses_funcionarios').doc(idParaExcluirAposRenovar).delete();
-        data.payments = [];
-        await db.collection('repasses_funcionarios').add(data);
-    }
-    closeModal('addEditDebtorModal');
-};
+}
 
 window.openPaymentModal = function(id) {
     currentQuadradoId = id; const r = repasses.find(x => x.id === id);
@@ -209,15 +215,18 @@ window.openPaymentModal = function(id) {
     document.getElementById('debtorDetailModal').style.display = 'flex';
 };
 
-document.getElementById('addPaymentButton').onclick = async () => {
-    const amount = parseFloat(document.getElementById('paymentAmount').value);
-    const date = document.getElementById('paymentDate').value;
-    if (!amount || !date) return alert("Preencha valor e data!");
-    await db.collection('repasses_funcionarios').doc(currentQuadradoId).update({
-        payments: firebase.firestore.FieldValue.arrayUnion({ amount, date, timestamp: new Date().toISOString() })
-    });
-    document.getElementById('paymentAmount').value = '';
-};
+const payBtn = document.getElementById('addPaymentButton');
+if (payBtn) {
+    payBtn.onclick = async () => {
+        const amount = parseFloat(document.getElementById('paymentAmount').value);
+        const date = document.getElementById('paymentDate').value;
+        if (!amount || !date) return alert("Preencha valor e data!");
+        await db.collection('repasses_funcionarios').doc(currentQuadradoId).update({
+            payments: firebase.firestore.FieldValue.arrayUnion({ amount, date, timestamp: new Date().toISOString() })
+        });
+        document.getElementById('paymentAmount').value = '';
+    };
+}
 
 function atualizarLayoutParcelas(debtor) {
     const totalParc = parseInt(debtor.installments);
@@ -246,20 +255,12 @@ function atualizarLayoutParcelas(debtor) {
 window.renewRepasse = function(id) {
     const r = repasses.find(item => item.id === id);
     if (!r) return;
-
-    // 1. Prepara para criar um novo (limpa o ID atual e guarda o antigo para deletar depois)
-    idParaExcluirAposRenovar = id; 
-    currentQuadradoId = null;
-
-    // 2. Preenche os campos básicos
+    idParaExcluirAposRenovar = id; currentQuadradoId = null;
     document.getElementById('loanedAmount').value = r.loanedAmount;
     document.getElementById('installments').value = r.installments;
     document.getElementById('frequency').value = r.frequency;
     document.getElementById('startDate').value = getHojeFormatado();
 
-    // 3. Lógica para preencher o Tipo de Cálculo e os valores específicos
-    // Se o totalToReceive dividido pelas parcelas for igual ao amountPerInstallment,
-    // é provável que tenha sido definido por Valor por Parcela.
     if (r.amountPerInstallment && !r.interestPercentageInput) {
         document.getElementById('calculationType').value = 'perInstallment';
         document.getElementById('amountPerInstallmentInput').value = r.amountPerInstallment;
@@ -267,21 +268,16 @@ window.renewRepasse = function(id) {
         document.getElementById('percentageFields').style.display = 'none';
     } else {
         document.getElementById('calculationType').value = 'percentage';
-        // Se você salvou a porcentagem no banco, coloque aqui. 
-        // Caso contrário, ele calcula a diferença.
         const jurosOrig = ((r.totalToReceive / r.loanedAmount) - 1) * 100;
         document.getElementById('interestPercentageInput').value = jurosOrig.toFixed(2);
         document.getElementById('perInstallmentFields').style.display = 'none';
         document.getElementById('percentageFields').style.display = 'block';
     }
-
     document.getElementById('addEditModalTitle').innerText = "Renovar Repasse";
     document.getElementById('addEditDebtorModal').style.display = 'flex';
-};;
+};
 
-// Função para atualizar as estatísticas de repasse na Dashboard
 function atualizarStatsRepasse() {
-    // Usamos auth.onAuthStateChanged para garantir que o ID do usuário já carregou
     auth.onAuthStateChanged(user => {
         if (user) {
             db.collection('repasses_funcionarios')
@@ -298,23 +294,18 @@ function atualizarStatsRepasse() {
                     totalReceber += parseFloat(data.totalToReceive || 0);
                 });
 
-                // Seleciona os elementos no HTML
                 const elQtd = document.getElementById('stat-repasse-qtd');
                 const elLent = document.getElementById('stat-repasse-lent');
                 const elLucro = document.getElementById('stat-repasse-lucro');
 
-                // Só tenta atualizar se os elementos existirem na página atual
                 if (elQtd) {
                     elQtd.innerText = qtdRepasses;
                     elLent.innerText = totalEmprestado.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
                     elLucro.innerText = totalReceber.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
                 }
-            }, error => {
-                console.error("Erro no Snapshot de Repasses:", error);
             });
         }
     });
 }
 
-// Chama a função imediatamente para ela ficar "escutando" o banco de dados
 atualizarStatsRepasse();
