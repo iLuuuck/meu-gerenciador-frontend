@@ -1141,7 +1141,27 @@ window.renewDebtor = function(id) {
 };
 
 
+// =============================
 
+// Função para marcar o menu ativo automaticamente
+function destacarMenuAtivo() {
+    const path = window.location.pathname;
+    const pagina = path.split("/").pop(); // Pega apenas o nome do arquivo (ex: perfil.html)
 
+    // Remove a classe active de todos os links primeiro
+    const links = document.querySelectorAll('.sidebar-nav ul li a, .mobile-nav .nav-item');
+    links.forEach(link => link.classList.remove('active'));
+
+    // Verifica qual página está aberta e adiciona a classe active
+    links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (pagina === href || (pagina === "" && href === "inicio.html")) {
+            link.classList.add('active');
+        }
+    });
+}
+
+// Executa a função assim que a página carrega
+window.addEventListener('DOMContentLoaded', destacarMenuAtivo);
 
 
