@@ -25,12 +25,28 @@ let currentQuadradoId = null;
 let idParaExcluirAposRenovar = null; 
 let repasses = []; 
 
+// ========================================================
+// 1. CONFIGURAÇÃO E INICIALIZAÇÃO
+// ========================================================
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Usar persistência local para evitar deslogar com refresh
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
 auth.onAuthStateChanged(user => {
     if (user) {
+        console.log("Usuário autenticado:", user.email);
         currentUserId = user.uid;
         carregarPastas();
     } else {
-        window.location.href = "index.html";
+        console.warn("Usuário não autenticado, redirecionando...");
+        // Pequeno delay para garantir que não é um erro temporário de rede
+        setTimeout(() => {
+            if (!auth.currentUser) {
+                window.location.href = "index.html";
+            }
+        }, 1500);
     }
 });
 
