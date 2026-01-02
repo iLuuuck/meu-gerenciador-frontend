@@ -1,12 +1,11 @@
 // CONFIGURAÇÃO FIREBASE (IGUAL AO SEU SCRIPT.JS)
 const firebaseConfig = {
-  apiKey: "AIzaSyC9FHAnBGwU9lp1RSPbUi0WUM1CZzRmXN4",
-  authDomain: "lucas-401eb.firebaseapp.com",
-  projectId: "lucas-401eb",
-  storageBucket: "lucas-401eb.firebasestorage.app",
-  messagingSenderId: "753727069062",
-  appId: "1:753727069062:web:8e00205dda18eb901f6a07",
-  measurementId: "G-GJ7NSK1KEZ"
+    apiKey: "AIzaSyAEZVCbz39BiqTj5f129PcrVHxfS6OnzLc",
+    authDomain: "gerenciadoremprestimos.firebaseapp.com",
+    projectId: "gerenciadoremprestimos",
+    storageBucket: "gerenciadoremprestimos.firebasestorage.app",
+    messagingSenderId: "365277402196",
+    appId: "1:365277402196:web:65016aa2dd316e718a89c1"
 };
 
 // ========================================================
