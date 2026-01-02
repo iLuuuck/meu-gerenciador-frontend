@@ -166,6 +166,15 @@ window.openAddModal = function() {
     document.getElementById('startDate').value = getHojeFormatado();
     document.getElementById('addEditModalTitle').innerText = "Novo Repasse";
     document.getElementById('addEditDebtorModal').style.display = 'flex';
+    // ADICIONE ESTAS LINHAS AQUI:
+    document.getElementById('percentageFields').style.display = 'block';
+    document.getElementById('perInstallmentFields').style.display = 'none';
+    document.getElementById('calculationType').value = 'percentage';
+    
+    document.getElementById('startDate').value = getHojeFormatado();
+    document.getElementById('addEditModalTitle').innerText = "Novo Repasse";
+    document.getElementById('addEditDebtorModal').style.display = 'flex';
+};
 };
 
 // Função para alternar entre campos de Porcentagem ou Valor por Parcela
