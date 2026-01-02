@@ -154,3 +154,57 @@
 .payment-square.partial .hist div {
     color: #000 !important;
 }
+
+/* Container dos filtros */
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+/* Estilo Base dos Botões de Filtro */
+.button-filter {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 5px;
+    border: 1px solid #333;
+    background: #1a1a1a;
+    color: #888;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+/* Efeito de Hover (passar o mouse) */
+.button-filter:hover {
+    border-color: #555;
+    background: #222;
+}
+
+/* Botão Ativo (Selecionado) */
+.button-filter.active {
+    background: #2ecc71; /* Verde Russo */
+    color: #000;         /* Texto preto para contraste */
+    border-color: #2ecc71;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.3);
+    transform: translateY(-2px); /* Leve levantada */
+}
+
+/* Pequeno detalhe lateral para identificar as frequências */
+.button-filter:not(.active) {
+    border-left: 3px solid #2ecc71;
+}
+
+/* Ajuste para Mobile */
+@media (max-width: 480px) {
+    .button-filter {
+        font-size: 0.65rem;
+        padding: 10px 2px;
+    }
+}
