@@ -25,8 +25,7 @@
         </nav>
         <div class="sidebar-footer">
              <button id="sidebarLogoutBtn" class="logout-btn">
-                 <span class="icon">🚪</span> 
-                 <span class="text">Sair da Conta</span>
+                 <span class="icon">🚪</span> <span class="text">Sair da Conta</span>
              </button>
         </div>
     </div>
@@ -39,7 +38,6 @@
     </header>
 
     <div id="listaNomesFuncionarios" class="filter-actions"></div>
-
     <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
 
     <div id="dashboardFuncionario" style="display: none;">
@@ -53,17 +51,17 @@
 
 <div id="modalPerfilFunc" class="modal">
     <div class="modal-content">
-        <h3>Criar Novo Perfil de Repasse</h3>
+        <h3>Criar Novo Perfil</h3>
         <input type="text" id="novoNomeFunc" placeholder="Ex: NEILI" style="width:100%; padding:10px; margin:15px 0; background:#2c2c2c; color:white; border:1px solid #444; border-radius:8px;">
         <button onclick="salvarPerfilFuncionario()" class="button">Criar Repasse</button>
-        <button onclick="document.getElementById('modalPerfilFunc').style.display='none'" class="button button-secondary">Cancelar</button>
+        <button onclick="closeModal('modalPerfilFunc')" class="button button-secondary">Cancelar</button>
     </div>
 </div>
 
 <div id="addEditDebtorModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="addEditModalTitle">Adicionar Novo Repasse</h2>
+            <h2 id="addEditModalTitle">Novo Repasse</h2>
             <span class="close-button" onclick="closeModal('addEditDebtorModal')">&times;</span>
         </div>
         <form id="addEditDebtorForm">
@@ -87,28 +85,14 @@
                 </select>
             </div>
             <div id="perInstallmentFields">
-                <div class="input-group">
-                    <label>Valor por Parcela:</label>
-                    <input type="number" id="amountPerInstallmentInput" step="0.01">
-                </div>
+                <div class="input-group"><label>Valor por Parcela:</label><input type="number" id="amountPerInstallmentInput" step="0.01"></div>
             </div>
             <div id="percentageFields" style="display: none;">
-                <div class="input-group">
-                    <label>Porcentagem de Juros (%):</label>
-                    <input type="number" id="interestPercentageInput" step="0.01">
-                </div>
+                <div class="input-group"><label>Porcentagem de Juros (%):</label><input type="number" id="interestPercentageInput" step="0.01"></div>
             </div>
-            <div class="input-group">
-                <label>Número de Parcelas:</label>
-                <input type="number" id="installments" required>
-            </div>
-            <div class="input-group">
-                <label>Data de Início:</label>
-                <input type="date" id="startDate" required>
-            </div>
-            <div class="modal-footer">
-                <button type="submit" class="button">Salvar</button>
-            </div>
+            <div class="input-group"><label>Número de Parcelas:</label><input type="number" id="installments" required></div>
+            <div class="input-group"><label>Data de Início:</label><input type="date" id="startDate" required></div>
+            <div class="modal-footer"><button type="submit" class="button">Salvar</button></div>
         </form>
     </div>
 </div>
@@ -136,7 +120,6 @@
 </nav>
 
 <script>
-    // --- CONFIGURAÇÃO ---
     const firebaseConfig = {
         apiKey: "AIzaSyAEZVCbz39BiqTj5f129PcrVHxfS6OnzLc",
         authDomain: "gerenciadoremprestimos.firebaseapp.com",
@@ -150,20 +133,14 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    let currentUserId = null;
-    let currentFuncId = null;
-    let currentQuadradoId = null;
-    let idParaExcluirAposRenovar = null;
-    let repasses = [];
+    let currentUserId = null, currentFuncId = null, currentQuadradoId = null, idParaExcluirAposRenovar = null, repasses = [];
 
-    // --- SEGURANÇA: REMOVIDA EXPULSÃO AUTOMÁTICA ---
     auth.onAuthStateChanged(user => {
         if (user) {
             currentUserId = user.uid;
             carregarPastas();
         } else {
-            console.log("Aguardando login...");
-            // window.location.href = "index.html"; // DESATIVADO PARA TESTE DEFINITIVO
+            setTimeout(() => { if (!auth.currentUser) window.location.href = "index.html"; }, 5000);
         }
     });
 
@@ -174,62 +151,51 @@
         return dataLocal.toISOString().split('T')[0];
     }
 
-    // --- FUNÇÕES DE PERFIL ---
     window.salvarPerfilFuncionario = async function() {
         const nome = document.getElementById('novoNomeFunc').value.toUpperCase().trim();
         if (!nome) return alert("Digite um nome!");
-        try {
-            await db.collection('lista_funcionarios').add({
-                nome: nome, userId: currentUserId, createdAt: new Date().toISOString()
-            });
-            document.getElementById('novoNomeFunc').value = '';
-            document.getElementById('modalPerfilFunc').style.display = 'none';
-        } catch (e) { alert("Erro ao salvar."); }
+        await db.collection('lista_funcionarios').add({ nome, userId: currentUserId, createdAt: new Date().toISOString() });
+        document.getElementById('novoNomeFunc').value = '';
+        closeModal('modalPerfilFunc');
     };
 
     function carregarPastas() {
-        db.collection('lista_funcionarios').where('userId', '==', currentUserId)
-            .onSnapshot(snap => {
-                const container = document.getElementById('listaNomesFuncionarios');
-                if (!container) return;
-                container.innerHTML = '';
-                snap.forEach(doc => {
-                    const f = doc.data();
-                    const btn = document.createElement('button');
-                    btn.className = "button button-secondary";
-                    btn.style.margin = "5px";
-                    btn.innerText = f.nome;
-                    btn.onclick = () => {
-                        currentFuncId = doc.id;
-                        document.getElementById('dashboardFuncionario').style.display = 'block';
-                        document.getElementById('nomeFuncionarioSelecionado').innerText = "REPASSE: " + f.nome;
-                        setupRepassesListener();
-                    };
-                    container.appendChild(btn);
-                });
+        db.collection('lista_funcionarios').where('userId', '==', currentUserId).onSnapshot(snap => {
+            const container = document.getElementById('listaNomesFuncionarios');
+            if (!container) return; container.innerHTML = '';
+            snap.forEach(doc => {
+                const btn = document.createElement('button');
+                btn.className = "button button-secondary";
+                btn.style.margin = "5px"; btn.innerText = doc.data().nome;
+                btn.onclick = () => {
+                    currentFuncId = doc.id;
+                    document.getElementById('dashboardFuncionario').style.display = 'block';
+                    document.getElementById('nomeFuncionarioSelecionado').innerText = "REPASSE: " + doc.data().nome;
+                    setupRepassesListener();
+                };
+                container.appendChild(btn);
             });
+        });
     }
 
-    // --- REPASSES ---
     function setupRepassesListener() {
-        db.collection('repasses_funcionarios').where('funcionarioId', '==', currentFuncId)
-            .onSnapshot(snap => {
-                repasses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderRepasses();
-                if (currentQuadradoId && document.getElementById('debtorDetailModal').style.display === 'flex') {
-                    const rAct = repasses.find(r => r.id === currentQuadradoId);
-                    if (rAct) document.getElementById('paymentsGrid').innerHTML = atualizarLayoutParcelas(rAct);
-                }
-            });
+        db.collection('repasses_funcionarios').where('funcionarioId', '==', currentFuncId).onSnapshot(snap => {
+            repasses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderRepasses();
+            if (currentQuadradoId && document.getElementById('debtorDetailModal').style.display === 'flex') {
+                const r = repasses.find(x => x.id === currentQuadradoId);
+                if (r) document.getElementById('paymentsGrid').innerHTML = atualizarLayoutParcelas(r);
+            }
+        });
     }
 
     function renderRepasses() {
         const list = document.getElementById('repassesList');
-        if (!list) return;
-        list.innerHTML = '';
+        if (!list) return; list.innerHTML = '';
         repasses.forEach(d => {
             const paid = (d.payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
             const total = parseFloat(d.totalToReceive) || 0;
+            const remaining = total - paid;
             const progress = total > 0 ? Math.min((paid / total) * 100, 100).toFixed(0) : 0;
             const isFinished = parseFloat(progress) >= 99.9;
 
@@ -237,9 +203,11 @@
             card.className = 'debtor-card';
             card.innerHTML = `
                 <h3>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
+                <div class="info-row"><span>Falta:</span> <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong></div>
                 <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
                 <div class="card-footer-actions">
                     ${isFinished ? `<button onclick="renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : `<button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Baixar</button>`}
+                    <button onclick="editRepasse('${d.id}')" class="btn-action btn-edit">📝</button>
                     <button onclick="deleteRepasse('${d.id}')" class="btn-action btn-delete">🗑️</button>
                 </div>
             `;
@@ -251,6 +219,16 @@
         currentQuadradoId = null; idParaExcluirAposRenovar = null;
         document.getElementById('addEditDebtorForm').reset();
         document.getElementById('startDate').value = getHojeFormatado();
+        document.getElementById('addEditModalTitle').innerText = "Novo Repasse";
+        document.getElementById('addEditDebtorModal').style.display = 'flex';
+    };
+
+    window.editRepasse = function(id) {
+        currentQuadradoId = id; const d = repasses.find(r => r.id === id);
+        document.getElementById('loanedAmount').value = d.loanedAmount;
+        document.getElementById('installments').value = d.installments;
+        document.getElementById('startDate').value = d.startDate;
+        document.getElementById('addEditModalTitle').innerText = "Editar Repasse";
         document.getElementById('addEditDebtorModal').style.display = 'flex';
     };
 
@@ -276,24 +254,28 @@
             userId: currentUserId, lastEdited: new Date().toISOString()
         };
 
-        if (idParaExcluirAposRenovar) await db.collection('repasses_funcionarios').doc(idParaExcluirAposRenovar).delete();
-        data.payments = [];
-        await db.collection('repasses_funcionarios').add(data);
+        if (currentQuadradoId) {
+            await db.collection('repasses_funcionarios').doc(currentQuadradoId).update(data);
+        } else {
+            if (idParaExcluirAposRenovar) await db.collection('repasses_funcionarios').doc(idParaExcluirAposRenovar).delete();
+            data.payments = [];
+            await db.collection('repasses_funcionarios').add(data);
+        }
         closeModal('addEditDebtorModal');
     };
 
     window.openPaymentModal = function(id) {
-        currentQuadradoId = id;
-        const repasse = repasses.find(r => r.id === id);
-        document.getElementById('paymentsGrid').innerHTML = atualizarLayoutParcelas(repasse);
+        currentQuadradoId = id; const r = repasses.find(x => x.id === id);
+        document.getElementById('paymentsGrid').innerHTML = atualizarLayoutParcelas(r);
         document.getElementById('paymentDate').value = getHojeFormatado();
-        document.getElementById('paymentAmount').value = repasse.amountPerInstallment.toFixed(2);
+        document.getElementById('paymentAmount').value = r.amountPerInstallment.toFixed(2);
         document.getElementById('debtorDetailModal').style.display = 'flex';
     };
 
     document.getElementById('addPaymentButton').onclick = async () => {
         const amount = parseFloat(document.getElementById('paymentAmount').value);
         const date = document.getElementById('paymentDate').value;
+        if (!amount || !date) return alert("Preencha tudo!");
         await db.collection('repasses_funcionarios').doc(currentQuadradoId).update({
             payments: firebase.firestore.FieldValue.arrayUnion({ amount, date, timestamp: new Date().toISOString() })
         });
@@ -303,24 +285,29 @@
         const totalParc = parseInt(debtor.installments);
         const valParc = parseFloat(debtor.amountPerInstallment);
         let pool = (debtor.payments || []).map(p => ({ ...p, amount: parseFloat(p.amount) }));
+        pool.sort((a, b) => a.date.localeCompare(b.date));
         let html = '';
         for (let i = 1; i <= totalParc; i++) {
-            let pago = 0, falta = valParc;
+            let pago = 0, falta = valParc, hist = '';
             for (let p of pool) {
                 if (p.amount > 0 && falta > 0) {
                     let u = Math.min(p.amount, falta);
                     pago += u; p.amount -= u; falta -= u;
+                    hist += `<div style="font-size:0.6rem; color:#f1c40f;">📅${p.date.split('-').reverse().slice(0,2).join('/')}: R$${u.toFixed(0)}</div>`;
                 }
             }
             let cor = pago >= valParc - 0.01 ? 'paid' : (pago > 0 ? 'partial' : 'pending');
-            html += `<div class="payment-square ${cor}">Parc ${i}<br>R$ ${valParc.toFixed(2)}</div>`;
+            html += `<div class="payment-square ${cor}">
+                <small>Parc ${i}</small><strong>R$${valParc.toFixed(2)}</strong>
+                <div class="hist">${hist}</div>
+            </div>`;
         }
         return html;
     }
 
     window.renewRepasse = function(id) {
         const r = repasses.find(item => item.id === id);
-        idParaExcluirAposRenovar = id;
+        idParaExcluirAposRenovar = id; currentQuadradoId = null;
         document.getElementById('loanedAmount').value = r.loanedAmount;
         document.getElementById('installments').value = r.installments;
         document.getElementById('addEditDebtorModal').style.display = 'flex';
@@ -334,5 +321,17 @@
         document.getElementById('percentageFields').style.display = type === 'percentage' ? 'block' : 'none';
     }
 </script>
+
+<style>
+    /* Estilos extras para os quadrados ficarem bonitos como antes */
+    .payments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .payment-square { padding: 8px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; min-height: 70px; border: 1px solid rgba(255,255,255,0.1); }
+    .payment-square.pending { background: #333; color: #888; }
+    .payment-square.partial { background: #f39c12; color: white; }
+    .payment-square.paid { background: #27ae60; color: white; }
+    .payment-square small { font-size: 0.65rem; opacity: 0.8; }
+    .payment-square strong { font-size: 0.8rem; margin: 2px 0; }
+    .hist { margin-top: 5px; line-height: 1; }
+</style>
 </body>
 </html>
