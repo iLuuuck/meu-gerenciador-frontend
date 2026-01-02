@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russo - Repasse</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="clientes.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+<div id="menuOverlay" class="menu-overlay"></div>
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-top">
+        <button id="toggleSidebar" class="toggle-btn">☰</button>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="inicio.html" class="active"><span class="icon">🏠</span> <span class="text">INÍCIO</span></a></li>
+                <li><a href="clientes.html"><span class="icon">👥</span> <span class="text">CLIENTES</span></a></li>
+                <li><a href="funcionarios.html"><span class="icon">💼</span> <span class="text">REPASSE</span></a></li>
+<!--            <li><a href="aviso.html"><span class="icon">🔔</span> <span class="text">AVISO</span></a></li> -->
+                <li><a href="perfil.html"><span class="icon">👤</span> <span class="text">PERFIL</span></a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+             <button id="sidebarLogoutBtn" class="logout-btn">
+                 <span class="icon">🚪</span> 
+                 <span class="text">Sair da Conta</span>
+             </button>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <header class="header-container">
+        <h2>💼 Repasse</h2>
+        <button onclick="document.getElementById('modalPerfilFunc').style.display='flex'" class="button">+ Novo Perfil</button>
+    </header>
+
+    <div id="listaNomesFuncionarios" class="filter-actions"></div>
+
+    <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+
+    <div id="dashboardFuncionario" style="display: none;">
+        <div class="header-container">
+            <h2 id="nomeFuncionarioSelecionado" style="color: var(--primary-color);"></h2>
+            <button class="button" onclick="openAddModal()">+ Novo Repasse</button>
+        </div>
+        <div id="repassesList" class="debtors-list"></div>
+    </div>
+</div>
+
+<div id="modalPerfilFunc" class="modal">
+    <div class="modal-content">
+        <h3>Criar Novo Repasse</h3>
+        <input type="text" id="novoNomeFunc" placeholder="Ex: NEILI" style="width:100%; padding:10px; margin:15px 0; background:#2c2c2c; color:white; border:1px solid #444; border-radius:8px;">
+        <button onclick="salvarPerfilFuncionario()" class="button">Criar Repasse</button>
+        <button onclick="document.getElementById('modalPerfilFunc').style.display='none'" class="button button-secondary">Cancelar</button>
+    </div>
+</div>
+
+<div id="addEditDebtorModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="addEditModalTitle">Adicionar Novo Repasse</h2>
+            <span class="close-button" onclick="closeModal('addEditDebtorModal')">&times;</span>
+        </div>
+        <form id="addEditDebtorForm">
+            <div class="input-group">
+                <label>Valor Emprestado:</label>
+                <input type="number" id="loanedAmount" step="0.01" required>
+            </div>
+            <div class="input-group">
+                <label>Frequência:</label>
+                <select id="frequency" required>
+                    <option value="daily">Diário</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="monthly">Mensal</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Tipo de Cálculo:</label>
+                <select id="calculationType">
+                    <option value="perInstallment">Valor por Parcela</option>
+                    <option value="percentage">Porcentagem de Juros</option>
+                </select>
+            </div>
+            <div id="perInstallmentFields">
+                <div class="input-group">
+                    <label>Valor por Parcela:</label>
+                    <input type="number" id="amountPerInstallmentInput" step="0.01">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Número de Parcelas:</label>
+                <input type="number" id="installments" required>
+            </div>
+            <div id="percentageFields" style="display: none;">
+                <div class="input-group">
+                    <label>Porcentagem de Juros (%):</label>
+                    <input type="number" id="interestPercentageInput" step="0.01">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Data de Início:</label>
+                <input type="date" id="startDate" required>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="button">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="debtorDetailModal" class="modal">
+    <div class="modal-content payment-modal">
+        <div class="modal-header">
+            <h2 id="modalDebtorName">Baixar Parcela</h2>
+            <span class="close-button" onclick="closeModal('debtorDetailModal')">&times;</span>
+        </div>
+        <div id="paymentsGrid" class="payments-grid"></div>
+        <div class="payment-form">
+            <div class="input-group"><label>Data</label><input type="date" id="paymentDate"></div>
+            <div class="input-group"><label>Valor Pago</label><input type="number" id="paymentAmount" step="0.01"></div>
+            <button id="addPaymentButton" class="btn-primary">Confirmar Pagamento</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalInformacoes" class="modal">
+    <div class="modal-content info-modal-main">
+        <div class="modal-header">
+            <h2 id="infoNomeCliente">Informações</h2>
+            <span class="close-button" onclick="document.getElementById('modalInformacoes').style.display='none'">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="info-section financial-grid">
+                <div class="info-card"><label>Emprestado</label><span id="infoEmprestado" class="val-lent">R$ 0,00</span></div>
+                <div class="info-card"><label>Falta</label><span id="infoFalta" class="val-pending">R$ 0,00</span></div>
+            </div>
+            <div class="contract-details">
+                <div class="detail-item"><i>📅</i> <div><label>Início</label><p id="infoDataInicio">--</p></div></div>
+                <div class="detail-item"><i>📊</i> <div><label>Parcelas</label><p><span id="infoParcelas">0</span>x de <span id="infoValorParcela">R$ 0,00</span></p></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<nav class="mobile-nav">
+    <a href="inicio.html" class="nav-item">
+        <span class="icon">🏠</span>
+        <span class="label">Início</span>
+    </a>
+    <a href="clientes.html" class="nav-item">
+        <span class="icon">👥</span>
+        <span class="label">Clientes</span>
+    </a>
+        <a href="funcionarios.html" class="nav-item">
+        <span class="icon">💼</span>
+        <span class="label">Repasse</span>
+    </a>
+<!--<a href="aviso.html" class="nav-item">
+        <span class="icon">🔔</span>
+        <span class="label">Avisos</span>
+    </a> -->
+    <a href="perfil.html" class="nav-item">
+        <span class="icon">👤</span>
+        <span class="label">Perfil</span>
+    </a>
+</nav>
+
+<script src="js/funcionarios.js"></script>
+</body>
+</html>
