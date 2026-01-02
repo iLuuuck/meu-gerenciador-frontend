@@ -75,7 +75,8 @@ function setupRepassesListener() {
 
 function renderRepasses() {
     const list = document.getElementById('repassesList');
-    if (!list) return; list.innerHTML = '';
+    if (!list) return;
+    list.innerHTML = '';
     repasses.forEach(d => {
         const paid = (d.payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
         const total = parseFloat(d.totalToReceive) || 0;
@@ -83,16 +84,51 @@ function renderRepasses() {
         const progress = total > 0 ? Math.min((paid / total) * 100, 100).toFixed(0) : 0;
         const isFinished = parseFloat(progress) >= 99.9;
 
+        // Formata a data para DD/MM/AAAA
+        const dataFormatada = d.startDate ? d.startDate.split('-').reverse().join('/') : '--/--/----';
+        
+        // Traduz a frequência para português
+        const freqPt = {
+            'daily': 'Diário',
+            'weekly': 'Semanal',
+            'monthly': 'Mensal'
+        }[d.frequency] || d.frequency;
+
         const card = document.createElement('div');
         card.className = 'debtor-card';
         card.innerHTML = `
-            <h3>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
-            <div class="info-row"><span>Falta:</span> <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong></div>
-            <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
+            <div class="card-header">
+                <h3>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
+                <span class="status-badge ${isFinished ? 'status-paid' : 'status-pending'}">
+                    ${isFinished ? 'QUITADO' : 'EM DIA'}
+                </span>
+            </div>
+            
+            <div class="info-row">
+                <span><i class="icon">📅</i> Início:</span>
+                <strong>${dataFormatada}</strong>
+            </div>
+            <div class="info-row">
+                <span><i class="icon">🔄</i> Freq:</span>
+                <strong>${freqPt}</strong>
+            </div>
+            <div class="info-row">
+                <span><i class="icon">💰</i> Falta:</span>
+                <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar" style="width: ${progress}%"></div>
+            </div>
+            <div style="text-align:right; font-size:11px; margin-top:5px; color:#aaa;">${progress}% Pago</div>
+
             <div class="card-footer-actions">
-                ${isFinished ? `<button onclick="renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : `<button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Adcionar Pagamento</button>`}
-                <button onclick="editRepasse('${d.id}')" class="btn-action btn-edit">Editar</button>
-                <button onclick="deleteRepasse('${d.id}')" class="btn-action btn-delete">Excluir</button>
+                ${isFinished ? 
+                    `<button onclick="renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : 
+                    `<button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Baixar Parcela</button>`
+                }
+                <button onclick="editRepasse('${d.id}')" class="btn-action btn-edit">📝</button>
+                <button onclick="deleteRepasse('${d.id}')" class="btn-action btn-delete">🗑️</button>
             </div>
         `;
         list.appendChild(card);
