@@ -89,9 +89,9 @@ function renderRepasses() {
         
         // Traduz a frequência para português
         const freqPt = {
-            'daily': 'Diário',
-            'weekly': 'Semanal',
-            'monthly': 'Mensal'
+            'daily': 'DIÁRIO',
+            'weekly': 'SEMANAL',
+            'monthly': 'MENSAL'
         }[d.frequency] || d.frequency;
 
         const card = document.createElement('div');
@@ -99,9 +99,7 @@ function renderRepasses() {
         card.innerHTML = `
             <div class="card-header">
                 <h3>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
-                <span class="status-badge ${isFinished ? 'status-paid' : 'status-pending'}">
-                    ${isFinished ? 'QUITADO' : 'EM DIA'}
-                </span>
+                ${isFinished ? '<span class="status-badge status-paid">QUITADO</span>' : ''}
             </div>
             
             <div class="info-row">
@@ -110,7 +108,7 @@ function renderRepasses() {
             </div>
             <div class="info-row">
                 <span><i class="icon">🔄</i> Freq:</span>
-                <strong>${freqPt}</strong>
+                <strong style="color: #2ecc71; font-weight: 800;">${freqPt}</strong>
             </div>
             <div class="info-row">
                 <span><i class="icon">💰</i> Falta:</span>
