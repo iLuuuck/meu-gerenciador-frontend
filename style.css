@@ -530,3 +530,27 @@ body.light-theme .sidebar-nav ul li a {
     }
 }
 
+
+/* Quando a sidebar estiver fechada (classe .collapsed) */
+.sidebar.collapsed {
+    width: 70px; /* Largura apenas para o ícone */
+}
+
+.sidebar.collapsed .text {
+    display: none; /* Esconde o texto */
+}
+
+.sidebar.collapsed li a {
+    justify-content: center; /* Centraliza o ícone */
+    padding: 15px 0;
+}
+
+.sidebar.collapsed .icon {
+    margin-right: 0; /* Remove o espaço que era para o texto */
+    font-size: 1.5rem; /* Aumenta um pouco o ícone para destacar */
+}
+
+/* Ajuste do conteúdo principal para não sobrepor */
+.sidebar.collapsed ~ .main-content {
+    margin-left: 70px;
+}
