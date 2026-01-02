@@ -16,29 +16,22 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-let currentFuncId = null;
 let currentUserId = null;
-let currentQuadradoId = null;
-let idParaExcluirAposRenovar = null; 
-let repasses = []; 
 
-// ESSA FUNÇÃO É A CHAVE: Ela espera o Firebase responder antes de decidir se expulsa o usuário
+// Bloqueador de expulsão imediata
 auth.onAuthStateChanged(user => {
     if (user) {
-        console.log("Acesso garantido para:", user.email);
+        console.log("Login validado!");
         currentUserId = user.uid;
-        
-        // Só carrega os dados se o usuário existir
         carregarPastas();
     } else {
-        // Aguarda 2 segundos antes de redirecionar para dar tempo do Firebase validar a sessão
-        console.log("Verificando autenticação...");
+        // Em vez de sair na hora, ele espera 3 segundos 
+        // para ter certeza que o Firebase não está apenas processando
         setTimeout(() => {
             if (!firebase.auth().currentUser) {
-                console.log("Usuário realmente deslogado. Saindo...");
                 window.location.href = "index.html";
             }
-        }, 2000); 
+        }, 3000); 
     }
 });
 
