@@ -273,37 +273,42 @@ window.renewRepasse = function(id) {
     document.getElementById('addEditDebtorModal').style.display = 'flex';
 };;
 
-// Função para atualizar as estatísticas de repasse na Dashboard (Início)
+// Função para atualizar as estatísticas de repasse na Dashboard
 function atualizarStatsRepasse() {
-    if (!currentUserId) return;
+    // Usamos auth.onAuthStateChanged para garantir que o ID do usuário já carregou
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            db.collection('repasses_funcionarios')
+              .where('userId', '==', user.uid)
+              .onSnapshot(snap => {
+                let qtdRepasses = 0;
+                let totalEmprestado = 0;
+                let totalReceber = 0;
 
-    // Escuta todos os repasses do usuário logado
-    db.collection('repasses_funcionarios').where('userId', '==', currentUserId).onSnapshot(snap => {
-        let qtdRepasses = 0;
-        let totalEmprestado = 0;
-        let totalReceber = 0;
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    qtdRepasses++;
+                    totalEmprestado += parseFloat(data.loanedAmount || 0);
+                    totalReceber += parseFloat(data.totalToReceive || 0);
+                });
 
-        snap.forEach(doc => {
-            const data = doc.data();
-            qtdRepasses++;
-            totalEmprestado += parseFloat(data.loanedAmount || 0);
-            totalReceber += parseFloat(data.totalToReceive || 0);
-        });
+                // Seleciona os elementos no HTML
+                const elQtd = document.getElementById('stat-repasse-qtd');
+                const elLent = document.getElementById('stat-repasse-lent');
+                const elLucro = document.getElementById('stat-repasse-lucro');
 
-        // Tenta encontrar os elementos na tela (só funciona se o usuário estiver no inicio.html)
-        const elQtd = document.getElementById('stat-repasse-qtd');
-        const elLent = document.getElementById('stat-repasse-lent');
-        const elLucro = document.getElementById('stat-repasse-lucro');
-
-        if (elQtd) elQtd.innerText = qtdRepasses;
-        if (elLent) elLent.innerText = totalEmprestado.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
-        if (elLucro) elLucro.innerText = totalReceber.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+                // Só tenta atualizar se os elementos existirem na página atual
+                if (elQtd) {
+                    elQtd.innerText = qtdRepasses;
+                    elLent.innerText = totalEmprestado.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+                    elLucro.innerText = totalReceber.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+                }
+            }, error => {
+                console.error("Erro no Snapshot de Repasses:", error);
+            });
+        }
     });
 }
 
-// Ativa a função assim que o usuário for identificado no sistema
-auth.onAuthStateChanged(user => {
-    if (user) {
-        atualizarStatsRepasse();
-    }
-});
+// Chama a função imediatamente para ela ficar "escutando" o banco de dados
+atualizarStatsRepasse();
