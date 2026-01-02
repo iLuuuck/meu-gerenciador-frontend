@@ -147,7 +147,7 @@ function renderRepasses() {
         card.className = 'debtor-card';
         card.innerHTML = `
             <div class="card-header" style="margin-bottom: 15px;"> <h3 style="margin: 0;">💰 Valor Emprestado: R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
-                ${isFinished ? '<span class="status-badge status-paid">QUITADO</span>' : ''}
+                ${isFinished ? '<span class="status-badge status-paid">✅ TOTALMENTE PAGO</span>' : ''}
             </div>
 
             <div class="info-row">
