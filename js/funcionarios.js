@@ -168,6 +168,28 @@ window.openAddModal = function() {
     document.getElementById('addEditDebtorModal').style.display = 'flex';
 };
 
+// Função para alternar entre campos de Porcentagem ou Valor por Parcela
+function gerenciarCamposCalculo() {
+    const calcType = document.getElementById('calculationType');
+    const divPercentage = document.getElementById('percentageFields');
+    const divPerInstallment = document.getElementById('perInstallmentFields');
+
+    if (calcType && divPercentage && divPerInstallment) {
+        calcType.addEventListener('change', function() {
+            if (this.value === 'percentage') {
+                divPercentage.style.display = 'block';
+                divPerInstallment.style.display = 'none';
+            } else {
+                divPercentage.style.display = 'none';
+                divPerInstallment.style.display = 'block';
+            }
+        });
+    }
+}
+
+// Chame essa função uma vez para ela começar a monitorar o Select
+gerenciarCamposCalculo();
+
 window.editRepasse = function(id) {
     window.currentQuadradoId = id; 
     const d = window.repasses.find(r => r.id === id);
