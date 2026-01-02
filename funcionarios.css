@@ -58,4 +58,15 @@
     border-top: 1px solid #444;
     padding-top: 5px;
     text-align: left;
+
 }
+
+#novoNomeFunc { width:100%; padding:10px; margin:15px 0; background:#2c2c2c; color:white; border:1px solid #444; border-radius:8px; }
+.payments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.payment-square { padding: 10px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; min-height: 80px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+.payment-square.pending { background: #333; color: #888; }
+.payment-square.partial { background: #f39c12; color: white; }
+.payment-square.paid { background: #27ae60; color: white; }
+.payment-square small { font-size: 0.7rem; opacity: 0.9; }
+.payment-square strong { font-size: 0.85rem; margin: 4px 0; }
+.hist { margin-top: 5px; line-height: 1.2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 3px; }
