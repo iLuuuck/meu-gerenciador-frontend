@@ -12,6 +12,7 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 let currentUserId = null, currentFuncId = null, currentQuadradoId = null, idParaExcluirAposRenovar = null, repasses = [];
+let filtroFreqAtual = 'todos'; // Variável para controlar o filtro
 
 // Trava de Segurança para Servidor Online
 auth.onAuthStateChanged(user => {
@@ -19,7 +20,6 @@ auth.onAuthStateChanged(user => {
         currentUserId = user.uid;
         carregarPastas();
     } else {
-        // Espera 5 segundos antes de expulsar (evita erro de lag no servidor)
         setTimeout(() => { 
             if (!auth.currentUser) window.location.href = "index.html"; 
         }, 5000);
@@ -62,6 +62,14 @@ function carregarPastas() {
     });
 }
 
+// NOVA FUNÇÃO PARA OS FILTROS
+window.setFiltroFreq = function(freq, btn) {
+    filtroFreqAtual = freq;
+    document.querySelectorAll('.button-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderRepasses(); // Re-renderiza aplicando o filtro
+};
+
 function setupRepassesListener() {
     db.collection('repasses_funcionarios').where('funcionarioId', '==', currentFuncId).onSnapshot(snap => {
         repasses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -77,17 +85,22 @@ function renderRepasses() {
     const list = document.getElementById('repassesList');
     if (!list) return;
     list.innerHTML = '';
-    repasses.forEach(d => {
+
+    // FILTRAGEM ANTES DO LOOP
+    const repassesExibidos = repasses.filter(d => {
+        if (filtroFreqAtual === 'todos') return true;
+        return d.frequency === filtroFreqAtual;
+    });
+
+    repassesExibidos.forEach(d => {
         const paid = (d.payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
         const total = parseFloat(d.totalToReceive) || 0;
         const remaining = total - paid;
         const progress = total > 0 ? Math.min((paid / total) * 100, 100).toFixed(0) : 0;
         const isFinished = parseFloat(progress) >= 99.9;
 
-        // Formata a data para DD/MM/AAAA
         const dataFormatada = d.startDate ? d.startDate.split('-').reverse().join('/') : '--/--/----';
         
-        // Traduz a frequência para português
         const freqPt = {
             'daily': 'DIÁRIO',
             'weekly': 'SEMANAL',
@@ -123,10 +136,10 @@ function renderRepasses() {
             <div class="card-footer-actions">
                 ${isFinished ? 
                     `<button onclick="renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : 
-                    `<button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Baixar Parcela</button>`
+                    `<button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Adicionar Pagamento</button>`
                 }
-                <button onclick="editRepasse('${d.id}')" class="btn-action btn-edit">📝</button>
-                <button onclick="deleteRepasse('${d.id}')" class="btn-action btn-delete">🗑️</button>
+                <button onclick="editRepasse('${d.id}')" class="btn-action btn-edit">Editar</button>
+                <button onclick="deleteRepasse('${d.id}')" class="btn-action btn-delete">Excluir</button>
             </div>
         `;
         list.appendChild(card);
