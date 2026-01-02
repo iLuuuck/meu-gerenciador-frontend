@@ -138,12 +138,12 @@ function renderRepasses() {
         card.className = 'debtor-card';
         card.innerHTML = `
             <div class="card-header">
-                <h3>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
+                <h3>💰 Valor Emprestado: R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
                 ${isFinished ? '<span class="status-badge status-paid">QUITADO</span>' : ''}
             </div>
-            <div class="info-row"><span> Início:</span> <strong>${dataFormatada}</strong></div>
-            <div class="info-row"><span> Freq:</span> <strong style="color: #2ecc71;">${freqPt}</strong></div>
-            <div class="info-row"><span> Falta:</span> <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong></div>
+            <div class="info-row"><span> 📅 Início:</span> <strong>${dataFormatada}</strong></div>
+            <div class="info-row"><span> ⏱ Frequência:</span> <strong style="color: #2ecc71;">${freqPt}</strong></div>
+            <div class="info-row"><span> 💵 Falta:</span> <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong></div>
             <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
             <div class="card-footer-actions">
                 ${isFinished ? 
