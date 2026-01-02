@@ -90,9 +90,9 @@ function renderRepasses() {
             <div class="info-row"><span>Falta:</span> <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong></div>
             <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
             <div class="card-footer-actions">
-                ${isFinished ? `<button onclick="renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : `<button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Baixar</button>`}
-                <button onclick="editRepasse('${d.id}')" class="btn-action btn-edit">📝</button>
-                <button onclick="deleteRepasse('${d.id}')" class="btn-action btn-delete">🗑️</button>
+                ${isFinished ? `<button onclick="renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : `<button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Adcionar Pagamento</button>`}
+                <button onclick="editRepasse('${d.id}')" class="btn-action btn-edit">Editar</button>
+                <button onclick="deleteRepasse('${d.id}')" class="btn-action btn-delete">Excluir</button>
             </div>
         `;
         list.appendChild(card);
