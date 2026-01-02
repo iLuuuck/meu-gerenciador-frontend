@@ -253,3 +253,34 @@ window.toggleCalcFields = function() {
     document.getElementById('perInstallmentFields').style.display = type === 'perInstallment' ? 'block' : 'none';
     document.getElementById('percentageFields').style.display = type === 'percentage' ? 'block' : 'none';
 }
+
+window.excluirPastaFuncionario = async function() {
+    if (!currentFuncId) return;
+
+    const confirma = confirm("⚠️ ATENÇÃO: Isso excluirá esta PASTA e TODOS os repasses dentro dela. Deseja continuar?");
+    
+    if (confirma) {
+        try {
+            // 1. Deleta todos os repasses vinculados a esse funcionário
+            const repassesRef = db.collection('repasses_funcionarios').where('funcionarioId', '==', currentFuncId);
+            const snapshot = await repassesRef.get();
+            
+            const batch = db.batch();
+            snapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+
+            // 2. Deleta o perfil do funcionário
+            await db.collection('lista_funcionarios').doc(currentFuncId).delete();
+
+            // 3. Limpa a tela e avisa
+            document.getElementById('dashboardFuncionario').style.display = 'none';
+            currentFuncId = null;
+            alert("Pasta excluída com sucesso!");
+        } catch (error) {
+            console.error("Erro ao excluir:", error);
+            alert("Erro ao excluir pasta.");
+        }
+    }
+};
