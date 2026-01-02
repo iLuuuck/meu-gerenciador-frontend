@@ -554,3 +554,33 @@ body.light-theme .sidebar-nav ul li a {
 .sidebar.collapsed ~ .main-content {
     margin-left: 70px;
 }
+
+/* Estilo para o item ativo (Borda Verde) */
+.sidebar-nav ul li a.active {
+    border-left: 4px solid #2ecc71; /* Borda na lateral esquerda */
+    background-color: rgba(46, 204, 113, 0.1); /* Um fundo leve para destacar */
+}
+
+/* Quando a sidebar estiver FECHADA (.collapsed) */
+.sidebar.collapsed .sidebar-nav ul li a {
+    justify-content: center; /* Centraliza o ícone no meio da barra */
+    padding: 12px 0;
+    width: 100%;
+    display: flex;
+}
+
+.sidebar.collapsed .sidebar-nav ul li a.active {
+    border-left: 4px solid #2ecc71; /* Mantém a borda na esquerda da barra fina */
+    width: 100%; /* Garante que a borda não encolha */
+}
+
+.sidebar.collapsed .icon {
+    margin-right: 0; /* Remove o espaço do texto para o ícone não ficar torto */
+    transition: all 0.3s ease;
+}
+
+/* Ajuste opcional: se quiser que a borda verde envolva o ícone como um quadrado 
+   em vez de uma linha lateral quando fechado, use este: */
+.sidebar.collapsed .sidebar-nav ul li a.active .icon {
+    color: #2ecc71; /* Faz o ícone brilhar em verde quando ativo */
+}
