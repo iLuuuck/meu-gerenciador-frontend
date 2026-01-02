@@ -175,7 +175,6 @@ window.openAddModal = function() {
     document.getElementById('addEditModalTitle').innerText = "Novo Repasse";
     document.getElementById('addEditDebtorModal').style.display = 'flex';
 };
-};
 
 // Função para alternar entre campos de Porcentagem ou Valor por Parcela
 function gerenciarCamposCalculo() {
