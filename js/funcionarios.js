@@ -239,48 +239,36 @@ function atualizarLayoutParcelas(debtor) {
 
 window.renewRepasse = function(id) {
     const r = repasses.find(item => item.id === id);
-    idParaExcluirAposRenovar = id; currentQuadradoId = null;
+    if (!r) return;
+
+    // 1. Prepara para criar um novo (limpa o ID atual e guarda o antigo para deletar depois)
+    idParaExcluirAposRenovar = id; 
+    currentQuadradoId = null;
+
+    // 2. Preenche os campos básicos
     document.getElementById('loanedAmount').value = r.loanedAmount;
     document.getElementById('installments').value = r.installments;
+    document.getElementById('frequency').value = r.frequency;
     document.getElementById('startDate').value = getHojeFormatado();
-    document.getElementById('addEditDebtorModal').style.display = 'flex';
-};
 
-window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-window.deleteRepasse = async (id) => { if(confirm("Excluir?")) await db.collection('repasses_funcionarios').doc(id).delete(); };
-window.toggleCalcFields = function() {
-    const type = document.getElementById('calculationType').value;
-    document.getElementById('perInstallmentFields').style.display = type === 'perInstallment' ? 'block' : 'none';
-    document.getElementById('percentageFields').style.display = type === 'percentage' ? 'block' : 'none';
-}
-
-window.excluirPastaFuncionario = async function() {
-    if (!currentFuncId) return;
-
-    const confirma = confirm("⚠️ ATENÇÃO: Isso excluirá esta PASTA e TODOS os repasses dentro dela. Deseja continuar?");
-    
-    if (confirma) {
-        try {
-            // 1. Deleta todos os repasses vinculados a esse funcionário
-            const repassesRef = db.collection('repasses_funcionarios').where('funcionarioId', '==', currentFuncId);
-            const snapshot = await repassesRef.get();
-            
-            const batch = db.batch();
-            snapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            await batch.commit();
-
-            // 2. Deleta o perfil do funcionário
-            await db.collection('lista_funcionarios').doc(currentFuncId).delete();
-
-            // 3. Limpa a tela e avisa
-            document.getElementById('dashboardFuncionario').style.display = 'none';
-            currentFuncId = null;
-            alert("Pasta excluída com sucesso!");
-        } catch (error) {
-            console.error("Erro ao excluir:", error);
-            alert("Erro ao excluir pasta.");
-        }
+    // 3. Lógica para preencher o Tipo de Cálculo e os valores específicos
+    // Se o totalToReceive dividido pelas parcelas for igual ao amountPerInstallment,
+    // é provável que tenha sido definido por Valor por Parcela.
+    if (r.amountPerInstallment && !r.interestPercentageInput) {
+        document.getElementById('calculationType').value = 'perInstallment';
+        document.getElementById('amountPerInstallmentInput').value = r.amountPerInstallment;
+        document.getElementById('perInstallmentFields').style.display = 'block';
+        document.getElementById('percentageFields').style.display = 'none';
+    } else {
+        document.getElementById('calculationType').value = 'percentage';
+        // Se você salvou a porcentagem no banco, coloque aqui. 
+        // Caso contrário, ele calcula a diferença.
+        const jurosOrig = ((r.totalToReceive / r.loanedAmount) - 1) * 100;
+        document.getElementById('interestPercentageInput').value = jurosOrig.toFixed(2);
+        document.getElementById('perInstallmentFields').style.display = 'none';
+        document.getElementById('percentageFields').style.display = 'block';
     }
-};
+
+    document.getElementById('addEditModalTitle').innerText = "Renovar Repasse";
+    document.getElementById('addEditDebtorModal').style.display = 'flex';
+};;
