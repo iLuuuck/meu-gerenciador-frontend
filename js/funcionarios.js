@@ -122,29 +122,51 @@ function renderRepasses() {
 
     const repassesExibidos = window.repasses.filter(d => {
         if (window.filtroFreqAtual === 'todos') return true;
-        return d.frequency === window.filtroFreqAtual;
+        return d.frequency === filtroFreqAtual;
     });
 
     repassesExibidos.forEach(d => {
-        const paid = (d.payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-        const total = parseFloat(d.totalToReceive) || 0;
-        const remaining = total - paid;
-        const progress = total > 0 ? Math.min((paid / total) * 100, 100).toFixed(0) : 0;
+        // --- CÁLCULOS ---
+        const totalParcelas = parseInt(d.installments) || 0;
+        // Conta quantas parcelas foram pagas baseado no valor total pago dividido pelo valor da parcela
+        const valorPagoTotal = (d.payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+        const valorParcela = parseFloat(d.amountPerInstallment) || 0;
+        
+        // Calcula parcelas pagas (arredondando para baixo)
+        const parcelasPagas = Math.floor(valorPagoTotal / (valorParcela || 1));
+        
+        const totalToReceive = parseFloat(d.totalToReceive) || 0;
+        const remaining = totalToReceive - valorPagoTotal;
+        const progress = totalToReceive > 0 ? Math.min((valorPagoTotal / totalToReceive) * 100, 100).toFixed(0) : 0;
         const isFinished = parseFloat(progress) >= 99.9;
+        
         const dataFormatada = d.startDate ? d.startDate.split('-').reverse().join('/') : '--/--/----';
         const freqPt = { 'daily': 'DIÁRIO', 'weekly': 'SEMANAL', 'monthly': 'MENSAL' }[d.frequency] || d.frequency;
 
         const card = document.createElement('div');
         card.className = 'debtor-card';
         card.innerHTML = `
-            <div class="card-header">
-                <h3>💰 Valor Emprestado: R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
+            <div class="card-header" style="margin-bottom: 15px;"> <h3 style="margin: 0;">💰 Valor Emprestado: R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
                 ${isFinished ? '<span class="status-badge status-paid">QUITADO</span>' : ''}
             </div>
+
+            <div class="info-row">
+                <span> 🔢 Parcelas:</span> 
+                <strong>${parcelasPagas} / ${totalParcelas}</strong>
+            </div>
+            <div class="info-row">
+                <span> 📑 Valor Prestação:</span> 
+                <strong style="color: #f1c40f;">R$ ${valorParcela.toFixed(2)}</strong>
+            </div>
+
             <div class="info-row"><span> 📅 Início:</span> <strong>${dataFormatada}</strong></div>
             <div class="info-row"><span> ⏱ Frequência:</span> <strong style="color: #2ecc71;">${freqPt}</strong></div>
             <div class="info-row"><span> 💵 Falta:</span> <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong></div>
-            <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
+            
+            <div class="progress-container" style="margin-top: 10px;">
+                <div class="progress-bar" style="width: ${progress}%"></div>
+            </div>
+
             <div class="card-footer-actions">
                 ${isFinished ? 
                     `<button onclick="window.renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : 
