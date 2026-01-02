@@ -1,4 +1,4 @@
-// Verifica se o Firebase já foi iniciado para não dar erro de duplicidade
+// --- CONFIGURAÇÃO DO FIREBASE (EVITA DUPLICIDADE) ---
 if (!firebase.apps.length) {
     const firebaseConfig = {
         apiKey: "AIzaSyAEZVCbz39BiqTj5f129PcrVHxfS6OnzLc",
@@ -11,11 +11,11 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
-// Inicializa db e auth apenas se ainda não existirem globalmente no navegador
+// Inicializa db e auth globalmente
 if (typeof db === 'undefined') window.db = firebase.firestore();
 if (typeof auth === 'undefined') window.auth = firebase.auth();
 
-// ARRUMANDO O ERRO DE IDENTIFICADOR: Verifica se as variáveis já foram declaradas em outros scripts
+// Declaração de variáveis globais seguras
 if (typeof currentUserId === 'undefined') window.currentUserId = null;
 if (typeof currentFuncId === 'undefined') window.currentFuncId = null;
 if (typeof currentQuadradoId === 'undefined') window.currentQuadradoId = null;
@@ -23,21 +23,11 @@ if (typeof idParaExcluirAposRenovar === 'undefined') window.idParaExcluirAposRen
 if (typeof repasses === 'undefined') window.repasses = [];
 if (typeof filtroFreqAtual === 'undefined') window.filtroFreqAtual = 'todos';
 
-// Trava de Segurança para Servidor Online
-auth.onAuthStateChanged(user => {
-    if (user) {
-        currentUserId = user.uid;
-        // Verifica se a função existe na página atual antes de chamar
-        if (typeof carregarPastas === 'function') carregarPastas();
-    } else {
-        setTimeout(() => { 
-            if (!auth.currentUser) {
-                // Só redireciona se não estiver na página de login (index.html)
-                if(!window.location.href.includes("index.html")) window.location.href = "index.html";
-            }
-        }, 5000);
-    }
-});
+// --- FUNÇÕES DE UTILIDADE E MODAIS ---
+window.closeModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+};
 
 function getHojeFormatado() {
     const hoje = new Date();
@@ -46,28 +36,42 @@ function getHojeFormatado() {
     return dataLocal.toISOString().split('T')[0];
 }
 
+// --- CONTROLE DE ACESSO ---
+auth.onAuthStateChanged(user => {
+    if (user) {
+        window.currentUserId = user.uid;
+        if (document.getElementById('listaNomesFuncionarios')) carregarPastas();
+    } else {
+        setTimeout(() => { 
+            if (!auth.currentUser && !window.location.href.includes("index.html")) {
+                window.location.href = "index.html";
+            }
+        }, 5000);
+    }
+});
+
+// --- GESTÃO DE PASTAS (FUNCIONÁRIOS) ---
 window.salvarPerfilFuncionario = async function() {
     const nome = document.getElementById('novoNomeFunc').value.toUpperCase().trim();
     if (!nome) return alert("Digite um nome!");
     await db.collection('lista_funcionarios').add({ 
-        nome, userId: currentUserId, createdAt: new Date().toISOString() 
+        nome, userId: window.currentUserId, createdAt: new Date().toISOString() 
     });
     document.getElementById('novoNomeFunc').value = '';
-    closeModal('modalPerfilFunc');
+    window.closeModal('modalPerfilFunc');
 };
 
 function carregarPastas() {
-    const container = document.getElementById('listaNomesFuncionarios');
-    if (!container) return; // Sai se não estiver na página de funcionários
-
-    db.collection('lista_funcionarios').where('userId', '==', currentUserId).onSnapshot(snap => {
+    db.collection('lista_funcionarios').where('userId', '==', window.currentUserId).onSnapshot(snap => {
+        const container = document.getElementById('listaNomesFuncionarios');
+        if (!container) return;
         container.innerHTML = '';
         snap.forEach(doc => {
             const btn = document.createElement('button');
             btn.className = "button button-secondary";
             btn.style.margin = "5px"; btn.innerText = doc.data().nome;
             btn.onclick = () => {
-                currentFuncId = doc.id;
+                window.currentFuncId = doc.id;
                 document.getElementById('dashboardFuncionario').style.display = 'block';
                 document.getElementById('nomeFuncionarioSelecionado').innerText = "PASTA: " + doc.data().nome;
                 setupRepassesListener();
@@ -77,19 +81,35 @@ function carregarPastas() {
     });
 }
 
+window.excluirPastaFuncionario = async function() {
+    if (!window.currentFuncId) return;
+    if (confirm("⚠️ ATENÇÃO: Isso excluirá esta PASTA e TODOS os repasses. Continuar?")) {
+        try {
+            const snapshot = await db.collection('repasses_funcionarios').where('funcionarioId', '==', window.currentFuncId).get();
+            const batch = db.batch();
+            snapshot.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            await db.collection('lista_funcionarios').doc(window.currentFuncId).delete();
+            document.getElementById('dashboardFuncionario').style.display = 'none';
+            alert("Pasta excluída com sucesso!");
+        } catch (e) { console.error(e); alert("Erro ao excluir pasta."); }
+    }
+};
+
+// --- GESTÃO DE REPASSES (LOGICA E FILTROS) ---
 window.setFiltroFreq = function(freq, btn) {
-    filtroFreqAtual = freq;
+    window.filtroFreqAtual = freq;
     document.querySelectorAll('.button-filter').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderRepasses();
 };
 
 function setupRepassesListener() {
-    db.collection('repasses_funcionarios').where('funcionarioId', '==', currentFuncId).onSnapshot(snap => {
-        repasses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    db.collection('repasses_funcionarios').where('funcionarioId', '==', window.currentFuncId).onSnapshot(snap => {
+        window.repasses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderRepasses();
-        if (currentQuadradoId && document.getElementById('debtorDetailModal').style.display === 'flex') {
-            const r = repasses.find(x => x.id === currentQuadradoId);
+        if (window.currentQuadradoId && document.getElementById('debtorDetailModal').style.display === 'flex') {
+            const r = window.repasses.find(x => x.id === window.currentQuadradoId);
             if (r) document.getElementById('paymentsGrid').innerHTML = atualizarLayoutParcelas(r);
         }
     });
@@ -100,9 +120,9 @@ function renderRepasses() {
     if (!list) return;
     list.innerHTML = '';
 
-    const repassesExibidos = repasses.filter(d => {
-        if (filtroFreqAtual === 'todos') return true;
-        return d.frequency === filtroFreqAtual;
+    const repassesExibidos = window.repasses.filter(d => {
+        if (window.filtroFreqAtual === 'todos') return true;
+        return d.frequency === window.filtroFreqAtual;
     });
 
     repassesExibidos.forEach(d => {
@@ -112,12 +132,7 @@ function renderRepasses() {
         const progress = total > 0 ? Math.min((paid / total) * 100, 100).toFixed(0) : 0;
         const isFinished = parseFloat(progress) >= 99.9;
         const dataFormatada = d.startDate ? d.startDate.split('-').reverse().join('/') : '--/--/----';
-        
-        const freqPt = {
-            'daily': 'DIÁRIO',
-            'weekly': 'SEMANAL',
-            'monthly': 'MENSAL'
-        }[d.frequency] || d.frequency;
+        const freqPt = { 'daily': 'DIÁRIO', 'weekly': 'SEMANAL', 'monthly': 'MENSAL' }[d.frequency] || d.frequency;
 
         const card = document.createElement('div');
         card.className = 'debtor-card';
@@ -126,55 +141,54 @@ function renderRepasses() {
                 <h3>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</h3>
                 ${isFinished ? '<span class="status-badge status-paid">QUITADO</span>' : ''}
             </div>
-            <div class="info-row">
-                <span><i class="icon">📅</i> Início:</span>
-                <strong>${dataFormatada}</strong>
-            </div>
-            <div class="info-row">
-                <span><i class="icon">🔄</i> Freq:</span>
-                <strong style="color: #2ecc71; font-weight: 800;">${freqPt}</strong>
-            </div>
-            <div class="info-row">
-                <span><i class="icon">💰</i> Falta:</span>
-                <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar" style="width: ${progress}%"></div>
-            </div>
-            <div style="text-align:right; font-size:11px; margin-top:5px; color:#aaa;">${progress}% Pago</div>
+            <div class="info-row"><span> Início:</span> <strong>${dataFormatada}</strong></div>
+            <div class="info-row"><span> Freq:</span> <strong style="color: #2ecc71;">${freqPt}</strong></div>
+            <div class="info-row"><span> Falta:</span> <strong style="color:${isFinished ? '#2ecc71' : '#e74c3c'}">R$ ${remaining.toFixed(2)}</strong></div>
+            <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
             <div class="card-footer-actions">
                 ${isFinished ? 
-                    `<button onclick="renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : 
-                    `<button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Adicionar Pagamento</button>`
+                    `<button onclick="window.renewRepasse('${d.id}')" class="btn-action" style="background:#27ae60; flex:1;">🔄 Renovar</button>` : 
+                    `<button onclick="window.openPaymentModal('${d.id}')" class="btn-action btn-pay">Pagar</button>`
                 }
-                <button onclick="editRepasse('${d.id}')" class="btn-action btn-edit">Editar</button>
-                <button onclick="deleteRepasse('${d.id}')" class="btn-action btn-delete">Excluir</button>
+                <button onclick="window.editRepasse('${d.id}')" class="btn-action btn-edit">Editar</button>
+                <button onclick="window.deleteRepasse('${d.id}')" class="btn-action btn-delete">Excluir</button>
             </div>
         `;
         list.appendChild(card);
     });
 }
 
+// --- MODAIS DE ADICIONAR / EDITAR / PAGAR ---
 window.openAddModal = function() {
-    currentQuadradoId = null; idParaExcluirAposRenovar = null;
-    document.getElementById('addEditDebtorForm').reset();
+    window.currentQuadradoId = null; window.idParaExcluirAposRenovar = null;
+    const form = document.getElementById('addEditDebtorForm');
+    if(form) form.reset();
     document.getElementById('startDate').value = getHojeFormatado();
     document.getElementById('addEditModalTitle').innerText = "Novo Repasse";
     document.getElementById('addEditDebtorModal').style.display = 'flex';
 };
 
 window.editRepasse = function(id) {
-    currentQuadradoId = id; const d = repasses.find(r => r.id === id);
+    window.currentQuadradoId = id; 
+    const d = window.repasses.find(r => r.id === id);
+    if (!d) return;
     document.getElementById('loanedAmount').value = d.loanedAmount;
     document.getElementById('installments').value = d.installments;
     document.getElementById('startDate').value = d.startDate;
+    document.getElementById('frequency').value = d.frequency;
     document.getElementById('addEditModalTitle').innerText = "Editar Repasse";
     document.getElementById('addEditDebtorModal').style.display = 'flex';
 };
 
-const form = document.getElementById('addEditDebtorForm');
-if (form) {
-    form.onsubmit = async (e) => {
+window.deleteRepasse = async function(id) {
+    if (confirm("Excluir este repasse permanentemente?")) {
+        await db.collection('repasses_funcionarios').doc(id).delete();
+    }
+};
+
+const formRepasse = document.getElementById('addEditDebtorForm');
+if (formRepasse) {
+    formRepasse.onsubmit = async (e) => {
         e.preventDefault();
         const loanedAmount = parseFloat(document.getElementById('loanedAmount').value);
         const installments = parseInt(document.getElementById('installments').value);
@@ -191,24 +205,26 @@ if (form) {
         }
 
         const data = {
-            funcionarioId: currentFuncId, loanedAmount, installments, totalToReceive, amountPerInstallment,
+            funcionarioId: window.currentFuncId, loanedAmount, installments, totalToReceive, amountPerInstallment,
             frequency: document.getElementById('frequency').value, startDate: document.getElementById('startDate').value,
-            userId: currentUserId, lastEdited: new Date().toISOString()
+            userId: window.currentUserId, lastEdited: new Date().toISOString()
         };
 
-        if (currentQuadradoId) {
-            await db.collection('repasses_funcionarios').doc(currentQuadradoId).update(data);
+        if (window.currentQuadradoId) {
+            await db.collection('repasses_funcionarios').doc(window.currentQuadradoId).update(data);
         } else {
-            if (idParaExcluirAposRenovar) await db.collection('repasses_funcionarios').doc(idParaExcluirAposRenovar).delete();
+            if (window.idParaExcluirAposRenovar) await db.collection('repasses_funcionarios').doc(window.idParaExcluirAposRenovar).delete();
             data.payments = [];
             await db.collection('repasses_funcionarios').add(data);
         }
-        closeModal('addEditDebtorModal');
+        window.closeModal('addEditDebtorModal');
     };
 }
 
 window.openPaymentModal = function(id) {
-    currentQuadradoId = id; const r = repasses.find(x => x.id === id);
+    window.currentQuadradoId = id; 
+    const r = window.repasses.find(x => x.id === id);
+    if (!r) return;
     document.getElementById('paymentsGrid').innerHTML = atualizarLayoutParcelas(r);
     document.getElementById('paymentDate').value = getHojeFormatado();
     document.getElementById('paymentAmount').value = r.amountPerInstallment.toFixed(2);
@@ -221,7 +237,7 @@ if (payBtn) {
         const amount = parseFloat(document.getElementById('paymentAmount').value);
         const date = document.getElementById('paymentDate').value;
         if (!amount || !date) return alert("Preencha valor e data!");
-        await db.collection('repasses_funcionarios').doc(currentQuadradoId).update({
+        await db.collection('repasses_funcionarios').doc(window.currentQuadradoId).update({
             payments: firebase.firestore.FieldValue.arrayUnion({ amount, date, timestamp: new Date().toISOString() })
         });
         document.getElementById('paymentAmount').value = '';
@@ -253,9 +269,9 @@ function atualizarLayoutParcelas(debtor) {
 }
 
 window.renewRepasse = function(id) {
-    const r = repasses.find(item => item.id === id);
+    const r = window.repasses.find(item => item.id === id);
     if (!r) return;
-    idParaExcluirAposRenovar = id; currentQuadradoId = null;
+    window.idParaExcluirAposRenovar = id; window.currentQuadradoId = null;
     document.getElementById('loanedAmount').value = r.loanedAmount;
     document.getElementById('installments').value = r.installments;
     document.getElementById('frequency').value = r.frequency;
@@ -277,31 +293,25 @@ window.renewRepasse = function(id) {
     document.getElementById('addEditDebtorModal').style.display = 'flex';
 };
 
+// --- SINCRONIZAÇÃO COM A DASHBOARD ---
 function atualizarStatsRepasse() {
     auth.onAuthStateChanged(user => {
         if (user) {
-            db.collection('repasses_funcionarios')
-              .where('userId', '==', user.uid)
-              .onSnapshot(snap => {
-                let qtdRepasses = 0;
-                let totalEmprestado = 0;
-                let totalReceber = 0;
-
+            db.collection('repasses_funcionarios').where('userId', '==', user.uid).onSnapshot(snap => {
+                let qtd = 0, lent = 0, total = 0;
                 snap.forEach(doc => {
                     const data = doc.data();
-                    qtdRepasses++;
-                    totalEmprestado += parseFloat(data.loanedAmount || 0);
-                    totalReceber += parseFloat(data.totalToReceive || 0);
+                    qtd++;
+                    lent += parseFloat(data.loanedAmount || 0);
+                    total += parseFloat(data.totalToReceive || 0);
                 });
-
                 const elQtd = document.getElementById('stat-repasse-qtd');
                 const elLent = document.getElementById('stat-repasse-lent');
                 const elLucro = document.getElementById('stat-repasse-lucro');
-
                 if (elQtd) {
-                    elQtd.innerText = qtdRepasses;
-                    elLent.innerText = totalEmprestado.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
-                    elLucro.innerText = totalReceber.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+                    elQtd.innerText = qtd;
+                    elLent.innerText = lent.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+                    elLucro.innerText = total.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
                 }
             });
         }
