@@ -1,17 +1,23 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyAEZVCbz39BiqTj5f129PcrVHxfS6OnzLc",
-    authDomain: "gerenciadoremprestimos.firebaseapp.com",
-    projectId: "gerenciadoremprestimos",
-    storageBucket: "gerenciadoremprestimos.firebasestorage.app",
-    messagingSenderId: "365277402196",
-    appId: "1:365277402196:web:65016aa2dd316e718a89c1"
-};
+// Este bloco verifica se o Firebase já foi iniciado por outro script
+if (!firebase.apps.length) {
+    const firebaseConfig = {
+        apiKey: "AIzaSyAEZVCbz39BiqTj5f129PcrVHxfS6OnzLc",
+        authDomain: "gerenciadoremprestimos.firebaseapp.com",
+        projectId: "gerenciadoremprestimos",
+        storageBucket: "gerenciadoremprestimos.firebasestorage.app",
+        messagingSenderId: "365277402196",
+        appId: "1:365277402196:web:65016aa2dd316e718a89c1"
+    };
+    firebase.initializeApp(firebaseConfig);
+}
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+// Em vez de usar "const", usamos apenas as variáveis se elas ainda não existirem
+if (typeof db === 'undefined') window.db = firebase.firestore();
+if (typeof auth === 'undefined') window.auth = firebase.auth();
 
+// O RESTANTE DO SEU CÓDIGO SEGUE IGUAL ABAIXO...
 let currentUserId = null, currentFuncId = null, currentQuadradoId = null, idParaExcluirAposRenovar = null, repasses = [];
+// ...
 let filtroFreqAtual = 'todos'; // Variável para controlar o filtro
 
 // Trava de Segurança para Servidor Online
