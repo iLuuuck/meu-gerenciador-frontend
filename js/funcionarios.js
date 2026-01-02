@@ -16,37 +16,29 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-const EMPLOYEES_COLLECTION = 'lista_funcionarios';
-const REPASSES_COLLECTION = 'repasses_funcionarios';
-
 let currentFuncId = null;
 let currentUserId = null;
 let currentQuadradoId = null;
 let idParaExcluirAposRenovar = null; 
 let repasses = []; 
 
-// ========================================================
-// 1. CONFIGURAÇÃO E INICIALIZAÇÃO
-// ========================================================
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-// Usar persistência local para evitar deslogar com refresh
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
+// ESSA FUNÇÃO É A CHAVE: Ela espera o Firebase responder antes de decidir se expulsa o usuário
 auth.onAuthStateChanged(user => {
     if (user) {
-        console.log("Usuário autenticado:", user.email);
+        console.log("Acesso garantido para:", user.email);
         currentUserId = user.uid;
+        
+        // Só carrega os dados se o usuário existir
         carregarPastas();
     } else {
-        console.warn("Usuário não autenticado, redirecionando...");
-        // Pequeno delay para garantir que não é um erro temporário de rede
+        // Aguarda 2 segundos antes de redirecionar para dar tempo do Firebase validar a sessão
+        console.log("Verificando autenticação...");
         setTimeout(() => {
-            if (!auth.currentUser) {
+            if (!firebase.auth().currentUser) {
+                console.log("Usuário realmente deslogado. Saindo...");
                 window.location.href = "index.html";
             }
-        }, 1500);
+        }, 2000); 
     }
 });
 
