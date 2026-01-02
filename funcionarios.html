@@ -42,9 +42,12 @@
     <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
 
     <div id="dashboardFuncionario" style="display: none;">
-        <div class="header-container">
+        <div class="header-container" style="display: flex; justify-content: space-between; align-items: center;">
             <h2 id="nomeFuncionarioSelecionado" style="color: var(--primary-color);"></h2>
-            <button class="button" onclick="openAddModal()">+ Novo Repasse</button>
+            <div style="display: flex; gap: 8px;">
+                <button class="button" onclick="openAddModal()">+ Novo Repasse</button>
+                <button onclick="excluirPastaFuncionario()" style="background: #e74c3c; border: none; border-radius: 8px; padding: 0 15px; cursor: pointer; color: white; font-size: 1.2rem;">🗑️</button>
+            </div>
         </div>
 
         <div class="filter-actions" style="margin: 15px 0; display: flex; gap: 8px; flex-wrap: wrap;">
