@@ -718,3 +718,38 @@ body.light-theme .sidebar-nav ul li a {
 .nav-item-central:active .central-circle {
     transform: scale(0.9);
 }
+
+/* --- MENU MOBILE (o O o) --- */
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: #1a1a1a;
+    display: flex; /* O padrão é mostrar */
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #333;
+    z-index: 1000;
+}
+
+/* REGRA DE OURO: Esconder no PC */
+@media (min-width: 769px) {
+    .mobile-nav {
+        display: none !important; /* Esconde o menu se a tela for grande */
+    }
+}
+
+/* REGRA DE OURO: Esconder a Sidebar no Celular (se você quiser) */
+@media (max-width: 768px) {
+    .sidebar {
+        display: none; /* Esconde a barra lateral no celular */
+    }
+    
+    /* Garante que o conteúdo não tenha margem da sidebar no celular */
+    .main-content {
+        margin-left: 0 !important;
+        padding-bottom: 80px; /* Dá espaço para o menu o O o não cobrir o conteúdo */
+    }
+}
