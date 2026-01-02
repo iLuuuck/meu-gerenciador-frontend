@@ -649,3 +649,72 @@ body.light-theme .sidebar-nav ul li a {
 .logout-btn:hover {
     background-color: rgba(231, 76, 60, 0.1);
 }
+
+/* --- TESTE MENU CELULAR --- */
+
+/* Container da navegação mobile */
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: #1a1a1a; /* Cor do fundo da barra */
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #333;
+    z-index: 1000;
+}
+
+/* Itens normais (os "o" pequenos) */
+.nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #888;
+    text-decoration: none;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+/* O item central (o "O" grande) */
+.nav-item-central {
+    position: relative;
+    top: -20px; /* Faz o botão subir para fora da barra */
+}
+
+.central-circle {
+    width: 65px;
+    height: 65px;
+    background: #2ecc71; /* Cor verde de destaque */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+    border: 5px solid #121212; /* Borda da cor do fundo do app para dar destaque */
+    transition: transform 0.3s ease;
+}
+
+.nav-item-central .icon {
+    font-size: 28px;
+    color: white;
+}
+
+.nav-item-central .label {
+    margin-top: 25px; /* Ajusta o texto abaixo do círculo */
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+/* Quando o item lateral está ativo */
+.nav-item.active {
+    color: #2ecc71;
+}
+
+/* Efeito de clique no botão central */
+.nav-item-central:active .central-circle {
+    transform: scale(0.9);
+}
