@@ -1,4 +1,6 @@
-// CONFIGURAÇÃO FIREBASE (IGUAL AO SEU SCRIPT.JS)
+// ========================================================
+// 1. CONFIGURAÇÃO FIREBASE E INICIALIZAÇÃO
+// ========================================================
 const firebaseConfig = {
     apiKey: "AIzaSyAEZVCbz39BiqTj5f129PcrVHxfS6OnzLc",
     authDomain: "gerenciadoremprestimos.firebaseapp.com",
@@ -8,32 +10,42 @@ const firebaseConfig = {
     appId: "1:365277402196:web:65016aa2dd316e718a89c1"
 };
 
-// ========================================================
-// 1. CONFIGURAÇÃO E INICIALIZAÇÃO
-// ========================================================
+// Inicializa o Firebase apenas se ainda não foi inicializado
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-let currentUserId = null;
+// Constantes de Coleções
+const EMPLOYEES_COLLECTION = 'lista_funcionarios';
+const REPASSES_COLLECTION = 'repasses_funcionarios';
 
-// Bloqueador de expulsão imediata
+// Variáveis de Controle
+let currentFuncId = null;
+let currentUserId = null;
+let currentQuadradoId = null;
+let idParaExcluirAposRenovar = null; 
+let repasses = []; 
+
+// Gerenciamento de Acesso Definitivo
 auth.onAuthStateChanged(user => {
     if (user) {
         console.log("Login validado!");
         currentUserId = user.uid;
         carregarPastas();
     } else {
-        // Em vez de sair na hora, ele espera 3 segundos 
-        // para ter certeza que o Firebase não está apenas processando
+        // Tolerância de 3 segundos para evitar deslogar por lag de rede
         setTimeout(() => {
-            if (!firebase.auth().currentUser) {
+            if (!auth.currentUser) {
                 window.location.href = "index.html";
             }
         }, 3000); 
     }
 });
 
-// Função auxiliar para pegar a data de hoje no formato YYYY-MM-DD corrigindo fuso horário
+// Função para data correta (ajuste de fuso horário)
 function getHojeFormatado() {
     const hoje = new Date();
     const offset = hoje.getTimezoneOffset();
@@ -42,7 +54,7 @@ function getHojeFormatado() {
 }
 
 // ========================================================
-// 2. GESTÃO DE PASTAS E LISTENERS
+// 2. GESTÃO DE PASTAS
 // ========================================================
 function carregarPastas() {
     db.collection(EMPLOYEES_COLLECTION)
@@ -69,6 +81,7 @@ function carregarPastas() {
 }
 
 function setupRepassesListener() {
+    if (!currentFuncId) return;
     db.collection(REPASSES_COLLECTION)
         .where('funcionarioId', '==', currentFuncId)
         .onSnapshot(snap => {
@@ -85,7 +98,7 @@ function setupRepassesListener() {
 }
 
 // ========================================================
-// 3. RENDERIZAÇÃO DOS CARDS
+// 3. RENDERIZAÇÃO DOS CARDS (MOSTRA RENOVAR EM 100%)
 // ========================================================
 function renderRepasses() {
     const list = document.getElementById('repassesList');
@@ -121,10 +134,8 @@ function renderRepasses() {
 }
 
 // ========================================================
-// 4. SALVAMENTO (NOVO, EDITAR OU RENOVAR)
+// 4. SALVAMENTO (NOVO, EDITAR OU RENOVAR COM EXCLUSÃO)
 // ========================================================
-
-// FUNÇÃO PARA ABRIR MODAL VAZIO (BOTÃO ADICIONAR NOVO)
 window.openAddModal = function() {
     currentQuadradoId = null;
     idParaExcluirAposRenovar = null;
@@ -155,11 +166,7 @@ document.getElementById('addEditDebtorForm').onsubmit = async (e) => {
 
     const data = {
         funcionarioId: currentFuncId,
-        loanedAmount, 
-        installments, 
-        totalToReceive, 
-        amountPerInstallment, 
-        interestPercentage,
+        loanedAmount, installments, totalToReceive, amountPerInstallment, interestPercentage,
         frequency: document.getElementById('frequency').value,
         startDate: document.getElementById('startDate').value,
         userId: currentUserId,
@@ -177,7 +184,6 @@ document.getElementById('addEditDebtorForm').onsubmit = async (e) => {
                 await db.collection(REPASSES_COLLECTION).doc(idParaExcluirAposRenovar).delete();
                 idParaExcluirAposRenovar = null;
             }
-
             await db.collection(REPASSES_COLLECTION).add(data);
         }
         closeModal('addEditDebtorModal');
@@ -189,7 +195,6 @@ document.getElementById('addEditDebtorForm').onsubmit = async (e) => {
 // ========================================================
 // 5. FUNÇÕES DE SUPORTE
 // ========================================================
-
 window.renewRepasse = function(id) {
     const r = repasses.find(item => item.id === id);
     if (!r) return;
@@ -200,7 +205,7 @@ window.renewRepasse = function(id) {
     document.getElementById('loanedAmount').value = r.loanedAmount;
     document.getElementById('installments').value = r.installments;
     document.getElementById('frequency').value = r.frequency;
-    document.getElementById('startDate').value = getHojeFormatado(); // DATA DE HOJE CORRIGIDA
+    document.getElementById('startDate').value = getHojeFormatado();
 
     if (r.interestPercentage > 0) {
         document.getElementById('calculationType').value = 'percentage';
@@ -224,7 +229,7 @@ window.openPaymentModal = function(id) {
     if (!repasse) return;
     document.getElementById('modalDebtorName').innerText = "Baixar Parcela";
     document.getElementById('paymentsGrid').innerHTML = atualizarLayoutParcelas(repasse);
-    document.getElementById('paymentDate').value = getHojeFormatado(); // DATA DE HOJE CORRIGIDA
+    document.getElementById('paymentDate').value = getHojeFormatado();
     document.getElementById('paymentAmount').value = repasse.amountPerInstallment.toFixed(2);
     document.getElementById('debtorDetailModal').style.display = 'flex';
 };
@@ -251,13 +256,9 @@ window.editRepasse = function(id) {
     if (d.interestPercentage > 0) {
         document.getElementById('calculationType').value = 'percentage';
         document.getElementById('interestPercentageInput').value = d.interestPercentage;
-        document.getElementById('percentageFields').style.display = 'block';
-        document.getElementById('perInstallmentFields').style.display = 'none';
     } else {
         document.getElementById('calculationType').value = 'perInstallment';
         document.getElementById('amountPerInstallmentInput').value = d.amountPerInstallment;
-        document.getElementById('perInstallmentFields').style.display = 'block';
-        document.getElementById('percentageFields').style.display = 'none';
     }
     document.getElementById('addEditModalTitle').innerText = "Editar Repasse";
     document.getElementById('addEditDebtorModal').style.display = 'flex';
@@ -285,8 +286,6 @@ function atualizarLayoutParcelas(debtor) {
                 pagoNestaParcela += valorUsado;
                 p.amount -= valorUsado;
                 aindaFaltaPagar -= valorUsado;
-                
-                // Formatação da data com cor mais clara (#eee) e o valor em destaque
                 const dataBR = p.date.split('-').reverse().join('/');
                 listaDatasHTML += `
                     <div style="font-size:0.7rem; color: #ffffff; margin-top: 2px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px;">
@@ -303,9 +302,7 @@ function atualizarLayoutParcelas(debtor) {
                 <div style="font-size:0.75rem; font-weight: bold; text-transform: uppercase; opacity: 0.9;">Parcela ${i}</div>
                 <div style="font-size:1.1rem; font-weight:bold; margin: 4px 0;">R$ ${valorCadaParcela.toFixed(2)}</div>
                 <div style="font-size:0.7rem; font-weight:bold; letter-spacing: 1px;">${statusTexto}</div>
-                <div class="payment-history" style="margin-top:8px; text-align: left;">
-                    ${listaDatasHTML}
-                </div>
+                <div class="payment-history" style="margin-top:8px; text-align: left;">${listaDatasHTML}</div>
             </div>`;
     }
     return htmlFinal;
@@ -319,5 +316,5 @@ function closeModal(id) {
     }
 }
 
-// Adicione isso ao final do seu js/funcionarios.js
+// Atalhos para botões antigos
 window.abrirModalNovoQuadrado = openAddModal;
