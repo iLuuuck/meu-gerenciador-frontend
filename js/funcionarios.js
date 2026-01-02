@@ -272,3 +272,38 @@ window.renewRepasse = function(id) {
     document.getElementById('addEditModalTitle').innerText = "Renovar Repasse";
     document.getElementById('addEditDebtorModal').style.display = 'flex';
 };;
+
+// Função para atualizar as estatísticas de repasse na Dashboard (Início)
+function atualizarStatsRepasse() {
+    if (!currentUserId) return;
+
+    // Escuta todos os repasses do usuário logado
+    db.collection('repasses_funcionarios').where('userId', '==', currentUserId).onSnapshot(snap => {
+        let qtdRepasses = 0;
+        let totalEmprestado = 0;
+        let totalReceber = 0;
+
+        snap.forEach(doc => {
+            const data = doc.data();
+            qtdRepasses++;
+            totalEmprestado += parseFloat(data.loanedAmount || 0);
+            totalReceber += parseFloat(data.totalToReceive || 0);
+        });
+
+        // Tenta encontrar os elementos na tela (só funciona se o usuário estiver no inicio.html)
+        const elQtd = document.getElementById('stat-repasse-qtd');
+        const elLent = document.getElementById('stat-repasse-lent');
+        const elLucro = document.getElementById('stat-repasse-lucro');
+
+        if (elQtd) elQtd.innerText = qtdRepasses;
+        if (elLent) elLent.innerText = totalEmprestado.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+        if (elLucro) elLucro.innerText = totalReceber.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+    });
+}
+
+// Ativa a função assim que o usuário for identificado no sistema
+auth.onAuthStateChanged(user => {
+    if (user) {
+        atualizarStatsRepasse();
+    }
+});
