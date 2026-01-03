@@ -301,18 +301,34 @@ function atualizarLayoutParcelas(debtor) {
     const valParc = parseFloat(debtor.amountPerInstallment);
     let pool = (debtor.payments || []).map(p => ({ ...p, amount: parseFloat(p.amount) }));
     pool.sort((a, b) => a.date.localeCompare(b.date));
+    
     let html = '';
     for (let i = 1; i <= totalParc; i++) {
         let pago = 0, falta = valParc, hist = '';
+        
+        // Procuramos pagamentos para esta parcela específica
         for (let p of pool) {
             if (p.amount > 0 && falta > 0) {
                 let u = Math.min(p.amount, falta);
-                pago += u; p.amount -= u; falta -= u;
-                hist += `<div style="font-size:0.65rem; color:#f1c40f;">📅${p.date.split('-').reverse().slice(0,2).join('/')}: R$${u.toFixed(0)}</div>`;
+                pago += u;
+                p.amount -= u;
+                falta -= u;
+                
+                // Adicionamos o botão de excluir (X) ao lado do valor no histórico
+                hist += `
+                <div class="payment-history-item" style="display:flex; justify-content:space-between; align-items:center; font-size:0.65rem; color:#f1c40f; margin-top:2px;">
+                    <span>📅${p.date.split('-').reverse().slice(0,2).join('/')}: R$${u.toFixed(0)}</span>
+                    <button onclick="event.stopPropagation(); window.excluirPagamento('${debtor.id}', '${p.timestamp}')" 
+                            style="background:none; border:none; color:#e74c3c; cursor:pointer; padding:0 2px; font-size:10px;">
+                        ✕
+                    </button>
+                </div>`;
             }
         }
+        
         let cor = pago >= valParc - 0.01 ? 'paid' : (pago > 0 ? 'partial' : 'pending');
-        html += `<div class="payment-square ${cor}" onclick="document.getElementById('paymentAmount').value='${valParc.toFixed(2)}'">
+        html += `
+        <div class="payment-square ${cor}" onclick="document.getElementById('paymentAmount').value='${valParc.toFixed(2)}'">
             <small>Parc ${i}</small><strong>R$${valParc.toFixed(2)}</strong>
             <div class="hist">${hist}</div>
         </div>`;
@@ -371,3 +387,30 @@ function atualizarStatsRepasse() {
 }
 
 atualizarStatsRepasse();
+
+
+window.excluirPagamento = async function(repasseId, timestampParaExcluir) {
+    if (!confirm("Deseja realmente remover este pagamento?")) return;
+
+    try {
+        // 1. Busca os dados atuais do repasse
+        const docRef = db.collection('repasses_funcionarios').doc(repasseId);
+        const doc = await docRef.get();
+
+        if (doc.exists) {
+            const data = doc.data();
+            // 2. Filtra a lista de pagamentos, removendo o que tem o timestamp clicado
+            const novosPagamentos = data.payments.filter(p => p.timestamp !== timestampParaExcluir);
+
+            // 3. Atualiza no Firebase
+            await docRef.update({
+                payments: novosPagamentos
+            });
+
+            alert("Pagamento removido com sucesso!");
+        }
+    } catch (error) {
+        console.error("Erro ao excluir pagamento:", error);
+        alert("Erro ao excluir o pagamento.");
+    }
+};
