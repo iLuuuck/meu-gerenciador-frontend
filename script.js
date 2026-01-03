@@ -132,6 +132,10 @@ function renderDebtors() {
         const paid = (d.payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
         const totalToReceive = parseFloat(d.totalToReceive) || 0;
         const remaining = totalToReceive - paid;
+        // Cálculo de parcelas pagas
+        const totalParcelas = parseInt(d.installments) || 0;
+        const valorParcela = parseFloat(d.amountPerInstallment) || 0;
+        const parcelasPagas = Math.floor(paid / (valorParcela || 1));
         
         // Cálculo de progresso (máximo 100%)
         const progress = totalToReceive > 0 ? Math.min((paid / totalToReceive) * 100, 100).toFixed(0) : 0;
@@ -1215,5 +1219,6 @@ window.excluirPagamentoPorIndice = async function(debtorId, index) {
         alert("Erro ao remover o pagamento.");
     }
 };
+
 
 
