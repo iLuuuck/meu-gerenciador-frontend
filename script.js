@@ -153,6 +153,8 @@ function renderDebtors() {
                 <strong class="badge-freq">${translateFrequency(d.frequency)}</strong>
             </div>
             <div class="info-row"><span>Emprestado:</span> <strong>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</strong></div>
+            <div class="info-row"><span>Emprestado:</span> <strong>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</strong></div>
+            <div class="info-row"><span>Falta:</span> <strong style="color:${isFinished ? 'green' : 'red'}">R$ ${remaining.toFixed(2)}</strong></div>
             <div class="info-row"><span>Falta:</span> <strong style="color:${isFinished ? 'green' : 'red'}">R$ ${remaining.toFixed(2)}</strong></div>
             
             <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
@@ -1219,6 +1221,7 @@ window.excluirPagamentoPorIndice = async function(debtorId, index) {
         alert("Erro ao remover o pagamento.");
     }
 };
+
 
 
 
