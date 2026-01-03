@@ -24,6 +24,12 @@ let debtors = [];
 let currentFilter = 'all';
 let currentDebtorId = null;
 
+window.limparCacheSistema = function() {
+    if (confirm("Deseja atualizar o sistema para a versão mais recente?")) {
+        // O false força o recarregamento a partir do servidor, não do cache
+        window.location.reload(true);
+    }
+};
 
 // ========================================================
 // 2. CONTROLE DE ACESSO E TEMA
@@ -1210,10 +1216,4 @@ window.excluirPagamentoPorIndice = async function(debtorId, index) {
     }
 };
 
-window.limparCacheSistema = function() {
-    if (confirm("Deseja atualizar o sistema para a versão mais recente?")) {
-        // O false força o recarregamento a partir do servidor, não do cache
-        window.location.reload(true);
-    }
-};
 
