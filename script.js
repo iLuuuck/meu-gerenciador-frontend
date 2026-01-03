@@ -146,25 +146,31 @@ function renderDebtors() {
         const card = document.createElement('div');
         card.className = 'debtor-card';
         card.innerHTML = `
-            <h3>${d.name}</h3>
-            <p>${d.description || ''}</p>
-            <div class="info-row frequency-row">
+            <h3 style="margin-top: 10px; margin-bottom: 5px; font-size: 1.4rem;">${d.name}</h3>
+            <p style="margin-bottom: 20px; color: #bbb; min-height: 20px;">${d.description || ''}</p>
+
+            <div class="info-row frequency-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333;">
                 <span>⏱ Frequência:</span> 
                 <strong class="badge-freq">${translateFrequency(d.frequency)}</strong>
             </div>
+            
+            <div class="info-row">
+                <span>🔢 Parcelas:</span> 
+                <strong>${parcelasPagas} / ${totalParcelas}</strong>
+            </div>
+
+            <div class="info-row">
+                <span>📑 Valor Parcela:</span> 
+                <strong style="color: #f1c40f;">R$ ${valorParcela.toFixed(2)}</strong>
+            </div>
+
             <div class="info-row"><span>Emprestado:</span> <strong>R$ ${parseFloat(d.loanedAmount).toFixed(2)}</strong></div>
-<div class="info-row">
-        <span>🔢 Parcelas:</span> 
-        <strong>${parcelasPagas} / ${totalParcelas}</strong>
-    </div>
-    <div class="info-row">
-        <span>📑 Valor Parcela:</span> 
-        <strong style="color: #f1c40f;">R$ ${valorParcela.toFixed(2)}</strong>
-    </div>
             <div class="info-row"><span>Falta:</span> <strong style="color:${isFinished ? 'green' : 'red'}">R$ ${remaining.toFixed(2)}</strong></div>
             
-            <div class="progress-container"><div class="progress-bar" style="width: ${progress}%"></div></div>
-            <div style="text-align:right; font-size:12px; color:${isFinished ? '#00e676' : '#888'}">${isFinished ? '✅ TOTALMENTE PAGO' : progress + '% Pago'}</div>
+            <div class="progress-container" style="margin-top: 15px;"><div class="progress-bar" style="width: ${progress}%"></div></div>
+            <div style="text-align:right; font-size:12px; color:${isFinished ? '#00e676' : '#888'}; margin-bottom: 15px;">
+                ${isFinished ? '✅ TOTALMENTE PAGO' : progress + '% Pago'}
+            </div>
 
             <div class="card-footer-actions">
                 ${isFinished ? `
@@ -1227,6 +1233,7 @@ window.excluirPagamentoPorIndice = async function(debtorId, index) {
         alert("Erro ao remover o pagamento.");
     }
 };
+
 
 
 
