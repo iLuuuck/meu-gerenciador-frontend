@@ -939,20 +939,20 @@ function atualizarLayoutParcelas(debtor, tipo) {
     const totalParcelas = parseInt(debtor.installments) || 0;
     const valorCadaParcela = parseFloat(debtor.amountPerInstallment) || 0;
     
-    let pagamentosRealizados = [];
+    // CORREÇÃO: Mantenha uma referência ao índice original antes de qualquer ordenação
+    let pagamentosComIndice = [];
     if (debtor.payments && Array.isArray(debtor.payments)) {
-        // Criamos uma cópia mantendo o timestamp para poder excluir depois
-        pagamentosRealizados = debtor.payments.map(p => ({
-            date: p.date,
+        pagamentosComIndice = debtor.payments.map((p, index) => ({
+            ...p,
             amount: parseFloat(p.amount) || 0,
-            timestamp: p.timestamp // Importante para a exclusão
+            originalIndex: index // Guardamos a posição real no banco de dados
         }));
     }
     
     let htmlFinal = '';
     
-    // Ordenação por texto (localeCompare)
-    let pool = pagamentosRealizados.sort((a, b) => a.date.localeCompare(b.date));
+    // Ordenamos apenas para exibição visual
+    let pool = pagamentosComIndice.sort((a, b) => a.date.localeCompare(b.date));
 
     for (let i = 1; i <= totalParcelas; i++) {
         let pagoNestaParcela = 0;
@@ -967,7 +967,6 @@ function atualizarLayoutParcelas(debtor, tipo) {
                 if (valorParaEstaParcela > 0) {
                     pagoNestaParcela += valorParaEstaParcela;
                     
-                    // Formatação manual da data BR (DD/MM/YYYY)
                     let dataBr = "S/D";
                     if (p.date) {
                         const partes = p.date.split('-'); 
@@ -978,11 +977,11 @@ function atualizarLayoutParcelas(debtor, tipo) {
                         }
                     }
 
-                    // ADICIONADO: Botão de exclusão (X) ao lado de cada pagamento no histórico
+                    // CORREÇÃO NO ONCLICK: Agora passamos o originalIndex
                     listaDatasHTML += `
                         <div class="history-item" style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
                             <span>📅 ${dataBr}: R$ ${valorParaEstaParcela.toFixed(2)}</span>
-                            <button onclick="event.stopPropagation(); window.excluirPagamento('${debtor.id}', '${p.timestamp}')" 
+                            <button onclick="event.stopPropagation(); window.excluirPagamentoPorIndice('${debtor.id}', ${p.originalIndex})" 
                                     style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:bold; padding:0 5px; font-size:12px;">
                                 ✕
                             </button>
@@ -1177,8 +1176,8 @@ window.addEventListener('DOMContentLoaded', destacarMenuAtivo);
 
 
 
-window.excluirPagamento = async function(debtorId, timestampParaExcluir) {
-    if (!confirm("⚠️ Deseja realmente remover este pagamento?")) return;
+window.excluirPagamentoPorIndice = async function(debtorId, index) {
+    if (!confirm("⚠️ Deseja realmente remover este pagamento específico?")) return;
 
     try {
         const docRef = db.collection('debtors').doc(debtorId);
@@ -1186,31 +1185,29 @@ window.excluirPagamento = async function(debtorId, timestampParaExcluir) {
 
         if (doc.exists) {
             const data = doc.data();
-            
-            // 1. Filtra os pagamentos
-            const novosPagamentos = (data.payments || []).filter(p => String(p.timestamp) !== String(timestampParaExcluir));
+            let listaPagamentos = data.payments || [];
 
-            // 2. Atualiza no Firebase
+            // Remove apenas 1 item na posição 'index'
+            listaPagamentos.splice(index, 1);
+
+            // Atualiza o Firebase
             await docRef.update({
-                payments: novosPagamentos
+                payments: listaPagamentos
             });
 
-            // 3. ATUALIZAÇÃO EM TEMPO REAL NA TELA
-            // Criamos um objeto temporário com os novos pagamentos para renderizar agora
-            const debtorAtualizado = { ...data, id: debtorId, payments: novosPagamentos };
-            
-            // Pegamos o container onde as parcelas aparecem (geralmente 'paymentsGrid')
+            // Atualiza a tela na hora
+            const debtorAtualizado = { ...data, id: debtorId, payments: listaPagamentos };
             const grid = document.getElementById('paymentsGrid');
             if (grid) {
-                // Chamamos a função que desenha as parcelas passando o tipo 'gestao'
                 grid.innerHTML = atualizarLayoutParcelas(debtorAtualizado, 'gestao');
             }
 
-            console.log("Pagamento excluído e tela atualizada!");
+            console.log("Pagamento removido com sucesso!");
         }
     } catch (error) {
-        console.error("Erro ao excluir pagamento:", error);
-        alert("Erro ao excluir o pagamento.");
+        console.error("Erro ao excluir:", error);
+        alert("Erro ao remover o pagamento.");
     }
 };
+
 
