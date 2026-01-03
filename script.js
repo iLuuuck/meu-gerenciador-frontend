@@ -1177,33 +1177,40 @@ window.addEventListener('DOMContentLoaded', destacarMenuAtivo);
 
 
 
-// Função para excluir pagamento no script principal (Debtors)
 window.excluirPagamento = async function(debtorId, timestampParaExcluir) {
     if (!confirm("⚠️ Deseja realmente remover este pagamento?")) return;
 
     try {
-        // Acessa a coleção 'debtors' (ajuste o nome se for 'devedores' no seu Firebase)
         const docRef = db.collection('debtors').doc(debtorId);
         const doc = await docRef.get();
 
         if (doc.exists) {
             const data = doc.data();
             
-            // Filtra o array de pagamentos removendo o que possui o timestamp clicado
+            // 1. Filtra os pagamentos
             const novosPagamentos = (data.payments || []).filter(p => String(p.timestamp) !== String(timestampParaExcluir));
 
-            // Grava a nova lista de pagamentos no Firebase
+            // 2. Atualiza no Firebase
             await docRef.update({
                 payments: novosPagamentos
             });
 
-            // Se você usa um sistema de abas ou precisa fechar o modal ao excluir:
-            // window.closeModal('debtorDetailModal'); 
+            // 3. ATUALIZAÇÃO EM TEMPO REAL NA TELA
+            // Criamos um objeto temporário com os novos pagamentos para renderizar agora
+            const debtorAtualizado = { ...data, id: debtorId, payments: novosPagamentos };
             
-            console.log("Pagamento excluído com sucesso do debtor!");
+            // Pegamos o container onde as parcelas aparecem (geralmente 'paymentsGrid')
+            const grid = document.getElementById('paymentsGrid');
+            if (grid) {
+                // Chamamos a função que desenha as parcelas passando o tipo 'gestao'
+                grid.innerHTML = atualizarLayoutParcelas(debtorAtualizado, 'gestao');
+            }
+
+            console.log("Pagamento excluído e tela atualizada!");
         }
     } catch (error) {
         console.error("Erro ao excluir pagamento:", error);
-        alert("Erro ao excluir o pagamento. Verifique a conexão.");
+        alert("Erro ao excluir o pagamento.");
     }
 };
+
