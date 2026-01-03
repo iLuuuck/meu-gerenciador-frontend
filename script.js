@@ -181,7 +181,6 @@ function renderDebtors() {
                     <button onclick="openPaymentModal('${d.id}')" class="btn-action btn-pay">Adicionar Pagamento</button>
                     <button onclick="showAllInstallments('${d.id}')" class="btn-action btn-view">Ver Parcelas</button>
                     <button onclick="openInfoModal('${d.id}')" class="btn-action btn-info">Informações</button>
-                    <button onclick="copiarTextoAcesso('${d.accessCode}')" class="btn-action btn-copy-access">Copiar Acesso</button>
                     <button onclick="editDebtor('${d.id}')" class="btn-action btn-edit">Editar</button>
                     <button onclick="deleteDebtor('${d.id}')" class="btn-action btn-delete">Excluir</button>
                 `}
@@ -1234,6 +1233,7 @@ window.excluirPagamentoPorIndice = async function(debtorId, index) {
         alert("Erro ao remover o pagamento.");
     }
 };
+
 
 
 
