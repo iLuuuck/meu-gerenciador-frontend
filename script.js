@@ -1008,7 +1008,7 @@ function atualizarLayoutParcelas(debtor, tipo) {
                             <span>📅 ${dataBr}: R$ ${valorParaEstaParcela.toFixed(2)}</span>
                             <button onclick="event.stopPropagation(); window.excluirPagamentoPorIndice('${debtor.id}', ${p.originalIndex})" 
                                     style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:bold; padding:0 5px; font-size:12px;">
-                                ✕
+                                🗑️
                             </button>
                         </div>`;
                     
@@ -1234,6 +1234,7 @@ window.excluirPagamentoPorIndice = async function(debtorId, index) {
         alert("Erro ao remover o pagamento.");
     }
 };
+
 
 
 
