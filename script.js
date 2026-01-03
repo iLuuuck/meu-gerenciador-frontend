@@ -941,16 +941,17 @@ function atualizarLayoutParcelas(debtor, tipo) {
     
     let pagamentosRealizados = [];
     if (debtor.payments && Array.isArray(debtor.payments)) {
-        // Criamos uma cópia para não alterar os dados originais
+        // Criamos uma cópia mantendo o timestamp para poder excluir depois
         pagamentosRealizados = debtor.payments.map(p => ({
             date: p.date,
-            amount: parseFloat(p.amount) || 0
+            amount: parseFloat(p.amount) || 0,
+            timestamp: p.timestamp // Importante para a exclusão
         }));
     }
     
     let htmlFinal = '';
     
-    // CORREÇÃO 1: Ordenação por texto (localeCompare) para não usar new Date()
+    // Ordenação por texto (localeCompare)
     let pool = pagamentosRealizados.sort((a, b) => a.date.localeCompare(b.date));
 
     for (let i = 1; i <= totalParcelas; i++) {
@@ -966,18 +967,26 @@ function atualizarLayoutParcelas(debtor, tipo) {
                 if (valorParaEstaParcela > 0) {
                     pagoNestaParcela += valorParaEstaParcela;
                     
-                    // CORREÇÃO 2: Formatação manual da data BR (DD/MM/YYYY) sem usar new Date()
+                    // Formatação manual da data BR (DD/MM/YYYY)
                     let dataBr = "S/D";
                     if (p.date) {
-                        const partes = p.date.split('-'); // Quebra "2025-12-31"
+                        const partes = p.date.split('-'); 
                         if (partes.length === 3) {
-                            dataBr = `${partes[2]}/${partes[1]}/${partes[0]}`; // Monta "31/12/2025"
+                            dataBr = `${partes[2]}/${partes[1]}/${partes[0]}`;
                         } else {
                             dataBr = p.date;
                         }
                     }
 
-                    listaDatasHTML += `<span class="history-item">📅 ${dataBr}: R$ ${valorParaEstaParcela.toFixed(2)}</span>`;
+                    // ADICIONADO: Botão de exclusão (X) ao lado de cada pagamento no histórico
+                    listaDatasHTML += `
+                        <div class="history-item" style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                            <span>📅 ${dataBr}: R$ ${valorParaEstaParcela.toFixed(2)}</span>
+                            <button onclick="event.stopPropagation(); window.excluirPagamento('${debtor.id}', '${p.timestamp}')" 
+                                    style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:bold; padding:0 5px; font-size:12px;">
+                                ✕
+                            </button>
+                        </div>`;
                     
                     p.amount -= valorParaEstaParcela;
                     aindaFaltaPagar -= valorParaEstaParcela;
@@ -1007,7 +1016,9 @@ function atualizarLayoutParcelas(debtor, tipo) {
                 <div style="font-size:1rem; font-weight:bold">R$ ${valorCadaParcela.toFixed(2)}</div>
                 <div style="font-size:0.7rem; font-weight:bold; margin-top:5px;">${textoStatus}</div>
                 ${avisoFalta}
-                <div class="payment-history">${listaDatasHTML}</div>
+                <div class="payment-history" style="margin-top:5px; border-top:1px solid rgba(255,255,255,0.1); padding-top:3px;">
+                    ${listaDatasHTML}
+                </div>
             </div>`;
     }
     return htmlFinal;
@@ -1165,3 +1176,34 @@ function destacarMenuAtivo() {
 window.addEventListener('DOMContentLoaded', destacarMenuAtivo);
 
 
+
+// Função para excluir pagamento no script principal (Debtors)
+window.excluirPagamento = async function(debtorId, timestampParaExcluir) {
+    if (!confirm("⚠️ Deseja realmente remover este pagamento?")) return;
+
+    try {
+        // Acessa a coleção 'debtors' (ajuste o nome se for 'devedores' no seu Firebase)
+        const docRef = db.collection('debtors').doc(debtorId);
+        const doc = await docRef.get();
+
+        if (doc.exists) {
+            const data = doc.data();
+            
+            // Filtra o array de pagamentos removendo o que possui o timestamp clicado
+            const novosPagamentos = (data.payments || []).filter(p => String(p.timestamp) !== String(timestampParaExcluir));
+
+            // Grava a nova lista de pagamentos no Firebase
+            await docRef.update({
+                payments: novosPagamentos
+            });
+
+            // Se você usa um sistema de abas ou precisa fechar o modal ao excluir:
+            // window.closeModal('debtorDetailModal'); 
+            
+            console.log("Pagamento excluído com sucesso do debtor!");
+        }
+    } catch (error) {
+        console.error("Erro ao excluir pagamento:", error);
+        alert("Erro ao excluir o pagamento. Verifique a conexão.");
+    }
+};
