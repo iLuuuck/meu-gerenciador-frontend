@@ -35,10 +35,15 @@
 </div>
 
 <main class="main-content">
-    <header class="welcome-banner">
+<header class="welcome-banner" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
         <h2 id="welcomeMessage">Olá! 👋</h2>
         <p>Aqui está o resumo dos seus investimentos.</p>
-    </header>
+    </div>
+    <button onclick="limparCacheSistema()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+        🔄 <span class="text-btn">Atualizar</span>
+    </button>
+</header>
 
     <section id="dashboard-clientes" class="stats-grid">
         <div class="stat-card-new">
@@ -126,6 +131,7 @@
 </body>
 
 </html>
+
 
 
 
