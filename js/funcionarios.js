@@ -320,7 +320,7 @@ function atualizarLayoutParcelas(debtor) {
                     <span>📅${p.date.split('-').reverse().slice(0,2).join('/')}: R$${u.toFixed(0)}</span>
                     <button onclick="event.stopPropagation(); window.excluirPagamento('${debtor.id}', '${p.timestamp}')" 
                             style="background:none; border:none; color:#e74c3c; cursor:pointer; padding:0 2px; font-size:10px;">
-                        ✕
+                        🗑️
                     </button>
                 </div>`;
             }
